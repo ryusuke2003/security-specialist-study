@@ -50,4 +50,8 @@ htmlcov/
 *.temp
 *.bak
 
+# The initial official past-question archive is force-tracked intentionally.
+# Keep any subsequently added, untracked past-question files local.
+/過去問/
+
 # Keep learning records under sessions/ and progress/ tracked.
