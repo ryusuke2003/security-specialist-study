@@ -1013,6 +1013,39 @@ Score: 100 / 100
         )[0]
         self.assertEqual(16, without_repeat.priority - with_repeat.priority)
 
+    def test_暗記と通常説明の復習期限を別々に判定する(self) -> None:
+        item = next(item for item in self.catalog if item.term == "CSRF")
+        record = study_helper.TermRecord(
+            item.term,
+            item.domain,
+            70,
+            date(2026, 8, 20),
+            2,
+            70,
+            1,
+            date(2026, 8, 19),
+            item.related,
+            "",
+            recall_score=90,
+            recall_attempts=1,
+            explanation_score=50,
+            explanation_attempts=1,
+            recall_last_studied=date(2026, 8, 20),
+            recall_next_review=date(2026, 9, 19),
+            explanation_last_studied=date(2026, 8, 10),
+            explanation_next_review=date(2026, 8, 15),
+        )
+
+        recall = study_helper.build_candidates(
+            [item], {item.term: record}, date(2026, 8, 20), {}, mode=study_helper.TERM_RECALL_MODE
+        )[0]
+        explanation = study_helper.build_candidates(
+            [item], {item.term: record}, date(2026, 8, 20), {}, mode="standard"
+        )[0]
+
+        self.assertFalse(recall.due)
+        self.assertTrue(explanation.due)
+
     def test_旧語句欄も直近出題語句として集計する(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

@@ -110,6 +110,10 @@ class TermRecord:
     recall_attempts: int = 0
     explanation_score: Optional[int] = None
     explanation_attempts: int = 0
+    recall_last_studied: Optional[date] = None
+    recall_next_review: Optional[date] = None
+    explanation_last_studied: Optional[date] = None
+    explanation_next_review: Optional[date] = None
 
 
 @dataclass(frozen=True)
@@ -269,6 +273,22 @@ def load_terms(root: Path) -> dict[str, TermRecord]:
             recall_attempts=as_int(row.get("Recall Attempts", "0")),
             explanation_score=explanation_score,
             explanation_attempts=explanation_attempts,
+            recall_last_studied=(
+                as_date(row.get("Recall Last Studied", ""))
+                or (as_date(row.get("Last Studied", "")) if as_int(row.get("Recall Attempts", "0")) else None)
+            ),
+            recall_next_review=(
+                as_date(row.get("Recall Next Review", ""))
+                or (as_date(row.get("Next Review", "")) if as_int(row.get("Recall Attempts", "0")) else None)
+            ),
+            explanation_last_studied=(
+                as_date(row.get("Explanation Last Studied", ""))
+                or (as_date(row.get("Last Studied", "")) if explanation_attempts else None)
+            ),
+            explanation_next_review=(
+                as_date(row.get("Explanation Next Review", ""))
+                or (as_date(row.get("Next Review", "")) if explanation_attempts else None)
+            ),
         )
     return result
 
@@ -801,10 +821,10 @@ def render_terms(records: dict[str, TermRecord]) -> str:
     lines = [
         "# 語句・概念ごとの理解度",
         "",
-        "`Score` は両モードを合わせた現在の総合理解度です。`Recall Score` は暗記語句、`Explanation Score` は通常説明で確認した理解度、`Average` は全問題点の平均です。日付は `YYYY-MM-DD`、未設定値は `—` とし、`Applied Sessions` は採点の二重反映を防ぐ台帳です。",
+        "`Score` は両モードを合わせた現在の総合理解度です。`Recall Score` は暗記語句、`Explanation Score` は通常説明で確認した理解度、`Average` は全問題点の平均です。RecallとExplanationの最終学習日・復習期限は別々に管理し、共通の`Next Review`は早い方を表示します。日付は `YYYY-MM-DD`、未設定値は `—` とし、`Applied Sessions` は採点の二重反映を防ぐ台帳です。",
         "",
-        "| Term | Domain | Track | Score | Recall Score | Explanation Score | Last Studied | Last Session | Applied Sessions | Attempts | Recall Attempts | Explanation Attempts | Average | Last Score | Last Level | Next Review | Related | Notes |",
-        "|---|---|---|---:|---:|---:|---|---|---|---:|---:|---:|---:|---:|---:|---|---|---|",
+        "| Term | Domain | Track | Score | Recall Score | Explanation Score | Last Studied | Recall Last Studied | Explanation Last Studied | Last Session | Applied Sessions | Attempts | Recall Attempts | Explanation Attempts | Average | Last Score | Last Level | Next Review | Recall Next Review | Explanation Next Review | Related | Notes |",
+        "|---|---|---|---:|---:|---:|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---|---|---|---|---|",
     ]
     for record in records.values():
         values = [
@@ -815,6 +835,8 @@ def render_terms(records: dict[str, TermRecord]) -> str:
             record.recall_score if record.recall_score is not None else "—",
             record.explanation_score if record.explanation_score is not None else "—",
             record.last_studied.isoformat() if record.last_studied else "—",
+            record.recall_last_studied.isoformat() if record.recall_last_studied else "—",
+            record.explanation_last_studied.isoformat() if record.explanation_last_studied else "—",
             record.last_session or "—",
             ", ".join(record.applied_sessions) or "—",
             record.attempts,
@@ -824,6 +846,8 @@ def render_terms(records: dict[str, TermRecord]) -> str:
             record.last_score if record.last_score is not None else "—",
             record.last_level,
             record.next_review.isoformat() if record.next_review else "—",
+            record.recall_next_review.isoformat() if record.recall_next_review else "—",
+            record.explanation_next_review.isoformat() if record.explanation_next_review else "—",
             record.related or "—",
             record.notes or "—",
         ]
@@ -875,14 +899,21 @@ def update_term_records(
                 and question.score >= 90
                 else 0
             )
-            interval = next_interval(new_score, question.score, question.level, stable_high)
             recall_score = old.recall_score if old else None
             recall_attempts = old.recall_attempts if old else 0
             explanation_score = old.explanation_score if old else None
             explanation_attempts = old.explanation_attempts if old else 0
+            recall_last_studied = old.recall_last_studied if old else None
+            recall_next_review = old.recall_next_review if old else None
+            explanation_last_studied = old.explanation_last_studied if old else None
+            explanation_next_review = old.explanation_next_review if old else None
             if question.question_mode == TERM_RECALL_MODE:
                 recall_score = updated_recall_mastery(recall_score, recall_attempts, question.score)
                 recall_attempts += 1
+                recall_last_studied = study_date
+                recall_next_review = study_date + timedelta(
+                    days=next_interval(recall_score, question.score, question.level, 0)
+                )
             else:
                 explanation_score = updated_mastery(
                     explanation_score,
@@ -891,6 +922,13 @@ def update_term_records(
                     question.level,
                 )
                 explanation_attempts += 1
+                explanation_last_studied = study_date
+                explanation_next_review = study_date + timedelta(
+                    days=next_interval(explanation_score, question.score, question.level, stable_high)
+                )
+            review_dates = [
+                value for value in (recall_next_review, explanation_next_review) if value is not None
+            ]
             catalog_item = catalog_by_term.get(term)
             track = catalog_item.track if catalog_item else question.track
             related = catalog_item.related if catalog_item else " / ".join(question.related_terms)
@@ -904,7 +942,7 @@ def update_term_records(
                 attempts=new_attempts,
                 average=new_average,
                 last_level=question.level,
-                next_review=study_date + timedelta(days=interval),
+                next_review=min(review_dates) if review_dates else None,
                 related=related,
                 notes=notes,
                 track=track,
@@ -915,6 +953,10 @@ def update_term_records(
                 recall_attempts=recall_attempts,
                 explanation_score=explanation_score,
                 explanation_attempts=explanation_attempts,
+                recall_last_studied=recall_last_studied,
+                recall_next_review=recall_next_review,
+                explanation_last_studied=explanation_last_studied,
+                explanation_next_review=explanation_next_review,
             )
     atomic_write(progress_file(root, "語句別理解度.md", "terms.md"), render_terms(records))
     return records
@@ -1321,6 +1363,8 @@ def build_candidates(
                 mode_score = record.recall_score
                 mode_attempts = record.recall_attempts
                 mode_label = "暗記理解度"
+                mode_last_studied = record.recall_last_studied
+                mode_next_review = record.recall_next_review
             else:
                 legacy_explanation = (
                     record.explanation_score is None
@@ -1331,13 +1375,15 @@ def build_candidates(
                 mode_score = record.score if legacy_explanation else record.explanation_score
                 mode_attempts = record.attempts if legacy_explanation else record.explanation_attempts
                 mode_label = "通常説明理解度"
+                mode_last_studied = record.last_studied if legacy_explanation else record.explanation_last_studied
+                mode_next_review = record.next_review if legacy_explanation else record.explanation_next_review
             mode_unseen = mode_attempts <= 0 or mode_score is None
             weakness = 0.0 if mode_unseen else 0.45 * (100 - mode_score)
-            elapsed = (today - record.last_studied).days if record.last_studied else base_interval(record.score)
+            elapsed = (today - mode_last_studied).days if mode_last_studied else base_interval(mode_score or record.score)
             elapsed = max(0, elapsed)
-            forgetting = min(40.0, 35.0 * elapsed / base_interval(record.score))
+            forgetting = min(40.0, 35.0 * elapsed / base_interval(mode_score or record.score))
             unseen_bonus = 20 if mode_unseen else 0
-            due = bool(record.next_review and record.next_review <= today) or forgetting >= 30
+            due = bool(mode_next_review and mode_next_review <= today) or forgetting >= 30
             challenge = not mode_unseen and mode_score >= 80
             recent_penalty = 30 if elapsed == 0 and record.last_score is not None and record.last_score >= 60 else 0
             level = (
