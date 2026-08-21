@@ -62,4 +62,71 @@ sequenceDiagram
 8. **アプリケーションデータ通信**
    - 共有秘密から別途導出したアプリケーションデータ用鍵で、HTTPなどの上位プロトコルのデータを暗号化・認証して通信する。
 
+## ECDHEの共有秘密から、実際の通信を守るまで
+
+TLS 1.3では、ECDHEの共有秘密をそのまま暗号鍵として使いません。HKDFで用途ごとの秘密値を導出してから、送信方向ごとにAEADの鍵とIVを作ります。
+
+```mermaid
+flowchart TD
+    CPUB["ブラウザの一時公開鍵"]
+    CSEC["ブラウザの一時秘密鍵"]
+    SPUB["Webサーバの一時公開鍵"]
+    SSEC["Webサーバの一時秘密鍵"]
+    CSHARED["ブラウザが CSEC と SPUB から計算する共有秘密"]
+    SSHARED["Webサーバが SSEC と CPUB から計算する共有秘密"]
+    SAME{"同じ共有秘密？"}
+    TRANSCRIPT["これまでのハンドシェイクメッセージのハッシュ"]
+    HKDF["HKDF-Extract / HKDF-Expand-Labelで用途別の秘密値を導出"]
+    HS["ハンドシェイク用の送受信traffic secret"]
+    APP["アプリケーションデータ用の送受信traffic secret"]
+    KEYIV["各traffic secretから AEAD鍵とIVを導出"]
+    FIN["finished keyを導出し、ハンドシェイク全体のハッシュへHMACを計算"]
+    RECORD["平文HTTPデータ・追加認証データ・AEAD鍵・nonceを入力"]
+    AEAD["AES-GCMまたはChaCha20-Poly1305で暗号化と認証"]
+    OUT["暗号文と認証タグを送信"]
+    VERIFY{"受信側が認証タグを検証できる？"}
+    ACCEPT["復号してHTTPデータを受理"]
+    REJECT["改ざん・鍵不一致として破棄"]
+
+    CSEC -->|"ブラウザが相手の一時公開鍵と組み合わせる"| CSHARED
+    SPUB --> CSHARED
+    SSEC -->|"Webサーバが相手の一時公開鍵と組み合わせる"| SSHARED
+    CPUB --> SSHARED
+    CSHARED --> SAME
+    SSHARED --> SAME
+    SAME -->|"双方で同じ値になる"| HKDF
+    TRANSCRIPT -->|"traffic secretの導出とFinished検証に使う"| HKDF
+    HKDF --> HS
+    HKDF --> APP
+    HS --> FIN
+    TRANSCRIPT --> FIN
+    APP --> KEYIV
+    KEYIV --> RECORD
+    RECORD --> AEAD
+    AEAD --> OUT
+    OUT --> VERIFY
+    VERIFY -->|"タグが正しい"| ACCEPT
+    VERIFY -->|"タグが不正"| REJECT
+```
+
+### ① ECDHE：共有秘密を双方で計算する
+
+- ブラウザとWebサーバは、一時的な公開鍵を交換します。
+- 各自が「自分の一時秘密鍵」と「相手の一時公開鍵」から、同じ共有秘密を計算します。
+- 共有秘密そのものや一時秘密鍵は送信しません。これが、一時秘密鍵を破棄した後の過去通信を守りやすいForward Secrecyにつながります。
+
+### ② HKDF：用途・方向ごとの鍵材料を分ける
+
+- 共有秘密と、それまでのハンドシェイクメッセージのハッシュを材料に、HKDFでハンドシェイク用とアプリケーションデータ用の`traffic secret`を分けて導出します。
+- さらに、ブラウザ送信方向とWebサーバ送信方向の秘密値も別です。一方の送信鍵を、そのまま逆方向には使いません。
+- 各`traffic secret`から、実際にレコードを保護する**AEAD鍵**と**IV**を導出します。送信ごとの連番をIVと組み合わせてnonceを作ります。
+
+### ③ 改ざん検知：通常の通信ではAEADの認証タグを使う
+
+- TLS 1.3の通常のレコード通信では、暗号用鍵と独立したMAC用鍵を作って「メッセージ + MAC用鍵」を別計算する構成ではありません。
+- AES-GCMやChaCha20-Poly1305の**AEAD**が、暗号化と認証タグの生成を一体で行います。受信側は同じ方向の鍵・IV・連番からnonceを再現し、タグを検証できなければ復号結果を使いません。
+- ただしハンドシェイク完了時の`Finished`は別です。`finished key`を導出し、ここまでのハンドシェイク全体のハッシュへHMACを計算して、交渉内容の改ざんを検知します。
+
+> 覚え方: **ECDHEで共有秘密を作る → HKDFで用途別・方向別の鍵材料を作る → AEADで暗号文と認証タグを一緒に作る。**
+
 補足: `EncryptedExtensions` はServerHelloの後、Certificateの前に送られるサーバ設定のメッセージである。この図では、8段階の主な流れに集中するため省略している。
