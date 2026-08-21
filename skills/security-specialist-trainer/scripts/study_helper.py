@@ -498,6 +498,15 @@ def unanswered_questions(root: Path) -> list[UnansweredQuestion]:
     )
 
 
+def unanswered_primary_terms(root: Path) -> set[str]:
+    """Return terms already assigned to unanswered questions."""
+    return {
+        term
+        for question in unanswered_questions(root)
+        for term in question.primary_terms
+    }
+
+
 def render_unanswered_index(questions: list[UnansweredQuestion]) -> str:
     lines = ["# 未解答一覧", ""]
     if not questions:
@@ -1413,6 +1422,17 @@ def build_candidates(
     return candidates
 
 
+def exclude_unanswered_candidates(
+    candidates: Iterable[Candidate],
+    unanswered_terms: set[str],
+    include_unanswered: bool = False,
+) -> list[Candidate]:
+    """Avoid creating duplicate pending questions unless review was requested."""
+    if include_unanswered:
+        return list(candidates)
+    return [candidate for candidate in candidates if candidate.item.term not in unanswered_terms]
+
+
 def _take_balanced(pool: Iterable[Candidate], count: int, selected: list[tuple[str, Candidate]]) -> None:
     if count <= 0:
         return
@@ -1432,22 +1452,26 @@ def _take_balanced(pool: Iterable[Candidate], count: int, selected: list[tuple[s
         count -= 1
 
 
-def diagnostic_plan(catalog: list[CatalogItem], count: int, focus: str = "") -> list[tuple[str, Candidate]]:
-    by_domain = {item.domain: item for item in catalog if item.diagnostic}
+def diagnostic_plan(
+    catalog: list[CatalogItem], count: int, focus: str = "", excluded_terms: Optional[set[str]] = None
+) -> list[tuple[str, Candidate]]:
+    excluded_terms = excluded_terms or set()
+    available = [item for item in catalog if item.term not in excluded_terms]
+    by_domain = {item.domain: item for item in available if item.diagnostic}
     ordered = [by_domain[domain] for domain in DIAGNOSTIC_DOMAIN_ORDER if domain in by_domain]
-    ordered.extend(item for item in catalog if item.diagnostic and item not in ordered)
+    ordered.extend(item for item in available if item.diagnostic and item not in ordered)
     if len(ordered) < count:
-        ordered.extend(item for item in catalog if item not in ordered)
+        ordered.extend(item for item in available if item not in ordered)
     focus_tokens = [token.strip().lower() for token in re.split(r"[,/、]", focus) if token.strip()]
     if focus_tokens:
         focused = [
             item
-            for item in catalog
+            for item in available
             if any(token in f"{item.term} {item.domain} {item.related}".lower() for token in focus_tokens)
         ]
         focus_count = max(1, round(count * 0.40))
         ordered = focused[:focus_count] + [item for item in ordered if item not in focused]
-        ordered.extend(item for item in catalog if item not in ordered)
+        ordered.extend(item for item in available if item not in ordered)
     result = []
     for item in ordered[:count]:
         candidate = Candidate(
@@ -1693,6 +1717,11 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     plan_parser.add_argument("--count", type=int)
     plan_parser.add_argument("--focus", default="")
     plan_parser.add_argument(
+        "--include-unanswered",
+        action="store_true",
+        help="Allow terms already assigned to unanswered questions; use only for an explicit review request.",
+    )
+    plan_parser.add_argument(
         "--mode",
         choices=["standard", "weak", "new", "subject-b", "light", TERM_RECALL_MODE],
     )
@@ -1773,6 +1802,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 2
 
     assessed = any(record.attempts > 0 for record in terms.values())
+    pending_terms = set() if args.include_unanswered else unanswered_primary_terms(root)
     if mode == TERM_RECALL_MODE:
         count = requested_count if requested_count is not None else 10
         candidates = build_candidates(
@@ -1784,11 +1814,13 @@ def main(argv: Optional[list[str]] = None) -> int:
             TERM_RECALL_MODE,
             recent_term_counts(root, today),
         )
-        plan = term_recall_plan(candidates, count)
+        plan = term_recall_plan(
+            exclude_unanswered_candidates(candidates, pending_terms, args.include_unanswered), count
+        )
         phase = TERM_RECALL_MODE
     elif not assessed:
         count = requested_count if requested_count is not None else (3 if mode == "light" else 8)
-        plan = diagnostic_plan(catalog, count, args.focus)
+        plan = diagnostic_plan(catalog, count, args.focus, pending_terms)
         phase = "diagnosis"
     else:
         count = requested_count if requested_count is not None else (
@@ -1803,7 +1835,9 @@ def main(argv: Optional[list[str]] = None) -> int:
             mode,
             recent_term_counts(root, today),
         )
-        plan = adaptive_plan(candidates, count, mode)
+        plan = adaptive_plan(
+            exclude_unanswered_candidates(candidates, pending_terms, args.include_unanswered), count, mode
+        )
         phase = "adaptive"
     print(render_plan(plan, phase, today, mode))
     return 0

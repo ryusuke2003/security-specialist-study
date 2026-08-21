@@ -160,6 +160,27 @@ class 学習支援テスト(unittest.TestCase):
             )
             self.assertNotIn("SQLインジェクション", index)
 
+            self.assertEqual(
+                {"SQLインジェクション", "XSS", "CSRF"},
+                study_helper.unanswered_primary_terms(root),
+            )
+
+    def test_未回答語句は明示指定なしで出題候補から除外する(self) -> None:
+        item = next(item for item in self.catalog if item.term == "CSRF")
+        candidates = study_helper.build_candidates(
+            [item], {}, date(2026, 8, 12), {}, mode=study_helper.TERM_RECALL_MODE
+        )
+
+        self.assertEqual(
+            [], study_helper.exclude_unanswered_candidates(candidates, {"CSRF"})
+        )
+        self.assertEqual(
+            candidates,
+            study_helper.exclude_unanswered_candidates(
+                candidates, {"CSRF"}, include_unanswered=True
+            ),
+        )
+
     def test_初回の分野指定が診断構成を変える(self) -> None:
         plan = study_helper.diagnostic_plan(self.catalog, 8, "Webセキュリティ")
         web_count = sum(candidate.item.domain == "Webセキュリティ" for _, candidate in plan)
