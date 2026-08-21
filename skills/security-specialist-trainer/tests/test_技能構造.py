@@ -62,6 +62,7 @@ class 技能構造テスト(unittest.TestCase):
 
         skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
         self.assertIn("復習用/流れ図/<topic>.md", skill_text)
+        self.assertIn("流れ図` bullet", skill_text)
         self.assertIn("復習用/学んだこと/<分野>.md", skill_text)
         self.assertIn("## YYYY-MM-DD", skill_text)
         self.assertIn("both normal and `term-recall` sessions", skill_text)
@@ -86,6 +87,7 @@ class 技能構造テスト(unittest.TestCase):
         self.assertIn("最優先", review_readme)
         self.assertIn("軽い確認", review_readme)
         self.assertIn("最優先 → 確認 → 軽い確認", review_readme)
+        self.assertIn("流れ図", review_readme)
 
     def test_ルート説明書から詳細文書を参照できる(self) -> None:
         readme = (self.root / "README.md").read_text(encoding="utf-8")
