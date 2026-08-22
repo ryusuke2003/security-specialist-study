@@ -88,6 +88,8 @@ class 技能構造テスト(unittest.TestCase):
         self.assertIn("軽い確認", review_readme)
         self.assertIn("最優先 → 確認 → 軽い確認", review_readme)
         self.assertIn("流れ図", review_readme)
+        self.assertIn("either an existing diagram or a newly created/materially expanded diagram", skill_text)
+        self.assertIn("Reuse the existing diagram instead of creating a duplicate, but still add the link.", skill_text)
 
     def test_翌日復習から流れ図へのリンクは兄弟ディレクトリを参照する(self) -> None:
         skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
