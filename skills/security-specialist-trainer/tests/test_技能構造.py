@@ -105,6 +105,17 @@ class 技能構造テスト(unittest.TestCase):
                 with self.subTest(review_file=review_file, link=link):
                     self.assertTrue((review_file.parent / link).is_file())
 
+    def test_十分復習の自動作成は学習操作に限定する(self) -> None:
+        agents_text = (self.root / "AGENTS.md").read_text(encoding="utf-8")
+        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        readme_text = (self.root / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("When starting question generation or session grading", agents_text)
+        self.assertNotIn("On every user interaction", agents_text)
+        self.assertIn("At the start of every question-generation or session-grading workflow", skill_text)
+        self.assertNotIn("At the start of every user interaction", skill_text)
+        self.assertIn("問題作成または採点を始めるとき", readme_text)
+
     def test_ルート説明書から詳細文書を参照できる(self) -> None:
         readme = (self.root / "README.md").read_text(encoding="utf-8")
         document_paths = (

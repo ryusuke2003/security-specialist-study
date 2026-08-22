@@ -1,6 +1,6 @@
 # Repository instructions
 
-On every user interaction while this repository is the active workspace—including a greeting such as「おはよう」or a documentation question—check whether a non-cancelled `学習記録/10分復習/YYYY-MM-DD.md` Session exists for the current JST date. If it does not, create exactly one default `quick-review` Session before responding, following `skills/security-specialist-trainer/SKILL.md`. An explicit request such as「今日の10分復習」or「復習問題作って」always creates an additional Session even if one exists. Do not create it only when the user explicitly asks to avoid study changes.
+When starting question generation or session grading in this repository, check whether a non-cancelled `学習記録/10分復習/YYYY-MM-DD.md` Session exists for the current JST date. If it does not, create exactly one default `quick-review` Session before the requested generation or grading, following `skills/security-specialist-trainer/SKILL.md`. Do not perform this check for greetings, documentation questions, or other non-learning requests. An explicit request such as「今日の10分復習」or「復習問題作って」always creates the requested quick-review Session even if one exists; that requested Session also satisfies the daily check. Do not create it only when the user explicitly asks to avoid study changes.
 
 For requests to create, customize, grade, review, or report progress on 情報処理安全確保支援士（セキスペ）practice, read and follow `skills/security-specialist-trainer/SKILL.md` completely before acting. This includes natural requests such as「問題作って」「今日の問題」「復習したい」「採点して」「答え合わせ」「理解度見せて」「今の弱点」and close paraphrases.
 

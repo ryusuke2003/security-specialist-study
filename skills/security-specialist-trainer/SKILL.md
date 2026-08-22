@@ -79,16 +79,16 @@ Use this mode only for a request such as「今日の10分復習」. Create exact
 
 Every question has exactly three plausible choices labeled `A` / `B` / `C`, with one correct choice. Ask for the selected letter only, without requiring written reasoning. Accept `a` / `b` / `c` as equivalent to uppercase after trimming whitespace; normalize the selection to uppercase before grading. Keep the correct choice out of the Session Markdown until grading. This is a short-start review, not evidence of mastery: grade an answer as correct or incorrect with a compact explanation, retain incorrect items as next-review candidates, and do not update Score, Attempts, either mode-specific score, review dates, or coverage.
 
-### Automatically create today's quick review
+### Automatically create today's quick review for learning workflows
 
-At the start of every user interaction while this repository is active—including greetings and documentation questions—obtain the actual JST date and run:
+At the start of every question-generation or session-grading workflow, obtain the actual JST date and run:
 
 ```bash
 python3 skills/security-specialist-trainer/scripts/study_helper.py quick-review-status \
   --root . --date YYYY-MM-DD
 ```
 
-If the result is `missing`, immediately generate one default eight-question quick-review Session using the procedure above, before responding to the user. A non-cancelled Session makes the status `exists`, so later messages on the same day do not create duplicates. If the user explicitly asks「今日の10分復習」or「復習問題作って」, always create a new quick-review Session even when the status is `exists`; this explicit request overrides the daily one-session limit. Skip only when the user explicitly asks to avoid study changes.
+If the result is `missing`, immediately generate one default eight-question quick-review Session using the procedure above, before the requested generation or grading. A non-cancelled Session makes the status `exists`, so later learning workflows on the same day do not create duplicates. Do not run this check for greetings, documentation questions, or other non-learning requests. If the user explicitly asks「今日の10分復習」or「復習問題作って」, always create the requested quick-review Session even when the status is `exists`; when it is `missing`, this requested Session satisfies the daily one-session requirement rather than creating a second automatic Session. Skip only when the user explicitly asks to avoid study changes.
 
 ## Grade a session
 
