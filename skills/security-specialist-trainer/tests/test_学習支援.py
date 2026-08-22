@@ -95,7 +95,6 @@ class 学習支援テスト(unittest.TestCase):
             recall_dir = root / "学習記録" / "暗記語句問題"
             standard_dir.mkdir(parents=True)
             recall_dir.mkdir(parents=True)
-            (root / "進捗").mkdir()
             (standard_dir / "2026-08-17.md").write_text(
                 """## Session 1
 
@@ -145,17 +144,17 @@ class 学習支援テスト(unittest.TestCase):
             path = study_helper.write_unanswered_index(root)
             index = path.read_text(encoding="utf-8")
 
-            self.assertEqual(root / "進捗" / "未解答一覧.md", path)
+            self.assertEqual(root / "学習記録" / "未解答一覧.md", path)
             self.assertNotIn("回答欄が空の問題だけを表示します。", index)
             self.assertTrue(index.startswith("# 未解答一覧\n\n## 理解・応用問題\n"))
             self.assertIn("## 理解・応用問題", index)
             self.assertIn(
-                "[2026-08-17 / Session 1 / Q1~2](../学習記録/理解・応用問題/2026-08-17.md)",
+                "[2026-08-17 / Session 1 / Q1~2](理解・応用問題/2026-08-17.md)",
                 index,
             )
             self.assertIn("## 暗記語句問題", index)
             self.assertIn(
-                "[2026-08-17 / Session 2 / Q1](../学習記録/暗記語句問題/2026-08-17.md)",
+                "[2026-08-17 / Session 2 / Q1](暗記語句問題/2026-08-17.md)",
                 index,
             )
             self.assertNotIn("SQLインジェクション", index)

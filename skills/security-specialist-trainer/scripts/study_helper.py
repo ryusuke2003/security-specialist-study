@@ -514,7 +514,7 @@ def unanswered_questions(root: Path) -> list[UnansweredQuestion]:
                         session_kind=session_kind,
                         primary_terms=primary_terms,
                         session_link_path=Path(
-                            os.path.relpath(path, progress_directory(root))
+                            os.path.relpath(path, sessions_directory(root))
                         ).as_posix(),
                     )
                 )
@@ -580,7 +580,7 @@ def render_unanswered_index(questions: list[UnansweredQuestion]) -> str:
 
 
 def write_unanswered_index(root: Path) -> Path:
-    path = progress_directory(root) / "未解答一覧.md"
+    path = sessions_directory(root) / "未解答一覧.md"
     atomic_write(path, render_unanswered_index(unanswered_questions(root)))
     return path
 

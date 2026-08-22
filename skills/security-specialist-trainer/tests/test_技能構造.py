@@ -26,7 +26,7 @@ class 技能構造テスト(unittest.TestCase):
             self.root / "進捗" / "語句別理解度.md",
             self.root / "進捗" / "分野別理解度.md",
             self.root / "進捗" / "学習履歴.md",
-            self.root / "進捗" / "未解答一覧.md",
+            self.root / "学習記録" / "未解答一覧.md",
             self.root / "参照資料" / "出題分類と概念カタログ.md",
             self.root / "参照資料" / "採点・理解度・復習ルール.md",
             self.root / "参照資料" / "セッション形式.md",
@@ -142,7 +142,7 @@ class 技能構造テスト(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn('subparsers.add_parser(\n        "unanswered"', script_text)
-        self.assertIn("進捗/未解答一覧.md", skill_text)
+        self.assertIn("学習記録/未解答一覧.md", skill_text)
         self.assertIn("study_helper.py unanswered --root .", skill_text)
         self.assertIn("study_helper.py unanswered --root .", session_text)
 
