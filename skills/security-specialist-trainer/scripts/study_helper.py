@@ -1047,31 +1047,78 @@ def domain_level(score: int) -> str:
     return "Advanced"
 
 
+def domain_coverage(
+    questions: list[GradedQuestion],
+) -> tuple[str, str]:
+    """Return the highest demonstrated coverage stage and its evidence summary."""
+    recall_count = sum(question.question_mode == TERM_RECALL_MODE for question in questions)
+    explanation_questions = [
+        question for question in questions if question.question_mode != TERM_RECALL_MODE
+    ]
+    high_difficulty_successes = sum(
+        question.level >= 5 and question.score >= 90 for question in explanation_questions
+    )
+    evidence = (
+        f"暗記 {recall_count}問 / 応用 {len(explanation_questions)}問"
+        f" / 高難度成功 {high_difficulty_successes}問"
+    )
+    if not questions:
+        return "未評価", "—"
+    if len(explanation_questions) == 0:
+        return "用語想起のみ", evidence
+    if high_difficulty_successes >= 2:
+        return "高難度で安定", evidence
+    return "応用まで確認", evidence
+
+
 def render_domains(
     existing_rows: list[dict[str, str]],
     records: dict[str, TermRecord],
     scored: list[tuple[date, int, GradedQuestion]],
     today: date,
+    catalog: Optional[list[CatalogItem]] = None,
 ) -> str:
     domain_order = [row["Domain"] for row in existing_rows]
+    for item in catalog or []:
+        if item.domain not in domain_order:
+            domain_order.append(item.domain)
     for record in records.values():
         if record.domain not in domain_order:
             domain_order.append(record.domain)
     lines = [
         "# 分野ごとの理解度",
         "",
-        "語句の現在スコアと直近セッションの成績から推定します。履歴がない分野は `Unassessed` とし、0点とは扱いません。",
+        "語句の現在スコアと直近セッションの成績から推定します。履歴がない分野は `Unassessed` とし、0点とは扱いません。`Coverage` は、暗記だけなら「用語想起のみ」、通常説明を1問以上確認すると「応用まで確認」、通常説明のLevel 5以上・90点以上を2問以上確認すると「高難度で安定」です。`Unassessed Important Terms` は、カタログのImportance 4〜5で一度も採点されていない語句数です。",
         "",
-        "| Domain | Score | Level | Last Studied | Attempts | Due Terms | Notes |",
-        "|---|---:|---|---|---:|---:|---|",
+        "| Domain | Score | Level | Coverage | Evidence | Last Studied | Questions | Unassessed Important Terms | Due Terms | Notes |",
+        "|---|---:|---|---|---|---|---:|---:|---:|---|",
     ]
     existing_by_domain = {row["Domain"]: row for row in existing_rows}
     for domain in domain_order:
         term_records = [record for record in records.values() if record.domain == domain]
         domain_questions = [(day, question) for day, _, question in scored if question.domain == domain]
+        questions = [question for _, question in domain_questions]
+        coverage, evidence = domain_coverage(questions)
+        unassessed_important = sum(
+            item.importance >= 4
+            and (item.term not in records or records[item.term].attempts == 0)
+            for item in (catalog or [])
+            if item.domain == domain
+        )
         if not term_records and not domain_questions:
             row = existing_by_domain.get(domain, {})
-            values = [domain, "—", "Unassessed", "—", 0, 0, row.get("Notes", "未評価")]
+            values = [
+                domain,
+                "—",
+                "Unassessed",
+                coverage,
+                evidence,
+                "—",
+                0,
+                unassessed_important,
+                0,
+                row.get("Notes", "未評価"),
+            ]
         else:
             term_mean = sum(record.score for record in term_records) / len(term_records) if term_records else None
             recent = [
@@ -1091,7 +1138,18 @@ def render_domains(
             weakest = min(term_records, key=lambda record: record.score).term if term_records else "—"
             strongest = max(term_records, key=lambda record: record.score).term if term_records else "—"
             notes = f"{prefix}強み候補 {strongest} / 次の確認 {weakest}"
-            values = [domain, score, domain_level(score), last_studied, len(domain_questions), due, notes]
+            values = [
+                domain,
+                score,
+                domain_level(score),
+                coverage,
+                evidence,
+                last_studied,
+                len(domain_questions),
+                unassessed_important,
+                due,
+                notes,
+            ]
         lines.append("| " + " | ".join(markdown_cell(value) for value in values) + " |")
     return "\n".join(lines) + "\n"
 
@@ -1100,12 +1158,13 @@ def update_domains(
     root: Path,
     records: dict[str, TermRecord],
     study_date: date,
+    catalog: Optional[list[CatalogItem]] = None,
 ) -> dict[str, int]:
     existing = read_table(progress_file(root, "分野別理解度.md", "domains.md"), "Domain")
     scored = all_scored_questions(root)
     atomic_write(
         progress_file(root, "分野別理解度.md", "domains.md"),
-        render_domains(existing, records, scored, study_date),
+        render_domains(existing, records, scored, study_date, catalog or load_catalog(root)),
     )
     result: dict[str, int] = {}
     for row in read_table(progress_file(root, "分野別理解度.md", "domains.md"), "Domain"):
@@ -1251,7 +1310,7 @@ def record_progress(
         raise ValueError("Set Session Status to grading after writing all scores, then run record")
     catalog = load_catalog(root)
     records = update_term_records(root, study_date, session_number, questions, catalog)
-    update_domains(root, records, study_date)
+    update_domains(root, records, study_date, catalog)
     summary = update_history(root, study_date, session_number, questions, records, session_path)
     finalize_session(session_path, session_number, summary)
     return {**summary, "questions": len(questions), "session_path": session_path}
@@ -1297,13 +1356,13 @@ def rebuild_progress(root: Path) -> dict[str, int]:
     atomic_write(progress_file(root, "語句別理解度.md", "terms.md"), render_terms({}))
     atomic_write(
         progress_file(root, "分野別理解度.md", "domains.md"),
-        render_domains(domain_rows, {}, [], date.today()),
+        render_domains(domain_rows, {}, [], date.today(), catalog),
     )
     atomic_write(progress_file(root, "学習履歴.md", "history.md"), render_history([]))
 
     for study_date, session_number, path, _, questions in sessions:
         records = update_term_records(root, study_date, session_number, questions, catalog)
-        update_domains(root, records, study_date)
+        update_domains(root, records, study_date, catalog)
         summary = update_history(root, study_date, session_number, questions, records, path)
         finalize_session(path, session_number, summary)
     return {"sessions": len(sessions), "questions": sum(len(item[4]) for item in sessions)}

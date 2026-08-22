@@ -876,6 +876,55 @@ Score: 100 / 100
             self.assertEqual("100", history_row["Average"])
             self.assertEqual(100, record.recall_score)
 
+    def test_カバレッジは暗記と応用と高難度安定を区別する(self) -> None:
+        recall = study_helper.GradedQuestion(
+            1, "Webセキュリティ", "B", 1, ("CSRF",), (), 100, "", "",
+            study_helper.TERM_RECALL_MODE,
+        )
+        application = study_helper.GradedQuestion(
+            2, "Webセキュリティ", "B", 4, ("XSS",), (), 80, "", "",
+        )
+        high_one = study_helper.GradedQuestion(
+            3, "Webセキュリティ", "B", 5, ("SQLインジェクション",), (), 90, "", "",
+        )
+        high_two = study_helper.GradedQuestion(
+            4, "Webセキュリティ", "B", 5, ("SSRF",), (), 95, "", "",
+        )
+
+        self.assertEqual(("未評価", "—"), study_helper.domain_coverage([]))
+        self.assertEqual("用語想起のみ", study_helper.domain_coverage([recall])[0])
+        self.assertEqual("応用まで確認", study_helper.domain_coverage([recall, application, high_one])[0])
+        coverage, evidence = study_helper.domain_coverage(
+            [recall, application, high_one, high_two]
+        )
+        self.assertEqual("高難度で安定", coverage)
+        self.assertEqual("暗記 1問 / 応用 3問 / 高難度成功 2問", evidence)
+
+    def test_分野表示は未評価重要語数とカタログ分野を含む(self) -> None:
+        catalog = [
+            study_helper.CatalogItem("評価済み", "新規分野", "B", 5, 2, False, "", ""),
+            study_helper.CatalogItem("未評価重要語", "新規分野", "B", 4, 2, False, "", ""),
+            study_helper.CatalogItem("低重要語", "新規分野", "B", 3, 2, False, "", ""),
+        ]
+        record = study_helper.TermRecord(
+            "評価済み", "新規分野", 80, date(2026, 8, 12), 1, 80, 3,
+            date(2026, 8, 17), "", "", explanation_score=80, explanation_attempts=1,
+        )
+        question = study_helper.GradedQuestion(
+            1, "新規分野", "B", 3, ("評価済み",), (), 80, "", "",
+        )
+        rendered = study_helper.render_domains(
+            [], {record.term: record}, [(date(2026, 8, 12), 1, question)],
+            date(2026, 8, 12), catalog,
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "domains.md"
+            path.write_text(rendered, encoding="utf-8")
+            row = study_helper.read_table(path, "Domain")[0]
+        self.assertEqual("応用まで確認", row["Coverage"])
+        self.assertEqual("1", row["Unassessed Important Terms"])
+        self.assertEqual("1", row["Questions"])
+
     def test_通常六問計画は新規を二問含む(self) -> None:
         today = date(2026, 8, 9)
         wanted = {

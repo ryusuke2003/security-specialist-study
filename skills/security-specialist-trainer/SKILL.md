@@ -129,6 +129,7 @@ Read all files under `進捗/` and enough recent sessions to explain the current
 3. Especially weak terms.
 4. Especially strong terms, including the highest level actually demonstrated.
 5. Terms due now or soon and the reason.
+6. For each domain, distinguish unassessed, recall-only, application-confirmed, and high-difficulty-stable coverage. Use the displayed evidence counts and unassessed important-term count so a high score based on too little or too-easy evidence is not described as stable.
 
 When both mode scores exist, call out meaningful gaps such as strong term recall with weak explanation/application, or the reverse. Do not treat a missing mode-specific score in old data as zero.
 
