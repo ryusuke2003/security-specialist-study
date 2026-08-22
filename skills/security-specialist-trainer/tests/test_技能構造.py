@@ -273,10 +273,12 @@ class 技能構造テスト(unittest.TestCase):
         )
 
         self.assertIn("Do **not** select by `Status`", skill_text)
+        self.assertIn("or use `git diff`, commit history, or working-tree state", skill_text)
         self.assertIn("select **all** grading candidates", skill_text)
         self.assertIn("chronological order", skill_text)
         self.assertIn("全回答が記入済みで、かつ採点とprogress更新が完了していないSessionをすべて", session_text)
         self.assertIn("Status`の値で対象を選ばない", session_text)
+        self.assertIn("コミット履歴、作業ツリーの状態を判定材料にしない", session_text)
         self.assertIn("空欄を含むSessionは飛ばされ", usage_text)
         self.assertIn("新しい未回答Sessionが古い回答済みSessionの採点を妨げません", logic_text)
 
