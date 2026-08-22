@@ -33,12 +33,14 @@ DIAGNOSTIC_DOMAIN_ORDER = [
 ]
 
 TERM_RECALL_MODE = "term-recall"
+QUICK_REVIEW_MODE = "quick-review"
 EXPLANATION_MODE = "explanation"
 STANDARD_SESSION_MODE = "standard"
 DEFAULT_NORMAL_QUESTION_COUNT = 6
 NORMAL_SESSION_MODES = frozenset({"diagnosis", "adaptive"})
 STANDARD_SESSION_DIRECTORY = "理解・応用問題"
 TERM_RECALL_SESSION_DIRECTORY = "暗記語句問題"
+QUICK_REVIEW_SESSION_DIRECTORY = "10分復習"
 LEGACY_SESSION_DIRECTORIES = (STANDARD_SESSION_MODE, TERM_RECALL_MODE)
 CURRENT_SESSIONS_DIRECTORY = "学習記録"
 CURRENT_PROGRESS_DIRECTORY = "進捗"
@@ -444,6 +446,7 @@ def session_file_paths(root: Path) -> list[Path]:
         *sessions_root.glob("*.md"),
         *(sessions_root / STANDARD_SESSION_DIRECTORY).glob("*.md"),
         *(sessions_root / TERM_RECALL_SESSION_DIRECTORY).glob("*.md"),
+        *(sessions_root / QUICK_REVIEW_SESSION_DIRECTORY).glob("*.md"),
     ]
     for directory in LEGACY_SESSION_DIRECTORIES:
         paths.extend((sessions_root / directory).glob("*.md"))
@@ -478,7 +481,10 @@ def unanswered_questions(root: Path) -> list[UnansweredQuestion]:
                 mode = session_mode_for_path(root, path, text, session_number)
             except ValueError:
                 mode = TERM_RECALL_MODE if path.parent.name == TERM_RECALL_SESSION_DIRECTORY else STANDARD_SESSION_MODE
-            session_kind = "暗記語句問題" if mode == TERM_RECALL_MODE else "理解・応用問題"
+            session_kind = {
+                TERM_RECALL_MODE: "暗記語句問題",
+                QUICK_REVIEW_MODE: "10分復習",
+            }.get(mode, "理解・応用問題")
             question_headings = list(
                 re.finditer(r"^### Q([1-9][0-9]*)[ \t]*$", session, flags=re.MULTILINE)
             )
@@ -532,7 +538,7 @@ def render_unanswered_index(questions: list[UnansweredQuestion]) -> str:
     if not questions:
         lines.append("未解答はありません。")
         return "\n".join(lines) + "\n"
-    for kind in ("理解・応用問題", "暗記語句問題"):
+    for kind in ("理解・応用問題", "暗記語句問題", "10分復習"):
         entries = [question for question in questions if question.session_kind == kind]
         if not entries:
             continue
@@ -580,11 +586,10 @@ def write_unanswered_index(root: Path) -> Path:
 
 
 def session_path_for_mode(root: Path, study_date: date, mode: str) -> Path:
-    directory = (
-        TERM_RECALL_SESSION_DIRECTORY
-        if mode == TERM_RECALL_MODE
-        else STANDARD_SESSION_DIRECTORY
-    )
+    directory = {
+        TERM_RECALL_MODE: TERM_RECALL_SESSION_DIRECTORY,
+        QUICK_REVIEW_MODE: QUICK_REVIEW_SESSION_DIRECTORY,
+    }.get(mode, STANDARD_SESSION_DIRECTORY)
     return sessions_directory(root) / directory / f"{study_date.isoformat()}.md"
 
 
@@ -605,9 +610,11 @@ def session_mode(
     value = values[0]
     if value == TERM_RECALL_MODE:
         return TERM_RECALL_MODE
+    if value == QUICK_REVIEW_MODE:
+        return QUICK_REVIEW_MODE
     if value in NORMAL_SESSION_MODES:
         return STANDARD_SESSION_MODE
-    allowed = ", ".join(sorted((*NORMAL_SESSION_MODES, TERM_RECALL_MODE)))
+    allowed = ", ".join(sorted((*NORMAL_SESSION_MODES, TERM_RECALL_MODE, QUICK_REVIEW_MODE)))
     raise ValueError(
         f"Session {session_number} has unsupported Mode {value!r}; expected one of: {allowed}"
     )
@@ -627,6 +634,8 @@ def expected_mode_for_current_path(root: Path, path: Path) -> Optional[str]:
         return STANDARD_SESSION_MODE
     if path.parent == sessions_root / TERM_RECALL_SESSION_DIRECTORY:
         return TERM_RECALL_MODE
+    if path.parent == sessions_root / QUICK_REVIEW_SESSION_DIRECTORY:
+        return QUICK_REVIEW_MODE
     return None
 
 
@@ -708,7 +717,11 @@ def parse_graded_session(
         raise ValueError(f"Session {session_number} has no Status")
     status = status_match.group(1)
     parsed_mode = session_mode(text, session_number, allow_missing=allow_missing_mode)
-    question_mode = TERM_RECALL_MODE if parsed_mode == TERM_RECALL_MODE else EXPLANATION_MODE
+    question_mode = (
+        TERM_RECALL_MODE if parsed_mode == TERM_RECALL_MODE
+        else QUICK_REVIEW_MODE if parsed_mode == QUICK_REVIEW_MODE
+        else EXPLANATION_MODE
+    )
     question_count_values = re.findall(
         r"^- Question Count:[ \t]*(.*?)[ \t]*$", session, flags=re.MULTILINE
     )
@@ -1023,7 +1036,9 @@ def all_scored_questions(root: Path) -> list[tuple[date, int, GradedQuestion]]:
         ]
         for number in numbers:
             try:
-                session_mode_for_path(root, path, text, number)
+                mode = session_mode_for_path(root, path, text, number)
+                if mode == QUICK_REVIEW_MODE:
+                    continue
                 status, questions = parse_graded_session(
                     text,
                     number,
@@ -1035,6 +1050,49 @@ def all_scored_questions(root: Path) -> list[tuple[date, int, GradedQuestion]]:
                 continue
             results.extend((study_date, number, question) for question in questions)
     return sorted(results, key=lambda item: (item[0], item[1], item[2].number))
+
+
+def quick_review_incorrect_terms(root: Path) -> set[str]:
+    """Return missed quick-review terms without changing mastery evidence."""
+    incorrect: set[str] = set()
+    for path in session_file_paths(root):
+        if path.parent.name != QUICK_REVIEW_SESSION_DIRECTORY:
+            continue
+        text = path.read_text(encoding="utf-8")
+        for match in re.finditer(r"^## Session ([1-9][0-9]*)[ \t]*$", text, flags=re.MULTILINE):
+            try:
+                status, questions = parse_graded_session(
+                    text, int(match.group(1)), allow_missing_mode=False
+                )
+            except ValueError:
+                continue
+            if status in {"grading", "graded"}:
+                incorrect.update(
+                    term
+                    for question in questions
+                    if question.score < 100
+                    for term in question.primary_terms
+                )
+    return incorrect
+
+
+def quick_review_exists(root: Path, study_date: date) -> bool:
+    """Return whether a non-cancelled quick-review Session exists for the JST date."""
+    for path in session_file_paths(root):
+        if path.parent.name != QUICK_REVIEW_SESSION_DIRECTORY or as_date(path.stem) != study_date:
+            continue
+        text = path.read_text(encoding="utf-8")
+        for match in re.finditer(r"^## Session ([1-9][0-9]*)[ \t]*$", text, flags=re.MULTILINE):
+            number = int(match.group(1))
+            try:
+                if session_mode_for_path(root, path, text, number) != QUICK_REVIEW_MODE:
+                    continue
+            except ValueError:
+                continue
+            start, end = session_bounds(text, number)
+            if not re.search(r"^- Status:[ \t]*cancelled[ \t]*$", text[start:end], flags=re.MULTILINE):
+                return True
+    return False
 
 
 def domain_level(score: int) -> str:
@@ -1291,6 +1349,27 @@ def finalize_session(
     atomic_write(path, text[:start] + session + text[end:])
 
 
+def finalize_quick_review_session(
+    path: Path, session_number: int, correct: int, question_count: int
+) -> None:
+    """Mark a quick review complete without writing mastery or coverage progress."""
+    text = path.read_text(encoding="utf-8")
+    start, end = session_bounds(text, session_number)
+    session = text[start:end]
+    session = re.sub(
+        r"^- Status:[ \t]*\S+[ \t]*$", "- Status: graded", session, count=1, flags=re.MULTILINE
+    )
+    summary = (
+        f"## Session {session_number} Summary\n\n"
+        f"- Correct: {correct} / {question_count}\n"
+        "- Mastery updated: いいえ（3択の正答は理解度・復習期限・カバレッジへ反映しない）\n"
+        "- Incorrect answers remain candidates for the next quick review.\n"
+    )
+    pattern = re.compile(rf"^## Session {session_number} Summary[ \t]*$.*\Z", re.MULTILINE | re.DOTALL)
+    session = pattern.sub(summary, session) if pattern.search(session) else session.rstrip() + "\n\n" + summary
+    atomic_write(path, text[:start] + session + text[end:])
+
+
 def record_progress(
     root: Path,
     study_date: date,
@@ -1306,6 +1385,19 @@ def record_progress(
     )
     if status == "cancelled":
         raise ValueError("Cannot record a cancelled session")
+    if session_mode_for_path(root, session_path, text, session_number) == QUICK_REVIEW_MODE:
+        if status not in {"grading", "graded"}:
+            raise ValueError("Set Session Status to grading after writing all scores, then run record")
+        correct = sum(question.score == 100 for question in questions)
+        finalize_quick_review_session(session_path, session_number, correct, len(questions))
+        return {
+            "average": round(100 * correct / len(questions)),
+            "weak": [],
+            "strong": [],
+            "next_review": "—",
+            "questions": len(questions),
+            "session_path": session_path,
+        }
     if status not in {"grading", "graded"}:
         raise ValueError("Set Session Status to grading after writing all scores, then run record")
     catalog = load_catalog(root)
@@ -1335,6 +1427,8 @@ def rebuild_progress(root: Path) -> dict[str, int]:
             if status not in {"grading", "graded"}:
                 continue
             mode = session_mode_for_path(root, path, text, session_number)
+            if mode == QUICK_REVIEW_MODE:
+                continue
             _, questions = parse_graded_session(
                 text,
                 session_number,
@@ -1733,6 +1827,58 @@ def term_recall_plan(candidates: list[Candidate], count: int) -> list[tuple[str,
     ]
 
 
+def quick_review_plan(
+    candidates: list[Candidate],
+    records: dict[str, TermRecord],
+    today: date,
+    count: int = 8,
+    incorrect_terms: Optional[set[str]] = None,
+) -> list[tuple[str, Candidate]]:
+    """Select a short review set: overdue 4, due today 2, low-score 2."""
+    incorrect_terms = incorrect_terms or set()
+    selected: list[tuple[str, Candidate]] = []
+    buckets = [
+        (
+            "期限超過",
+            (
+                candidate for candidate in candidates
+                if (record := records.get(candidate.item.term))
+                and record.next_review and record.next_review < today
+            ),
+            min(4, count),
+        ),
+        (
+            "今日の復習",
+            (
+                candidate for candidate in candidates
+                if (record := records.get(candidate.item.term))
+                and record.next_review == today
+            ),
+            min(2, max(0, count - 4)),
+        ),
+        (
+            "低得点",
+            (
+                candidate for candidate in candidates
+                if (record := records.get(candidate.item.term))
+                and (record.score < 60 or candidate.item.term in incorrect_terms)
+            ),
+            min(2, max(0, count - 6)),
+        ),
+    ]
+    for label, pool, quota in buckets:
+        before = len(selected)
+        _take_balanced(pool, quota, selected)
+        for index in range(before, len(selected)):
+            selected[index] = (label, selected[index][1])
+    if len(selected) < count:
+        before = len(selected)
+        _take_balanced(candidates, count - len(selected), selected)
+        for index in range(before, len(selected)):
+            selected[index] = ("優先度補完", selected[index][1])
+    return selected[:count]
+
+
 def suggested_form(level: int) -> str:
     return {
         1: "定義",
@@ -1750,10 +1896,13 @@ def term_recall_question(term: str) -> str:
 
 def infer_generation_request(request: str) -> tuple[str, Optional[int]]:
     """Keep natural-language trigger behavior testable without exposing it as CLI input."""
+    quick_review = bool(re.search(r"(?:今日の)?10分復習", request))
     term_recall = bool(
         re.search(r"暗記(?:単語|語句)?問題|(?:暗記)?(?:単語|語句)問題", request)
     )
     count_match = re.search(r"(\d+)\s*問", request)
+    if quick_review:
+        return QUICK_REVIEW_MODE, int(count_match.group(1)) if count_match else 8
     return (
         TERM_RECALL_MODE if term_recall else "standard",
         int(count_match.group(1)) if count_match else (10 if term_recall else None),
@@ -1775,7 +1924,17 @@ def render_plan(
         f"- Phase: {phase}",
         f"- Questions: {len(plan)}",
     ]
-    if mode == TERM_RECALL_MODE:
+    if mode == QUICK_REVIEW_MODE:
+        lines.extend(
+            [
+                "- Format: 3-choice",
+                "- Scoring: incorrect answers are review signals; correct answers do not raise mastery scores",
+                "",
+                "| Slot | Bucket | Term | Domain | Track | Level | Form | Priority | Reason |",
+                "|---:|---|---|---|---|---:|---|---:|---|",
+            ]
+        )
+    elif mode == TERM_RECALL_MODE:
         lines.extend(
             [
                 f"- Track allocation: A {len(plan) - b_count} / B {b_count}",
@@ -1796,7 +1955,7 @@ def render_plan(
     for slot, (bucket, candidate) in enumerate(plan, 1):
         item = candidate.item
         track = planned_track(candidate, mode)
-        form = "語句説明" if mode == TERM_RECALL_MODE else suggested_form(candidate.suggested_level)
+        form = "3択" if mode == QUICK_REVIEW_MODE else "語句説明" if mode == TERM_RECALL_MODE else suggested_form(candidate.suggested_level)
         row = (
             f"| {slot} | {bucket} | {item.term} | {item.domain} | {track} | "
             f"{candidate.suggested_level} | {form} | {candidate.priority:.1f} | {candidate.reason} |"
@@ -1828,7 +1987,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     )
     plan_parser.add_argument(
         "--mode",
-        choices=["standard", "weak", "new", "subject-b", "light", TERM_RECALL_MODE],
+        choices=["standard", "weak", "new", "subject-b", "light", TERM_RECALL_MODE, QUICK_REVIEW_MODE],
     )
     record_parser = subparsers.add_parser(
         "record",
@@ -1839,7 +1998,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     record_parser.add_argument("--session", type=int, required=True)
     record_parser.add_argument(
         "--mode",
-        choices=[STANDARD_SESSION_MODE, TERM_RECALL_MODE],
+        choices=[STANDARD_SESSION_MODE, TERM_RECALL_MODE, QUICK_REVIEW_MODE],
         help="Verify the mode-specific Session directory.",
     )
     rebuild_parser = subparsers.add_parser(
@@ -1852,6 +2011,12 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Write a compact Markdown list of unanswered questions.",
     )
     unanswered_parser.add_argument("--root", type=Path, default=default_root())
+    quick_status_parser = subparsers.add_parser(
+        "quick-review-status",
+        help="Report whether today's quick-review Session already exists.",
+    )
+    quick_status_parser.add_argument("--root", type=Path, default=default_root())
+    quick_status_parser.add_argument("--date", type=as_date, default=date.today())
     return parser.parse_args(argv)
 
 
@@ -1890,6 +2055,14 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"Wrote {len(unanswered_questions(root))} unanswered questions to {path}")
         return 0
 
+    if args.command == "quick-review-status":
+        if args.date is None:
+            print("error: --date must use YYYY-MM-DD", file=sys.stderr)
+            return 2
+        state = "exists" if quick_review_exists(root, args.date) else "missing"
+        print(f"Quick review for {args.date.isoformat()}: {state}")
+        return 0
+
     catalog = load_catalog(root)
     if not catalog:
         print(f"error: no concept catalog found under {root / '参照資料' / '出題分類と概念カタログ.md'}", file=sys.stderr)
@@ -1908,7 +2081,18 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     assessed = any(record.attempts > 0 for record in terms.values())
     pending_terms = set() if args.include_unanswered else unanswered_primary_terms(root)
-    if mode == TERM_RECALL_MODE:
+    if mode == QUICK_REVIEW_MODE:
+        count = requested_count if requested_count is not None else 8
+        candidates = build_candidates(
+            catalog, terms, today, recent_domain_counts(root), args.focus,
+            STANDARD_SESSION_MODE, recent_term_counts(root, today),
+        )
+        plan = quick_review_plan(
+            exclude_unanswered_candidates(candidates, pending_terms, args.include_unanswered),
+            terms, today, count, quick_review_incorrect_terms(root),
+        )
+        phase = QUICK_REVIEW_MODE
+    elif mode == TERM_RECALL_MODE:
         count = requested_count if requested_count is not None else 10
         candidates = build_candidates(
             catalog,

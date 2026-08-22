@@ -223,6 +223,102 @@ class 学習支援テスト(unittest.TestCase):
         self.assertIn("- Questions: 10", output.getvalue())
         self.assertIn("- Track allocation: A 4 / B 6", output.getvalue())
 
+    def test_今日の十分復習は既定八問の三択計画になる(self) -> None:
+        self.assertEqual(
+            (study_helper.QUICK_REVIEW_MODE, 8),
+            study_helper.infer_generation_request("今日の10分復習"),
+        )
+        output = io.StringIO()
+        with redirect_stdout(output):
+            exit_code = study_helper.main(
+                [
+                    "plan", "--root", str(self.root), "--date", "2026-08-22",
+                    "--mode", study_helper.QUICK_REVIEW_MODE,
+                ]
+            )
+        self.assertEqual(0, exit_code)
+        self.assertIn("- Questions: 8", output.getvalue())
+        self.assertIn("- Format: 3-choice", output.getvalue())
+
+    def test_十分復習は期限超過と今日の復習と低得点を優先する(self) -> None:
+        items = [
+            study_helper.CatalogItem(f"語句{number}", f"分野{number}", "B", 5, 2, False, "", "")
+            for number in range(1, 9)
+        ]
+        records = {
+            item.term: study_helper.TermRecord(
+                item.term, item.domain, 40 if index >= 6 else 80,
+                date(2026, 8, 1), 1, 80, 2,
+                date(2026, 8, 21) if index < 4 else date(2026, 8, 22) if index < 6 else date(2026, 8, 30), "", "",
+            )
+            for index, item in enumerate(items)
+        }
+        candidates = study_helper.build_candidates(items, records, date(2026, 8, 22), {})
+        plan = study_helper.quick_review_plan(candidates, records, date(2026, 8, 22))
+        labels = [label for label, _ in plan]
+        self.assertEqual(4, labels.count("期限超過"))
+        self.assertEqual(2, labels.count("今日の復習"))
+        self.assertEqual(2, labels.count("低得点"))
+
+    def test_十分復習の記録は理解度進捗を更新しない(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            review_dir = root / "学習記録" / "10分復習"
+            progress_dir = root / "進捗"
+            review_dir.mkdir(parents=True)
+            progress_dir.mkdir()
+            for name in ("語句別理解度.md", "分野別理解度.md", "学習履歴.md"):
+                (progress_dir / name).write_text("変更しない\n", encoding="utf-8")
+            (review_dir / "2026-08-22.md").write_text(
+                """## Session 1
+
+- Status: grading
+- Mode: quick-review
+- Question Count: 1
+
+### Q1
+
+- Domain: Webセキュリティ
+- Primary Terms:
+  - `CSRF`
+- Related Terms:
+  - `SameSite`
+- Level: 2
+- Track: B
+
+### 採点
+
+Score: 0 / 100
+""",
+                encoding="utf-8",
+            )
+            result = study_helper.record_progress(
+                root, date(2026, 8, 22), 1, study_helper.QUICK_REVIEW_MODE
+            )
+            self.assertEqual(0, result["average"])
+            for name in ("語句別理解度.md", "分野別理解度.md", "学習履歴.md"):
+                self.assertEqual("変更しない\n", (progress_dir / name).read_text(encoding="utf-8"))
+            session = (review_dir / "2026-08-22.md").read_text(encoding="utf-8")
+            self.assertIn("- Status: graded", session)
+            self.assertIn("Mastery updated: いいえ", session)
+
+    def test_十分復習の作成済み判定は取消済みを除外する(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            review_dir = root / "学習記録" / "10分復習"
+            review_dir.mkdir(parents=True)
+            path = review_dir / "2026-08-22.md"
+            path.write_text(
+                "## Session 1\n\n- Status: cancelled\n- Mode: quick-review\n",
+                encoding="utf-8",
+            )
+            self.assertFalse(study_helper.quick_review_exists(root, date(2026, 8, 22)))
+            path.write_text(
+                "## Session 1\n\n- Status: awaiting_answers\n- Mode: quick-review\n",
+                encoding="utf-8",
+            )
+            self.assertTrue(study_helper.quick_review_exists(root, date(2026, 8, 22)))
+
     def test_問題数は一問から三十問を受理し範囲外を拒否する(self) -> None:
         accepted = [
             ["--mode", "standard", "--count", "1"],

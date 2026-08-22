@@ -12,6 +12,7 @@ Build recall and explanation skill from Markdown history. Treat the repository c
 Choose one workflow:
 
 - Create questions: follow **Generate a session**. Requests such as「暗記単語問題作って」「暗記語句問題作って」「単語問題10問」「暗記問題20問作って」select term-recall mode.
+- Requests such as「今日の10分復習」select quick-review mode.
 - Grade answers: follow **Grade a session**.
 - Show results or mastery: follow **Report progress**.
 - Combine requests only when the user clearly asks for both; finish grading before generating later adaptive questions.
@@ -35,7 +36,7 @@ Perform these steps in order:
      --root . --date YYYY-MM-DD
    ```
 
-   Add `--count N`, `--focus 'Webセキュリティ'`, or `--mode weak|new|subject-b|light|term-recall` to reflect the request. Explicit counts must be between 1 and 30 for every mode; do not clamp an out-of-range request. Use `--mode term-recall` for a term-recall request. Exclude every `Primary Term` that is already assigned to an unanswered question by default; only add `--include-unanswered` when the user explicitly asks to review or repeat unanswered material. Use the planner as a candidate plan, not as permission to ignore prerequisites or recent question wording.
+   Add `--count N`, `--focus 'Webセキュリティ'`, or `--mode weak|new|subject-b|light|term-recall|quick-review` to reflect the request. Explicit counts must be between 1 and 30 for every mode; do not clamp an out-of-range request. Use `--mode term-recall` for a term-recall request and `--mode quick-review` for a 10-minute review. Exclude every `Primary Term` that is already assigned to an unanswered question by default; only add `--include-unanswered` when the user explicitly asks to review or repeat unanswered material. Use the planner as a candidate plan, not as permission to ignore prerequisites or recent question wording.
 7. A default normal session has six questions: two weak, one due review, two new, and one strong/challenge. When the user explicitly requests more than six normal questions, retain those six slots and make every additional slot new. Keep Subject B material around 70–85%; for the default six questions, make five Subject B-style. A Subject B-style question must present a short situation such as a log, configuration, system structure, operational procedure, or attack path and ask the learner to identify what to check, explain the cause or impact, or prioritize a countermeasure. Do not count a bare 「説明してください」 question as Subject B material. Keep pure explanation questions to at most one per normal session unless the user explicitly asks for them, a first-session diagnosis requires them, or the concept is too weak for even a short scenario. For term-recall sessions, follow **Generate a term-recall session** below. An explicit focus or style such as weak/new/subject-b takes precedence over this default allocation.
 8. Write normal questions to `学習記録/理解・応用問題/YYYY-MM-DD.md` and term-recall questions to `学習記録/暗記語句問題/YYYY-MM-DD.md`. Determine the next Session number from every file for that date across both current directories and all legacy Session paths. Create the target file heading if absent; otherwise append without changing earlier sessions. Every Session must contain exactly one integer `Question Count` from 1 to 30. Keep internal metadata and CLI identifiers in English (`Mode: adaptive`, `Mode: term-recall`, `--mode standard`, and `--mode term-recall`). After creating the Session, run `python3 skills/security-specialist-trainer/scripts/study_helper.py unanswered --root .` to refresh `進捗/未解答一覧.md`. Render the index with its title followed directly by problem-type headings or `未解答はありません。`; do not add explanatory prose. Verify that each complete list entry links to its source Session file.
 
@@ -72,6 +73,23 @@ Set `Mode: term-recall`, `Level: 1`, and `Track A/B Target: 40% / 60%`. Use `A =
 
 Use the short question emitted in the plan, normally「`用語`とは何ですか？」. The target answer is a single short sentence that states the core meaning, such as「クラウドの提供側と利用者側で責任を分担すること。」 Do not ask for purpose, features, mechanism, a scenario, comparison, countermeasure, residual-risk, or a long-form explanation. For grading, treat a correct core definition as sufficient for full credit; assess purpose and detailed features only in normal understanding/application sessions. The normal-session rule against pure definition recall does not apply here.
 
+### Generate a quick-review session
+
+Use this mode only for a request such as「今日の10分復習」. Create exactly eight questions unless the user explicitly requests 1〜30. Select four overdue terms, two terms due today, and two low-score terms; the planner fills any unavailable slots by priority. Save it to `学習記録/10分復習/YYYY-MM-DD.md` and use `Mode: quick-review`.
+
+Every question has exactly three plausible choices labeled `A` / `B` / `C`, with one correct choice. Ask for the selected letter only, without requiring written reasoning. Keep the correct choice out of the Session Markdown until grading. This is a short-start review, not evidence of mastery: grade an answer as correct or incorrect with a compact explanation, retain incorrect items as next-review candidates, and do not update Score, Attempts, either mode-specific score, review dates, or coverage.
+
+### Automatically create today's quick review
+
+After successfully completing any non-quick trainer workflow (generating normal or term-recall questions, grading, or reporting progress), obtain the actual JST date and run:
+
+```bash
+python3 skills/security-specialist-trainer/scripts/study_helper.py quick-review-status \
+  --root . --date YYYY-MM-DD
+```
+
+If the result is `missing`, immediately generate one default eight-question quick-review Session using the procedure above. Do this after grading so its candidate selection includes the latest result. Do not create it when the requested workflow failed, is blocked by unanswered items, or is cancelled. If the user explicitly asks「今日の10分復習」or「復習問題作って」, always create a new quick-review Session even when the status is `exists`; this explicit request overrides the daily one-session limit.
+
 ## Grade a session
 
 Perform these steps in order:
@@ -79,12 +97,14 @@ Perform these steps in order:
 1. Search every Session location below before selecting a grading target:
    - Current normal sessions: `学習記録/理解・応用問題/`
    - Current term-recall sessions: `学習記録/暗記語句問題/`
+   - Current quick-review sessions: `学習記録/10分復習/`
    - Legacy normal sessions: `学習記録/standard/`
    - Legacy term-recall sessions: `学習記録/term-recall/`
    - Legacy root-level sessions: `学習記録/YYYY-MM-DD.md`
    For every Session, inspect the questions, answers, grading blocks, and Session Summary. Do **not** select by `Status`: `awaiting_answers` often remains after a user fills every answer. Ignore the standard HTML placeholder when deciding whether an answer is blank. A Session is a grading candidate when every answer is nonblank and either a question lacks a valid `### 採点` block or its Session Summary does not confirm `Progress updated`. Skip a Session with a user-requested `cancelled` Status.
 2. Unless the user names a date or Session number, select **all** grading candidates and sort them in chronological order: date ascending, then Session number ascending. If a date or Session number is named, limit the selection to that Session. An incomplete Session is not a candidate: list its unanswered question numbers, but do not let it block other completed Sessions.
 3. Process the full sorted candidate list sequentially. Finish scoring and recording the earlier Session before changing progress for the next one; this preserves chronological updates for overlapping Primary Terms. In both normal (understanding/application) and `term-recall` sessions, an explicit response such as `わかりません` is nonblank and must be scored `0 / 100` with a compact model explanation and next-review focus.
+   For `quick-review`, grade A/B/C as `100 / 100` or `0 / 100`, then use `record --mode quick-review` to mark only that Session complete; it must not change mastery progress.
 4. For each selected Session, read every question, its metadata, and the user's full answer, then score each answer from 0 to 100 for conceptual meaning. In a normal session, select only applicable rubric dimensions that the question explicitly asks for: definition, principle, conditions, scenario/application, countermeasures with reasons, comparison/limits, and normalize applicable weights to 100. Award full credit when every requested point is conceptually correct. Do not lower a correct answer to 95 or another partial score merely because it omits an unasked detail, even if that detail would improve a model answer; mention such details only as optional enrichment, not as a missing point or next-review requirement. In `term-recall`, evaluate only whether the core definition is correct. Do not deduct for omitted purpose, features, mechanism, scenarios, advanced countermeasures, residual risk, comparisons, or length beyond the one short sentence expected.
 5. Change the Session Status to `grading`. Upsert concise feedback under each answer: score, good points, missing or mistaken points, a short model explanation, and one next-review focus. On recovery, replace an existing grading block instead of appending a duplicate.
 6. For each graded answer, decide whether a Mermaid diagram would make a difficult flow materially easier to review. Create one only for concepts involving multiple actors, ordered processing steps, branching conditions, trust/key/data movement, or incident/control sequences; do not create diagrams for isolated definitions or relationships that a short sentence makes clear.
