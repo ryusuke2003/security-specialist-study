@@ -7,7 +7,7 @@ import sys
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 
@@ -64,6 +64,17 @@ class 学習支援テスト(unittest.TestCase):
         self.assertEqual(8, len(plan))
         self.assertEqual(8, len({candidate.item.domain for _, candidate in plan}))
         self.assertTrue(all(2 <= candidate.suggested_level <= 3 for _, candidate in plan))
+
+    def test_学習日は午前五時に切り替わる(self) -> None:
+        timezone = study_helper.STUDY_TIMEZONE
+        self.assertEqual(
+            date(2026, 8, 22),
+            study_helper.current_study_date(datetime(2026, 8, 23, 4, 59, tzinfo=timezone)),
+        )
+        self.assertEqual(
+            date(2026, 8, 23),
+            study_helper.current_study_date(datetime(2026, 8, 23, 5, 0, tzinfo=timezone)),
+        )
 
     def test_セッション要約の更新後も末尾改行を保持する(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

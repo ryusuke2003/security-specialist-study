@@ -19,6 +19,7 @@ from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Iterable, Optional
+from zoneinfo import ZoneInfo
 
 
 DIAGNOSTIC_DOMAIN_ORDER = [
@@ -45,6 +46,20 @@ LEGACY_SESSION_DIRECTORIES = (STANDARD_SESSION_MODE, TERM_RECALL_MODE)
 CURRENT_SESSIONS_DIRECTORY = "学習記録"
 CURRENT_PROGRESS_DIRECTORY = "進捗"
 CURRENT_REFERENCES_DIRECTORY = "参照資料"
+STUDY_TIMEZONE = ZoneInfo("Asia/Tokyo")
+STUDY_DAY_START_HOUR = 5
+
+
+def current_study_date(now: Optional[datetime] = None) -> date:
+    """Return the JST study date, which changes at 05:00 rather than midnight."""
+    moment = now or datetime.now(STUDY_TIMEZONE)
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=STUDY_TIMEZONE)
+    else:
+        moment = moment.astimezone(STUDY_TIMEZONE)
+    if moment.hour < STUDY_DAY_START_HOUR:
+        moment -= timedelta(days=1)
+    return moment.date()
 
 
 def study_directory(root: Path, current: str, legacy: str) -> Path:
@@ -1077,7 +1092,7 @@ def quick_review_incorrect_terms(root: Path) -> set[str]:
 
 
 def quick_review_exists(root: Path, study_date: date) -> bool:
-    """Return whether a non-cancelled quick-review Session exists for the JST date."""
+    """Return whether a non-cancelled quick-review Session exists for a JST study date."""
     for path in session_file_paths(root):
         if path.parent.name != QUICK_REVIEW_SESSION_DIRECTORY or as_date(path.stem) != study_date:
             continue
@@ -1476,7 +1491,7 @@ def rebuild_progress(root: Path) -> dict[str, int]:
     atomic_write(progress_file(root, "語句別理解度.md", "terms.md"), render_terms({}))
     atomic_write(
         progress_file(root, "分野別理解度.md", "domains.md"),
-        render_domains(domain_rows, {}, [], date.today(), catalog),
+        render_domains(domain_rows, {}, [], current_study_date(), catalog),
     )
     atomic_write(progress_file(root, "学習履歴.md", "history.md"), render_history([]))
 
@@ -2005,7 +2020,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     subparsers = parser.add_subparsers(dest="command", required=True)
     plan_parser = subparsers.add_parser("plan", help="Print a Markdown selection plan without changing files.")
     plan_parser.add_argument("--root", type=Path, default=default_root())
-    plan_parser.add_argument("--date", type=as_date, default=date.today())
+    plan_parser.add_argument("--date", type=as_date)
     plan_parser.add_argument("--count", type=int)
     plan_parser.add_argument("--focus", default="")
     plan_parser.add_argument(
@@ -2044,13 +2059,21 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Report whether today's quick-review Session already exists.",
     )
     quick_status_parser.add_argument("--root", type=Path, default=default_root())
-    quick_status_parser.add_argument("--date", type=as_date, default=date.today())
+    quick_status_parser.add_argument("--date", type=as_date)
+    study_date_parser = subparsers.add_parser(
+        "study-date",
+        help="Print the current JST study date; the study day starts at 05:00.",
+    )
+    study_date_parser.add_argument("--root", type=Path, default=default_root())
     return parser.parse_args(argv)
 
 
 def main(argv: Optional[list[str]] = None) -> int:
     args = parse_args(argv)
     root = args.root.resolve()
+    if args.command == "study-date":
+        print(current_study_date().isoformat())
+        return 0
     if args.command == "record":
         if args.date is None:
             print("error: --date must use YYYY-MM-DD", file=sys.stderr)
@@ -2084,11 +2107,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 0
 
     if args.command == "quick-review-status":
-        if args.date is None:
-            print("error: --date must use YYYY-MM-DD", file=sys.stderr)
-            return 2
-        state = "exists" if quick_review_exists(root, args.date) else "missing"
-        print(f"Quick review for {args.date.isoformat()}: {state}")
+        study_date = args.date or current_study_date()
+        state = "exists" if quick_review_exists(root, study_date) else "missing"
+        print(f"Quick review for {study_date.isoformat()}: {state}")
         return 0
 
     catalog = load_catalog(root)
@@ -2097,10 +2118,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 2
     terms = load_terms(root)
     catalog = merge_uncatalogued_terms(catalog, terms)
-    today = args.date
-    if today is None:
-        print("error: --date must use YYYY-MM-DD", file=sys.stderr)
-        return 2
+    today = args.date or current_study_date()
     mode = args.mode or STANDARD_SESSION_MODE
     requested_count = args.count
     if requested_count is not None and not 1 <= requested_count <= 30:
