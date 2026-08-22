@@ -81,14 +81,14 @@ Every question has exactly three plausible choices labeled `A` / `B` / `C`, with
 
 ### Automatically create today's quick review
 
-After successfully completing any non-quick trainer workflow (generating normal or term-recall questions, grading, or reporting progress), obtain the actual JST date and run:
+At the start of every user interaction while this repository is active—including greetings and documentation questions—obtain the actual JST date and run:
 
 ```bash
 python3 skills/security-specialist-trainer/scripts/study_helper.py quick-review-status \
   --root . --date YYYY-MM-DD
 ```
 
-If the result is `missing`, immediately generate one default eight-question quick-review Session using the procedure above. Do this after grading so its candidate selection includes the latest result. Do not create it when the requested workflow failed, is blocked by unanswered items, or is cancelled. If the user explicitly asks「今日の10分復習」or「復習問題作って」, always create a new quick-review Session even when the status is `exists`; this explicit request overrides the daily one-session limit.
+If the result is `missing`, immediately generate one default eight-question quick-review Session using the procedure above, before responding to the user. A non-cancelled Session makes the status `exists`, so later messages on the same day do not create duplicates. If the user explicitly asks「今日の10分復習」or「復習問題作って」, always create a new quick-review Session even when the status is `exists`; this explicit request overrides the daily one-session limit. Skip only when the user explicitly asks to avoid study changes.
 
 ## Grade a session
 
