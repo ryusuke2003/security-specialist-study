@@ -89,6 +89,20 @@ class 技能構造テスト(unittest.TestCase):
         self.assertIn("最優先 → 確認 → 軽い確認", review_readme)
         self.assertIn("流れ図", review_readme)
 
+    def test_翌日復習から流れ図へのリンクは兄弟ディレクトリを参照する(self) -> None:
+        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        review_files = sorted(
+            (self.root / "復習用" / "明日復習するべきところ").glob("*.md")
+        )
+
+        self.assertIn("[SAMLによるSSO](../流れ図/SAMLによるSSO.md)", skill_text)
+        self.assertNotIn("../" * 2 + "流れ図/", skill_text)
+        for review_file in review_files:
+            links = re.findall(r"\]\((\.\./流れ図/[^)]+\.md)\)", review_file.read_text(encoding="utf-8"))
+            for link in links:
+                with self.subTest(review_file=review_file, link=link):
+                    self.assertTrue((review_file.parent / link).is_file())
+
     def test_ルート説明書から詳細文書を参照できる(self) -> None:
         readme = (self.root / "README.md").read_text(encoding="utf-8")
         document_paths = (
