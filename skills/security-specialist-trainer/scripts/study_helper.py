@@ -1264,6 +1264,7 @@ def update_history(
     questions: list[GradedQuestion],
     records: dict[str, TermRecord],
     session_path: Path,
+    mode: Optional[str] = None,
 ) -> dict[str, object]:
     rows = read_table(progress_file(root, "学習履歴.md", "history.md"), "Date")
     average = round(sum(question.score for question in questions) / len(questions))
@@ -1277,12 +1278,25 @@ def update_history(
     weakest_questions = sorted(questions, key=lambda question: question.score)[:2]
     focus = "、".join(question.primary_terms[0] for question in weakest_questions)
     review_dates = [
-        records[term].next_review
+        (
+            records[term].recall_next_review
+            if mode == TERM_RECALL_MODE
+            else records[term].explanation_next_review
+            if mode is not None
+            else records[term].next_review
+        )
         for question in questions
         for term in question.primary_terms
-        if term in records and records[term].next_review
+        if term in records
     ]
-    next_review = min(review_dates).isoformat() if review_dates else "—"
+    review_dates = [review_date for review_date in review_dates if review_date]
+    earliest_review_date = min(review_dates) if review_dates else None
+    next_review = earliest_review_date.isoformat() if earliest_review_date else "—"
+    next_review_interval_days = (
+        max(0, (earliest_review_date - study_date).days)
+        if earliest_review_date
+        else None
+    )
     relative_path = session_path.relative_to(root).as_posix()
     history_target = os.path.relpath(session_path, progress_directory(root))
     row = {
@@ -1293,7 +1307,11 @@ def update_history(
         "Subject B": f"{b_ratio}%",
         "Weak Domains": "、".join(weak) or "—",
         "Strong Domains": "、".join(strong) or "—",
-        "Next Focus": f"{focus}を{next_review}に復習",
+        "Next Focus": (
+            f"{focus}を次の学習時に優先（目安: {next_review_interval_days}日後）"
+            if next_review_interval_days is not None
+            else f"{focus}を次の学習時に確認"
+        ),
         "Session File": f"[{relative_path}]({history_target}#session-{session_number})",
     }
     replaced = False
@@ -1310,6 +1328,7 @@ def update_history(
         "weak": weak,
         "strong": strong,
         "next_review": next_review,
+        "next_review_interval_days": next_review_interval_days,
     }
 
 
@@ -1330,12 +1349,16 @@ def finalize_session(
     )
     strong = "、".join(summary["strong"]) if summary["strong"] else "—"
     weak = "、".join(summary["weak"]) if summary["weak"] else "—"
+    review_interval_days = summary.get("next_review_interval_days")
+    review_guidance = "次の学習時に優先"
+    if isinstance(review_interval_days, int):
+        review_guidance += f"（目安: {review_interval_days}日後）"
     summary_text = (
         f"## Session {session_number} Summary\n\n"
         f"- Average: {summary['average']} / 100\n"
         f"- Strong points: {strong}\n"
         f"- Weak points: {weak}\n"
-        f"- Recommended next review: {summary['next_review']}\n"
+        f"- 次回復習: {review_guidance}\n"
         "- Progress updated: 語句別理解度.md / 分野別理解度.md / 学習履歴.md\n"
     )
     summary_pattern = re.compile(
@@ -1385,7 +1408,8 @@ def record_progress(
     )
     if status == "cancelled":
         raise ValueError("Cannot record a cancelled session")
-    if session_mode_for_path(root, session_path, text, session_number) == QUICK_REVIEW_MODE:
+    session_mode = session_mode_for_path(root, session_path, text, session_number)
+    if session_mode == QUICK_REVIEW_MODE:
         if status not in {"grading", "graded"}:
             raise ValueError("Set Session Status to grading after writing all scores, then run record")
         correct = sum(question.score == 100 for question in questions)
@@ -1403,7 +1427,9 @@ def record_progress(
     catalog = load_catalog(root)
     records = update_term_records(root, study_date, session_number, questions, catalog)
     update_domains(root, records, study_date, catalog)
-    summary = update_history(root, study_date, session_number, questions, records, session_path)
+    summary = update_history(
+        root, study_date, session_number, questions, records, session_path, session_mode
+    )
     finalize_session(session_path, session_number, summary)
     return {**summary, "questions": len(questions), "session_path": session_path}
 
@@ -1454,10 +1480,12 @@ def rebuild_progress(root: Path) -> dict[str, int]:
     )
     atomic_write(progress_file(root, "学習履歴.md", "history.md"), render_history([]))
 
-    for study_date, session_number, path, _, questions in sessions:
+    for study_date, session_number, path, mode, questions in sessions:
         records = update_term_records(root, study_date, session_number, questions, catalog)
         update_domains(root, records, study_date, catalog)
-        summary = update_history(root, study_date, session_number, questions, records, path)
+        summary = update_history(
+            root, study_date, session_number, questions, records, path, mode
+        )
         finalize_session(path, session_number, summary)
     return {"sessions": len(sessions), "questions": sum(len(item[4]) for item in sessions)}
 

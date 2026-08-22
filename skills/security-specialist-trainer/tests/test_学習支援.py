@@ -80,9 +80,14 @@ class 学習支援テスト(unittest.TestCase):
                 "strong": [],
                 "weak": [],
                 "next_review": "2026-08-16",
+                "next_review_interval_days": 1,
             }
 
             study_helper.finalize_session(session_path, 1, summary)
+            self.assertIn(
+                "- 次回復習: 次の学習時に優先（目安: 1日後）",
+                session_path.read_text(encoding="utf-8"),
+            )
             self.assertTrue(session_path.read_bytes().endswith(b"\n"))
 
             study_helper.finalize_session(session_path, 1, summary)
