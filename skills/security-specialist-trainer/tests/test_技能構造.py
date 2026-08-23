@@ -76,7 +76,7 @@ class 技能構造テスト(unittest.TestCase):
         self.assertIn("Importance >= 4", skill_text)
         self.assertIn("Track B", skill_text)
 
-    def test_翌日復習に全件掲載と優先度を併記する規則がある(self) -> None:
+    def test_翌日復習に全件掲載と点数順表示の規則がある(self) -> None:
         skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
         review_readme = (
             self.root / "復習用" / "明日復習するべきところ" / "README.md"
@@ -84,13 +84,12 @@ class 技能構造テスト(unittest.TestCase):
         self.assertIn("Include every normal or `term-recall` answer with `Score < 100`", skill_text)
         self.assertIn("every incorrect `quick-review` answer", skill_text)
         self.assertIn("10分復習で不正解だった問題", review_readme)
-        self.assertIn("`### 最優先` (0〜69)", skill_text)
-        self.assertIn("`### 確認` (70〜89)", skill_text)
-        self.assertIn("`### 軽い確認` (90〜99)", skill_text)
+        self.assertIn("Do not group entries by problem type or score range", skill_text)
+        self.assertIn("sorted by score ascending", skill_text)
+        self.assertIn("Break ties by source date, then Session number, then Q number ascending", skill_text)
         self.assertIn("100点未満なら必ず掲載", review_readme)
-        self.assertIn("最優先", review_readme)
-        self.assertIn("軽い確認", review_readme)
-        self.assertIn("最優先 → 確認 → 軽い確認", review_readme)
+        self.assertIn("問題形式を区別せず点数の低い順", review_readme)
+        self.assertIn("同点は出典の日付・Session番号・Q番号の順", review_readme)
         self.assertIn("流れ図", review_readme)
         self.assertIn("either an existing diagram or a newly created/materially expanded diagram", skill_text)
         self.assertIn("Reuse the existing diagram instead of creating a duplicate, but still add the link.", skill_text)
