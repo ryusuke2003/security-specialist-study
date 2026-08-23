@@ -27,6 +27,7 @@ class 技能構造テスト(unittest.TestCase):
             self.root / "進捗" / "分野別理解度.md",
             self.root / "進捗" / "学習履歴.md",
             self.root / "学習記録" / "未解答一覧.md",
+            self.root / "復習用" / "未復習一覧.md",
             self.root / "参照資料" / "出題分類と概念カタログ.md",
             self.root / "参照資料" / "採点・理解度・復習ルール.md",
             self.root / "参照資料" / "セッション形式.md",
@@ -175,6 +176,19 @@ class 技能構造テスト(unittest.TestCase):
         self.assertIn("学習記録/未解答一覧.md", skill_text)
         self.assertIn("study_helper.py unanswered --root .", skill_text)
         self.assertIn("study_helper.py unanswered --root .", session_text)
+
+    def test_未復習一覧を問題作成と採点の後に更新する(self) -> None:
+        script_text = (self.skill / "scripts" / "study_helper.py").read_text(
+            encoding="utf-8"
+        )
+        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        session_text = (self.root / "参照資料" / "セッション形式.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('subparsers.add_parser(\n        "unreviewed"', script_text)
+        self.assertIn("復習用/未復習一覧.md", skill_text)
+        self.assertIn("study_helper.py unreviewed --root .", skill_text)
+        self.assertIn("study_helper.py unreviewed --root .", session_text)
 
     def test_暗記語句を一周した後にカタログを拡張する(self) -> None:
         skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")

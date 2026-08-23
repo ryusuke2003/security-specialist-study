@@ -196,6 +196,56 @@ class 学習支援テスト(unittest.TestCase):
             ),
         )
 
+    def test_未復習一覧は未チェック項目だけを点数順に表示する(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            review_dir = root / "復習用" / "明日復習するべきところ"
+            review_dir.mkdir(parents=True)
+            (review_dir / "2026-08-23.md").write_text(
+                """# 2026-08-23に復習するべきところ
+
+#### SAML — 15点
+
+- [ ] 復習済み
+
+#### DNSSEC — 0点
+
+- [x] 復習済み
+""",
+                encoding="utf-8",
+            )
+            (review_dir / "2026-08-24.md").write_text(
+                """# 2026-08-24に復習するべきところ
+
+#### AEAD — 15点
+
+- [ ] 復習済み
+
+#### VPN（IPsec） — 35点
+
+- [ ] 復習済み
+""",
+                encoding="utf-8",
+            )
+
+            path = study_helper.write_unreviewed_index(root)
+            index = path.read_text(encoding="utf-8")
+
+            self.assertEqual(root / "復習用" / "未復習一覧.md", path)
+            self.assertEqual(
+                ["SAML", "AEAD", "VPN（IPsec）"],
+                [item.term for item in study_helper.unreviewed_items(root)],
+            )
+            self.assertIn(
+                "[2026-08-23 / SAML — 15点](明日復習するべきところ/2026-08-23.md)",
+                index,
+            )
+            self.assertIn(
+                "[2026-08-24 / AEAD — 15点](明日復習するべきところ/2026-08-24.md)",
+                index,
+            )
+            self.assertNotIn("DNSSEC", index)
+
     def test_初回の分野指定が診断構成を変える(self) -> None:
         plan = study_helper.diagnostic_plan(self.catalog, 8, "Webセキュリティ")
         web_count = sum(candidate.item.domain == "Webセキュリティ" for _, candidate in plan)

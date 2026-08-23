@@ -171,6 +171,15 @@ class UnansweredQuestion:
 
 
 @dataclass(frozen=True)
+class UnreviewedItem:
+    review_date: date
+    term: str
+    score: int
+    review_link_path: str
+    order: int
+
+
+@dataclass(frozen=True)
 class GradingCandidate:
     study_date: date
     session_number: int
@@ -677,6 +686,56 @@ def render_unanswered_index(questions: list[UnansweredQuestion]) -> str:
 def write_unanswered_index(root: Path) -> Path:
     path = sessions_directory(root) / "未解答一覧.md"
     atomic_write(path, render_unanswered_index(unanswered_questions(root)))
+    return path
+
+
+def unreviewed_items(root: Path) -> list[UnreviewedItem]:
+    """Find unchecked entries in the daily review checklists."""
+    review_directory = root / "復習用" / "明日復習するべきところ"
+    items: list[UnreviewedItem] = []
+    for path in sorted(review_directory.glob("*.md")):
+        review_date = as_date(path.stem)
+        if review_date is None:
+            continue
+        text = path.read_text(encoding="utf-8")
+        headings = list(
+            re.finditer(r"^#### (.+?) — ([0-9]{1,3})点[ \t]*$", text, re.MULTILINE)
+        )
+        for order, heading in enumerate(headings):
+            end = headings[order + 1].start() if order + 1 < len(headings) else len(text)
+            entry = text[heading.start() : end]
+            if not re.search(r"^- \[ \] 復習済み[ \t]*$", entry, re.MULTILINE):
+                continue
+            items.append(
+                UnreviewedItem(
+                    review_date=review_date,
+                    term=heading.group(1),
+                    score=int(heading.group(2)),
+                    review_link_path=Path(
+                        os.path.relpath(path, root / "復習用")
+                    ).as_posix(),
+                    order=order,
+                )
+            )
+    return sorted(items, key=lambda item: (item.score, item.review_date, item.order))
+
+
+def render_unreviewed_index(items: list[UnreviewedItem]) -> str:
+    lines = ["# 未復習一覧", ""]
+    if not items:
+        lines.append("未復習はありません。")
+    else:
+        for item in items:
+            lines.append(
+                f"- [{item.review_date.isoformat()} / {item.term} — {item.score}点]"
+                f"({item.review_link_path})"
+            )
+    return "\n".join(lines) + "\n"
+
+
+def write_unreviewed_index(root: Path) -> Path:
+    path = root / "復習用" / "未復習一覧.md"
+    atomic_write(path, render_unreviewed_index(unreviewed_items(root)))
     return path
 
 
@@ -2134,6 +2193,11 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Write a compact Markdown list of unanswered questions.",
     )
     unanswered_parser.add_argument("--root", type=Path, default=default_root())
+    unreviewed_parser = subparsers.add_parser(
+        "unreviewed",
+        help="Write a compact Markdown list of unchecked review entries.",
+    )
+    unreviewed_parser.add_argument("--root", type=Path, default=default_root())
     candidates_parser = subparsers.add_parser(
         "grading-candidates", help="List fully answered Sessions that need grading.")
     candidates_parser.add_argument("--root", type=Path, default=default_root())
@@ -2187,6 +2251,11 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.command == "unanswered":
         path = write_unanswered_index(root)
         print(f"Wrote {len(unanswered_questions(root))} unanswered questions to {path}")
+        return 0
+
+    if args.command == "unreviewed":
+        path = write_unreviewed_index(root)
+        print(f"Wrote {len(unreviewed_items(root))} unreviewed items to {path}")
         return 0
 
     if args.command == "grading-candidates":
