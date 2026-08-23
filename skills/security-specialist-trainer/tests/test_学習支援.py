@@ -236,6 +236,7 @@ class 学習支援テスト(unittest.TestCase):
             self.assertEqual(root / "学習記録" / "行ったこと.md", path)
             self.assertIn("## 2026-08-22", activity)
             self.assertIn("## 2026-08-23", activity)
+            self.assertLess(activity.index("## 2026-08-23"), activity.index("## 2026-08-22"))
             self.assertIn("### 理解・応用問題", activity)
             self.assertIn(
                 "[2026-08-22 / Session 2 / 6問](理解・応用問題/2026-08-22.md)",

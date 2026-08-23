@@ -785,20 +785,20 @@ def write_activity_log(root: Path, graded_date: date) -> Path:
     match = heading.search(text)
     if match is None:
         date_headings = list(re.finditer(r"^## (\d{4}-\d{2}-\d{2})[ \t]*$", text, re.MULTILINE))
-        later_heading = next(
+        earlier_heading = next(
             (
                 item
                 for item in date_headings
-                if as_date(item.group(1)) is not None and as_date(item.group(1)) > graded_date
+                if as_date(item.group(1)) is not None and as_date(item.group(1)) < graded_date
             ),
             None,
         )
-        if later_heading is None:
+        if earlier_heading is None:
             atomic_write(path, text.rstrip() + "\n\n" + section)
         else:
             atomic_write(
                 path,
-                text[: later_heading.start()] + section.rstrip() + "\n\n" + text[later_heading.start() :],
+                text[: earlier_heading.start()] + section.rstrip() + "\n\n" + text[earlier_heading.start() :],
             )
         return path
     next_heading = re.search(r"^## ", text[match.end() :], re.MULTILINE)
