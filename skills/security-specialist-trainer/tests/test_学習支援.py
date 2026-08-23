@@ -180,6 +180,73 @@ class 学習支援テスト(unittest.TestCase):
                 study_helper.unanswered_primary_terms(root),
             )
 
+    def test_行ったことは採点日ごとに追記し同じ日付だけを更新する(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            normal_dir = root / "学習記録" / "理解・応用問題"
+            quick_dir = root / "学習記録" / "10分復習"
+            normal_dir.mkdir(parents=True)
+            quick_dir.mkdir(parents=True)
+            (normal_dir / "2026-08-22.md").write_text(
+                """## Session 2
+
+- Status: graded
+- Graded: 2026-08-23
+- Mode: adaptive
+- Question Count: 6
+""",
+                encoding="utf-8",
+            )
+            (quick_dir / "2026-08-23.md").write_text(
+                """## Session 1
+
+- Status: graded
+- Graded: 2026-08-23
+- Mode: quick-review
+- Question Count: 8
+""",
+                encoding="utf-8",
+            )
+            (normal_dir / "2026-08-21.md").write_text(
+                """## Session 1
+
+- Status: graded
+- Graded: 2026-08-22
+- Mode: adaptive
+- Question Count: 6
+""",
+                encoding="utf-8",
+            )
+
+            activity_path = root / "学習記録" / "行ったこと.md"
+            activity_path.write_text(
+                """# 行ったこと
+
+## 2026-08-22
+
+### 暗記語句問題
+
+- [2026-08-20 / Session 1 / 10問](暗記語句問題/2026-08-20.md)
+""",
+                encoding="utf-8",
+            )
+            path = study_helper.write_activity_log(root, date(2026, 8, 23))
+            activity = path.read_text(encoding="utf-8")
+
+            self.assertEqual(root / "学習記録" / "行ったこと.md", path)
+            self.assertIn("## 2026-08-22", activity)
+            self.assertIn("## 2026-08-23", activity)
+            self.assertIn("### 理解・応用問題", activity)
+            self.assertIn(
+                "[2026-08-22 / Session 2 / 6問](理解・応用問題/2026-08-22.md)",
+                activity,
+            )
+            self.assertIn("### 10分復習", activity)
+            self.assertIn(
+                "[2026-08-23 / Session 1 / 8問](10分復習/2026-08-23.md)", activity
+            )
+            self.assertNotIn("2026-08-21 / Session 1", activity)
+
     def test_未回答語句は明示指定なしで出題候補から除外する(self) -> None:
         item = next(item for item in self.catalog if item.term == "CSRF")
         candidates = study_helper.build_candidates(

@@ -188,6 +188,15 @@ class GradingCandidate:
     question_count: int
 
 
+@dataclass(frozen=True)
+class GradedActivity:
+    study_date: date
+    session_number: int
+    session_kind: str
+    question_count: int
+    session_link_path: str
+
+
 def split_markdown_row(line: str) -> list[str]:
     """Split the simple pipe tables used by this repository."""
     escaped = "\u0000"
@@ -686,6 +695,100 @@ def render_unanswered_index(questions: list[UnansweredQuestion]) -> str:
 def write_unanswered_index(root: Path) -> Path:
     path = sessions_directory(root) / "未解答一覧.md"
     atomic_write(path, render_unanswered_index(unanswered_questions(root)))
+    return path
+
+
+def graded_activities(root: Path, graded_date: date) -> list[GradedActivity]:
+    """Return Sessions explicitly recorded as graded on the requested study date."""
+    activities: list[GradedActivity] = []
+    for path in session_file_paths(root):
+        study_date = as_date(path.stem)
+        if study_date is None:
+            continue
+        text = path.read_text(encoding="utf-8")
+        headings = list(re.finditer(r"^## Session ([1-9][0-9]*)[ \t]*$", text, re.MULTILINE))
+        for index, heading in enumerate(headings):
+            end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
+            session = text[heading.start() : end]
+            if not re.search(r"^- Status:[ \t]*graded[ \t]*$", session, re.MULTILINE):
+                continue
+            recorded_date = re.search(
+                r"^- Graded:[ \t]*(\d{4}-\d{2}-\d{2})[ \t]*$", session, re.MULTILINE
+            )
+            if not recorded_date or as_date(recorded_date.group(1)) != graded_date:
+                continue
+            session_number = int(heading.group(1))
+            try:
+                mode = session_mode_for_path(root, path, text, session_number)
+            except ValueError:
+                mode = (
+                    TERM_RECALL_MODE
+                    if path.parent.name == TERM_RECALL_SESSION_DIRECTORY
+                    else STANDARD_SESSION_MODE
+                )
+            session_kind = {
+                TERM_RECALL_MODE: "暗記語句問題",
+                QUICK_REVIEW_MODE: "10分復習",
+            }.get(mode, "理解・応用問題")
+            count_match = re.search(
+                r"^- Question Count:[ \t]*([1-9][0-9]*)[ \t]*$", session, re.MULTILINE
+            )
+            if count_match is None:
+                continue
+            activities.append(
+                GradedActivity(
+                    study_date=study_date,
+                    session_number=session_number,
+                    session_kind=session_kind,
+                    question_count=int(count_match.group(1)),
+                    session_link_path=Path(
+                        os.path.relpath(path, sessions_directory(root))
+                    ).as_posix(),
+                )
+            )
+    return sorted(
+        activities,
+        key=lambda item: (item.study_date, item.session_number, item.session_link_path),
+    )
+
+
+def render_activity_section(graded_date: date, activities: list[GradedActivity]) -> str:
+    """Render one date section for the source-linked activity log."""
+    lines = [f"## {graded_date.isoformat()}", ""]
+    if not activities:
+        lines.append("採点したファイルはありません。")
+        return "\n".join(lines) + "\n"
+    for kind in ("理解・応用問題", "暗記語句問題", "10分復習"):
+        entries = [activity for activity in activities if activity.session_kind == kind]
+        if not entries:
+            continue
+        lines.extend([f"### {kind}", ""])
+        for activity in entries:
+            lines.append(
+                f"- [{activity.study_date.isoformat()} / Session {activity.session_number} / "
+                f"{activity.question_count}問]({activity.session_link_path})"
+            )
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_activity_log(root: Path, graded_date: date) -> Path:
+    """Append or replace one study-date section without discarding prior dates."""
+    path = sessions_directory(root) / "行ったこと.md"
+    section = render_activity_section(graded_date, graded_activities(root, graded_date))
+    if not path.exists():
+        atomic_write(path, "# 行ったこと\n\n" + section)
+        return path
+
+    text = path.read_text(encoding="utf-8")
+    heading = re.compile(rf"^## {re.escape(graded_date.isoformat())}[ \t]*$", re.MULTILINE)
+    match = heading.search(text)
+    if match is None:
+        atomic_write(path, text.rstrip() + "\n\n" + section)
+        return path
+    next_heading = re.search(r"^## ", text[match.end() :], re.MULTILINE)
+    end = match.end() + next_heading.start() if next_heading else len(text)
+    atomic_write(path, text[: match.start()] + section + text[end:])
     return path
 
 
@@ -1490,6 +1593,7 @@ def finalize_session(
     path: Path,
     session_number: int,
     summary: dict[str, object],
+    graded_date: Optional[date] = None,
 ) -> None:
     text = path.read_text(encoding="utf-8")
     start, end = session_bounds(text, session_number)
@@ -1501,6 +1605,24 @@ def finalize_session(
         count=1,
         flags=re.MULTILINE,
     )
+    if graded_date is not None:
+        graded_line = f"- Graded: {graded_date.isoformat()}"
+        if re.search(r"^- Graded:[ \t]*\d{4}-\d{2}-\d{2}[ \t]*$", session, re.MULTILINE):
+            session = re.sub(
+                r"^- Graded:[ \t]*\d{4}-\d{2}-\d{2}[ \t]*$",
+                graded_line,
+                session,
+                count=1,
+                flags=re.MULTILINE,
+            )
+        else:
+            session = re.sub(
+                r"(^- Status:[ \t]*graded[ \t]*$)",
+                rf"\1\n{graded_line}",
+                session,
+                count=1,
+                flags=re.MULTILINE,
+            )
     strong = "、".join(summary["strong"]) if summary["strong"] else "—"
     weak = "、".join(summary["weak"]) if summary["weak"] else "—"
     review_interval_days = summary.get("next_review_interval_days")
@@ -1527,7 +1649,11 @@ def finalize_session(
 
 
 def finalize_quick_review_session(
-    path: Path, session_number: int, correct: int, question_count: int
+    path: Path,
+    session_number: int,
+    correct: int,
+    question_count: int,
+    graded_date: Optional[date] = None,
 ) -> None:
     """Mark a quick review complete without writing mastery or coverage progress."""
     text = path.read_text(encoding="utf-8")
@@ -1536,6 +1662,24 @@ def finalize_quick_review_session(
     session = re.sub(
         r"^- Status:[ \t]*\S+[ \t]*$", "- Status: graded", session, count=1, flags=re.MULTILINE
     )
+    if graded_date is not None:
+        graded_line = f"- Graded: {graded_date.isoformat()}"
+        if re.search(r"^- Graded:[ \t]*\d{4}-\d{2}-\d{2}[ \t]*$", session, re.MULTILINE):
+            session = re.sub(
+                r"^- Graded:[ \t]*\d{4}-\d{2}-\d{2}[ \t]*$",
+                graded_line,
+                session,
+                count=1,
+                flags=re.MULTILINE,
+            )
+        else:
+            session = re.sub(
+                r"(^- Status:[ \t]*graded[ \t]*$)",
+                rf"\1\n{graded_line}",
+                session,
+                count=1,
+                flags=re.MULTILINE,
+            )
     summary = (
         f"## Session {session_number} Summary\n\n"
         f"- Correct: {correct} / {question_count}\n"
@@ -1563,11 +1707,15 @@ def record_progress(
     if status == "cancelled":
         raise ValueError("Cannot record a cancelled session")
     session_mode = session_mode_for_path(root, session_path, text, session_number)
+    graded_date = current_study_date()
     if session_mode == QUICK_REVIEW_MODE:
         if status not in {"grading", "graded"}:
             raise ValueError("Set Session Status to grading after writing all scores, then run record")
         correct = sum(question.score == 100 for question in questions)
-        finalize_quick_review_session(session_path, session_number, correct, len(questions))
+        finalize_quick_review_session(
+            session_path, session_number, correct, len(questions), graded_date
+        )
+        write_activity_log(root, graded_date)
         return {
             "average": round(100 * correct / len(questions)),
             "weak": [],
@@ -1584,7 +1732,8 @@ def record_progress(
     summary = update_history(
         root, study_date, session_number, questions, records, session_path, session_mode
     )
-    finalize_session(session_path, session_number, summary)
+    finalize_session(session_path, session_number, summary, graded_date)
+    write_activity_log(root, graded_date)
     return {**summary, "questions": len(questions), "session_path": session_path}
 
 
@@ -2198,6 +2347,11 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Write a compact Markdown list of unchecked review entries.",
     )
     unreviewed_parser.add_argument("--root", type=Path, default=default_root())
+    activity_parser = subparsers.add_parser(
+        "activity-log", help="Append a source-linked list of Sessions graded on a study date."
+    )
+    activity_parser.add_argument("--root", type=Path, default=default_root())
+    activity_parser.add_argument("--date", type=as_date)
     candidates_parser = subparsers.add_parser(
         "grading-candidates", help="List fully answered Sessions that need grading.")
     candidates_parser.add_argument("--root", type=Path, default=default_root())
@@ -2256,6 +2410,14 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.command == "unreviewed":
         path = write_unreviewed_index(root)
         print(f"Wrote {len(unreviewed_items(root))} unreviewed items to {path}")
+        return 0
+
+    if args.command == "activity-log":
+        graded_date = args.date or current_study_date()
+        path = write_activity_log(root, graded_date)
+        print(
+            f"Wrote {len(graded_activities(root, graded_date))} graded Sessions to {path}"
+        )
         return 0
 
     if args.command == "grading-candidates":
