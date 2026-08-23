@@ -444,6 +444,18 @@ def _first_feedback_bullet(section: str, heading: str) -> str:
     return ""
 
 
+def quick_review_checked_choices(question: str) -> tuple[str, ...]:
+    """Return checked A/B/C task-list choices in a quick-review question."""
+    return tuple(
+        match.group(1)
+        for match in re.finditer(
+            r"^- \[[xX]\][ \t]+([ABC])\.[ \t]+",
+            question,
+            flags=re.MULTILINE,
+        )
+    )
+
+
 def session_bounds(text: str, session_number: int) -> tuple[int, int]:
     headings = list(re.finditer(r"^## Session (\d+)[ \t]*$", text, flags=re.MULTILINE))
     for index, heading in enumerate(headings):
@@ -472,7 +484,7 @@ def session_file_paths(root: Path) -> list[Path]:
 
 
 def unanswered_questions(root: Path) -> list[UnansweredQuestion]:
-    """Find question blocks whose answer contains only the standard placeholder."""
+    """Find unanswered question blocks in text-answer and quick-review sessions."""
     unanswered: list[UnansweredQuestion] = []
     for path in session_file_paths(root):
         study_date = as_date(path.stem)
@@ -510,16 +522,36 @@ def unanswered_questions(root: Path) -> list[UnansweredQuestion]:
                     else len(session)
                 )
                 question = session[question_heading.start() : question_end]
-                answer_match = re.search(
-                    r"^### 回答[ \t]*\n(?P<answer>.*?)(?=^### |\Z)",
-                    question,
-                    flags=re.MULTILINE | re.DOTALL,
-                )
-                if answer_match is None:
-                    continue
-                answer = re.sub(r"<!--.*?-->", "", answer_match.group("answer"), flags=re.DOTALL)
-                if answer.strip():
-                    continue
+                if mode == QUICK_REVIEW_MODE:
+                    checked_choices = quick_review_checked_choices(question)
+                    if len(checked_choices) == 1:
+                        continue
+                    # Older quick-review Sessions accepted a text answer. Keep them
+                    # answerable while new Sessions use only their task-list choices.
+                    answer_match = re.search(
+                        r"^### 回答[ \t]*\n(?P<answer>.*?)(?=^### |\Z)",
+                        question,
+                        flags=re.MULTILINE | re.DOTALL,
+                    )
+                    if not checked_choices and answer_match is not None:
+                        answer = re.sub(
+                            r"<!--.*?-->", "", answer_match.group("answer"), flags=re.DOTALL
+                        )
+                        if answer.strip():
+                            continue
+                else:
+                    answer_match = re.search(
+                        r"^### 回答[ \t]*\n(?P<answer>.*?)(?=^### |\Z)",
+                        question,
+                        flags=re.MULTILINE | re.DOTALL,
+                    )
+                    if answer_match is None:
+                        continue
+                    answer = re.sub(
+                        r"<!--.*?-->", "", answer_match.group("answer"), flags=re.DOTALL
+                    )
+                    if answer.strip():
+                        continue
                 primary_terms = parse_list_field(question, "Primary Terms")
                 unanswered.append(
                     UnansweredQuestion(

@@ -317,6 +317,47 @@ Score: 0 / 100
             self.assertIn("- Status: graded", session)
             self.assertIn("Mastery updated: いいえ", session)
 
+    def test_十分復習は選択肢のチェックボックスで回答済みを判定する(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            review_dir = root / "学習記録" / "10分復習"
+            review_dir.mkdir(parents=True)
+            (review_dir / "2026-08-22.md").write_text(
+                """## Session 1
+
+- Status: awaiting_answers
+- Mode: quick-review
+
+### Q1
+
+- Primary Terms:
+  - `CSRF`
+
+### 問題
+
+- [ ] A. CSRFトークンを検証する。
+- [ ] B. Cookieを常に削除する。
+- [ ] C. ログを削除する。
+
+### Q2
+
+- Primary Terms:
+  - `XSS`
+
+### 問題
+
+- [ ] A. Cookieを常に削除する。
+- [x] B. 出力エンコーディングを行う。
+- [ ] C. ログを削除する。
+""",
+                encoding="utf-8",
+            )
+            unanswered = study_helper.unanswered_questions(root)
+            self.assertEqual([1], [question.question_number for question in unanswered])
+            self.assertEqual(("B",), study_helper.quick_review_checked_choices(
+                (review_dir / "2026-08-22.md").read_text(encoding="utf-8")
+            ))
+
     def test_十分復習の作成済み判定は取消済みを除外する(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
