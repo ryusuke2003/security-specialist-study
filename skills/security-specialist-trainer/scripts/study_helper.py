@@ -170,6 +170,15 @@ class UnansweredQuestion:
     session_link_path: str
 
 
+@dataclass(frozen=True)
+class GradingCandidate:
+    study_date: date
+    session_number: int
+    session_kind: str
+    path: Path
+    question_count: int
+
+
 def split_markdown_row(line: str) -> list[str]:
     """Split the simple pipe tables used by this repository."""
     escaped = "\u0000"
@@ -578,6 +587,45 @@ def unanswered_primary_terms(root: Path) -> set[str]:
         for question in unanswered_questions(root)
         for term in question.primary_terms
     }
+
+
+def grading_candidates(root: Path) -> list[GradingCandidate]:
+    """Find fully answered Sessions without finalized grading markers."""
+    candidates: list[GradingCandidate] = []
+    for path in session_file_paths(root):
+        study_date = as_date(path.stem)
+        if study_date is None:
+            continue
+        text = path.read_text(encoding="utf-8")
+        headings = list(re.finditer(r"^## Session ([1-9][0-9]*)[ \t]*$", text, re.MULTILINE))
+        for index, heading in enumerate(headings):
+            end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
+            session = text[heading.start() : end]
+            if re.search(r"^- Status:[ \t]*cancelled[ \t]*$", session, re.MULTILINE):
+                continue
+            number = int(heading.group(1))
+            try:
+                mode = session_mode_for_path(root, path, text, number)
+            except ValueError:
+                mode = TERM_RECALL_MODE if path.parent.name == TERM_RECALL_SESSION_DIRECTORY else STANDARD_SESSION_MODE
+            questions = list(re.finditer(r"^### Q[1-9][0-9]*[ \t]*$", session, re.MULTILINE))
+            if not questions:
+                continue
+            answered = scored = True
+            for q_index, q_heading in enumerate(questions):
+                q_end = questions[q_index + 1].start() if q_index + 1 < len(questions) else len(session)
+                question = session[q_heading.start() : q_end]
+                if mode == QUICK_REVIEW_MODE:
+                    answered = answered and len(quick_review_checked_choices(question)) == 1
+                else:
+                    answer = re.search(r"^### 回答[ \t]*\n(?P<value>.*?)(?=^### |\Z)", question, re.MULTILINE | re.DOTALL)
+                    answered = answered and bool(answer and re.sub(r"<!--.*?-->", "", answer.group("value"), flags=re.DOTALL).strip())
+                scored = scored and bool(re.search(r"^### 採点[ \t]*\n+Score: (?:100|[1-9]?[0-9]) / 100[ \t]*$", question, re.MULTILINE))
+            finalized = "Mastery updated:" in session if mode == QUICK_REVIEW_MODE else "Progress updated:" in session
+            if answered and not (scored and finalized):
+                kind = {TERM_RECALL_MODE: "暗記語句問題", QUICK_REVIEW_MODE: "10分復習"}.get(mode, "理解・応用問題")
+                candidates.append(GradingCandidate(study_date, number, kind, path, len(questions)))
+    return sorted(candidates, key=lambda item: (item.study_date, item.session_number, item.path.as_posix()))
 
 
 def render_unanswered_index(questions: list[UnansweredQuestion]) -> str:
@@ -2086,6 +2134,9 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Write a compact Markdown list of unanswered questions.",
     )
     unanswered_parser.add_argument("--root", type=Path, default=default_root())
+    candidates_parser = subparsers.add_parser(
+        "grading-candidates", help="List fully answered Sessions that need grading.")
+    candidates_parser.add_argument("--root", type=Path, default=default_root())
     quick_status_parser = subparsers.add_parser(
         "quick-review-status",
         help="Report whether today's quick-review Session already exists.",
@@ -2136,6 +2187,17 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.command == "unanswered":
         path = write_unanswered_index(root)
         print(f"Wrote {len(unanswered_questions(root))} unanswered questions to {path}")
+        return 0
+
+    if args.command == "grading-candidates":
+        candidates = grading_candidates(root)
+        if not candidates:
+            print("採点候補はありません。")
+            return 0
+        print("# 採点候補")
+        for candidate in candidates:
+            relative = Path(os.path.relpath(candidate.path, root)).as_posix()
+            print(f"- {candidate.study_date} / Session {candidate.session_number} / {candidate.session_kind} / {candidate.question_count}問 / {relative}")
         return 0
 
     if args.command == "quick-review-status":
