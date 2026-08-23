@@ -1,30 +1,32 @@
 # DNSキャッシュポイズニングとDNSSEC
 
 ```mermaid
-flowchart TB
-    RESOLVER["キャッシュDNSサーバ"]
-    AUTH["正規の権威DNS"]
-    ATTACKER["攻撃者"]
-    QUERY["問い合わせ: www.example.jp A"]
-    RESPONSE["権威DNSの正規応答"]
-    FAKE["攻撃者の偽応答"]
-    MATCH{"TXID・ポート・名前・種別が一致？"}
-    CACHE["キャッシュへ保存"]
-    DROP["破棄"]
+sequenceDiagram
+    participant U as 利用者
+    participant R as 検証するキャッシュDNSサーバ
+    participant P as 親ゾーン（.jp）
+    participant A as 子ゾーン（example.jp）
 
-    RESOLVER -->|"キャッシュDNSサーバが問い合わせを作成"| QUERY
-    QUERY -->|"キャッシュDNSサーバが権威DNSへ送信"| AUTH
-    AUTH -->|"権威DNSがキャッシュDNSサーバへ返答"| RESPONSE
-    RESPONSE -->|"キャッシュDNSサーバが照合"| MATCH
-    ATTACKER -->|"攻撃者がキャッシュDNSサーバへ先に送信"| FAKE
-    FAKE -->|"キャッシュDNSサーバが照合"| MATCH
-    MATCH -->|"TXID・ポート・名前・種別が一致するため保存"| CACHE
-    MATCH -->|"照合に失敗するため破棄"| DROP
+    U->>R: www.example.jp の A レコードを問い合わせ
+    R->>P: example.jp の DS レコードを問い合わせ
+    P-->>R: DS（子ゾーンDNSKEYのハッシュ）とRRSIG
+    Note right of R: ルートの信頼アンカーから<br/>親ゾーンまでの署名は検証済み
+    R->>A: Aレコード、RRSIG、DNSKEYを問い合わせ
+    A-->>R: Aレコード、RRSIG、DNSKEY
+    R->>R: DNSKEYのハッシュがDSと一致するか確認
+    R->>R: DNSKEYでAレコードのRRSIGを検証
 
-    SIGN["DNSSEC署名を信頼の連鎖で検証"]
-    VALID{"署名が有効？"}
-    CACHE -->|"キャッシュDNSサーバがDNSSEC署名を検証"| SIGN
-    SIGN --> VALID
-    VALID -->|"署名が有効なためキャッシュDNSサーバが利用"| ACCEPT["正当なレコードを利用"]
-    VALID -->|"署名が無効なためキャッシュDNSサーバが拒否"| REJECT["偽レコードを受理しない"]
+    alt 信頼の連鎖と署名が有効
+        R-->>U: 検証済みのAレコードを返す
+        Note right of R: 検証済みとしてキャッシュする
+    else DS・DNSKEY・RRSIGのいずれかの検証に失敗
+        R-->>U: 応答を利用しない（通常はSERVFAIL）
+        Note right of R: 偽造・改ざんの可能性を検出し、キャッシュしない
+    end
 ```
+
+## DNSSECで確認するもの
+
+- `RRSIG`はDNSレコード群（RRset）に付く電子署名、`DNSKEY`はその署名を検証する公開鍵である。
+- `DS`は親ゾーンに置く「子ゾーンのDNSKEYのハッシュ」である。親から子へたどれるようにすることで、ルートを起点とした信頼の連鎖を作る。
+- DNSSECは、問い合わせや応答を暗号化する仕組みではない。DNS応答が正しいゾーンにより作られ、途中で改ざんされていないことを検証する仕組みである。
