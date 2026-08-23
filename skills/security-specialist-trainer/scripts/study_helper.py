@@ -809,6 +809,50 @@ def write_activity_log(root: Path, graded_date: date) -> Path:
     return path
 
 
+def render_motivation(root: Path) -> str:
+    """Render a compact, derived study-coverage dashboard."""
+    catalog = load_catalog(root)
+    records = load_terms(root)
+    assessed = {term for term, record in records.items() if record.attempts > 0}
+    assessed_catalog = [item for item in catalog if item.term in assessed]
+    total = len(catalog)
+    completed = len(assessed_catalog)
+    lines = [
+        "# モチベーション",
+        "",
+        "採点済みの語句数を、出題分類と概念カタログの語句数に対して表示します。採点時に自動更新されます。",
+        "",
+        "```mermaid",
+        "pie showData",
+        '    title 全体の語彙カバレッジ',
+        f'    "評価済み" : {completed}',
+        f'    "未評価" : {total - completed}',
+        "```",
+        "",
+        f"**全体**: {completed} / {total} 語（{round(100 * completed / total) if total else 0}%）",
+        "",
+        "| 分野 | 評価済み | 全語彙 | カバレッジ |",
+        "|---|---:|---:|---:|",
+    ]
+    domains: list[str] = []
+    for item in catalog:
+        if item.domain not in domains:
+            domains.append(item.domain)
+    for domain in domains:
+        domain_items = [item for item in catalog if item.domain == domain]
+        done = sum(item.term in assessed for item in domain_items)
+        count = len(domain_items)
+        percent = round(100 * done / count) if count else 0
+        lines.append(f"| {domain} | {done} | {count} | {percent}% |")
+    return "\n".join(lines) + "\n"
+
+
+def write_motivation(root: Path) -> Path:
+    path = progress_directory(root) / "モチベ.md"
+    atomic_write(path, render_motivation(root))
+    return path
+
+
 def unreviewed_items(root: Path) -> list[UnreviewedItem]:
     """Find unchecked entries in the daily review checklists."""
     review_directory = root / "復習用" / "明日復習するべきところ"
@@ -1733,6 +1777,7 @@ def record_progress(
             session_path, session_number, correct, len(questions), graded_date
         )
         write_activity_log(root, graded_date)
+        write_motivation(root)
         return {
             "average": round(100 * correct / len(questions)),
             "weak": [],
@@ -1751,6 +1796,7 @@ def record_progress(
     )
     finalize_session(session_path, session_number, summary, graded_date)
     write_activity_log(root, graded_date)
+    write_motivation(root)
     return {**summary, "questions": len(questions), "session_path": session_path}
 
 
@@ -2369,6 +2415,10 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     )
     activity_parser.add_argument("--root", type=Path, default=default_root())
     activity_parser.add_argument("--date", type=as_date)
+    motivation_parser = subparsers.add_parser(
+        "motivation", help="Write the derived vocabulary-coverage dashboard."
+    )
+    motivation_parser.add_argument("--root", type=Path, default=default_root())
     candidates_parser = subparsers.add_parser(
         "grading-candidates", help="List fully answered Sessions that need grading.")
     candidates_parser.add_argument("--root", type=Path, default=default_root())
@@ -2435,6 +2485,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(
             f"Wrote {len(graded_activities(root, graded_date))} graded Sessions to {path}"
         )
+        return 0
+
+    if args.command == "motivation":
+        path = write_motivation(root)
+        print(f"Wrote motivation dashboard to {path}")
         return 0
 
     if args.command == "grading-candidates":
