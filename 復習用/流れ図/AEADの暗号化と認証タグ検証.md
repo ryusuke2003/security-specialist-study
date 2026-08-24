@@ -3,19 +3,20 @@
 ```mermaid
 sequenceDiagram
     participant S as 送信側
-    participant N as 通信路
+    participant X as 攻撃者
     participant R as 受信側
 
     Note over S: 同一鍵ではnonceを再利用しない
     S->>S: 平文・AAD・共通鍵・一意なnonceをAEADへ入力
-    S->>N: 暗号文、認証タグ、nonce、AADを送信
-    Note over N: AADは暗号化しないが認証タグの計算対象
-    N->>R: 暗号文、認証タグ、nonce、AADを渡す
+    S->>X: 暗号文、認証タグ、nonce、AADを送信
+    Note over X: AADは暗号化しないが認証タグの計算対象
+    X->>X: 暗号文またはAADを改ざんしようとする
+    X->>R: 改ざん済み又は元の暗号文、認証タグ、nonce、AADを渡す
     R->>R: 共通鍵・nonce・AAD・暗号文で認証タグを検証
 
     alt 認証タグが有効
         R->>R: 暗号文を復号し、平文を利用する
-    else 認証タグが無効
+    else 改ざんにより認証タグが無効
         R->>R: 復号結果を利用せず、データを破棄する
     end
 ```
@@ -23,5 +24,7 @@ sequenceDiagram
 ## 要点
 
 - AEADは、平文を暗号化して機密性を守り、認証タグで暗号文とAADの改ざんを検知する。
+- 暗号文は、平文を共通鍵とnonceで暗号化して作る。AADは暗号文には含めず、平文として送るが、認証タグの計算対象に含める。
+- 認証タグは、暗号文・AAD・nonceを共通鍵に結び付けて計算する。受信側も同じ入力でタグを検証するため、いずれかが改ざんされると検証に失敗する。
 - `nonce`は秘密ではないが、同一鍵の下で再利用してはならない。
 - 認証タグの検証に失敗したデータは、内容を信用せず破棄する。
