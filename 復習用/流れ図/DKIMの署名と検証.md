@@ -18,10 +18,11 @@ sequenceDiagram
     Sender->>Sender: 受信した本文と選んだ既存ヘッダを正規化してハッシュ化する
     Sender->>Sender: 送信サーバがDKIM秘密鍵でハッシュへ署名する
     Sender->>Sender: 送信サーバがd=example.jp、s=selector1、h=署名対象ヘッダ、bh=本文ハッシュ、b=署名値をDKIM-Signatureへ入れる
-    Sender->>Receiver: 送信サーバがDKIM-Signature付きメールを送信する
+    Sender->>Receiver: SMTPでメール全体を配送する（本文、From/To/Subject等のヘッダ、DKIM-Signature〔d=署名ドメイン・s=selector・h=対象ヘッダ・bh=本文ハッシュ・b=署名値〕）
 
-    Receiver->>Receiver: 受信サーバがDKIM-Signatureからd=とs=を取り出す
-    Receiver->>DNS: 受信サーバがselector1._domainkey.example.jpのTXTを問い合わせる
+    Receiver->>Receiver: 受信サーバが配送されたメールから本文・ヘッダ・DKIM-Signatureを読み取る
+    Receiver->>Receiver: d=example.jp（署名ドメイン）とs=selector1（公開鍵を選ぶ名前）を取り出す
+    Receiver->>DNS: s._domainkey.d の形、selector1._domainkey.example.jp のTXTを問い合わせる
     DNS-->>Receiver: DNSがDKIM公開鍵を返す
     Receiver->>Receiver: 受信サーバが同じ本文と対象ヘッダを正規化してハッシュ化する
     Receiver->>Receiver: 受信サーバがDNS公開鍵でb=の署名を検証する
@@ -37,7 +38,7 @@ sequenceDiagram
 
 ## 覚えるポイント
 
-- `d=`は署名ドメイン、`s=`は公開鍵を選ぶselectorである。受信側は`<selector>._domainkey.<d=>`をDNSで引く。
+- `d=`は署名ドメイン（「どのドメインの管理者が署名したか」を示す）、`s=`はそのドメイン内で使う公開鍵を選ぶselector（鍵の世代・用途を分ける名前）である。受信側は`<selector>._domainkey.<d=>`、すなわち`<s>._domainkey.<d>`をDNSで引く。
 - 秘密鍵は送信メールサーバだけが保持し、DNSへ公開するのは公開鍵である。
 - 本文とFrom・To・Subjectなどの送信ヘッダは、送信者のメールソフトや業務アプリがメールサーバへ渡す。送信サーバもDateやMessage-IDなどを付加でき、その中から署名対象の既存ヘッダを選んで署名する。
 - DKIMが守るのは署名対象に含めた本文・ヘッダだけである。署名対象外のヘッダ追加や、メーリングリストによる本文変更などは、構成によって検証結果へ影響する。
