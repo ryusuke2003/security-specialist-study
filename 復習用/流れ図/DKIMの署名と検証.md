@@ -12,6 +12,7 @@ sequenceDiagram
     participant Policy as DMARC評価
 
     Admin->>DNS: 管理者がselector1._domainkey.example.jpにDKIM公開鍵をTXTで公開する
+    Note over Admin,DNS: 同一ドメインでもメールサービス・鍵の世代ごとに公開鍵を分けられる。s=selector1 がどの公開鍵かを一意に選ぶ。
 
     Client->>Sender: メール本文と送信ヘッダ（From、To、Subjectなど）を送る
     Sender->>Sender: 送信サーバが必要に応じてDate、Message-IDなどのヘッダを付加する
@@ -38,7 +39,9 @@ sequenceDiagram
 
 ## 覚えるポイント
 
-- `d=`は署名ドメイン（「どのドメインの管理者が署名したか」を示す）、`s=`はそのドメイン内で使う公開鍵を選ぶselector（鍵の世代・用途を分ける名前）である。受信側は`<selector>._domainkey.<d=>`、すなわち`<s>._domainkey.<d>`をDNSで引く。
+- `d=`は署名ドメイン（「どのドメインの管理者が署名したか」を示す）、`s=`はそのドメイン内で使う公開鍵を一意に選ぶselector（鍵の世代・用途を分ける名前）である。同じドメインが複数のメールサービスを使う場合や鍵をローテーションする場合も、`s=`で対応する公開鍵を区別できる。受信側は`<selector>._domainkey.<d=>`、すなわち`<s>._domainkey.<d>`をDNSで引く。
+- `DKIM-Signature`には、図で示した`d=`・`s=`・`h=`・`bh=`・`b=`のほか、通常は`v=1`（DKIMのバージョン）、`a=`（署名アルゴリズム。例: `rsa-sha256`）、`c=`（canonicalization方式。空白・改行の差異をどこまで許容するか。例: `relaxed/relaxed`）も入る。
+- 必要に応じて、`t=`（署名時刻）、`x=`（署名の有効期限）、`i=`（署名者の識別子）、`l=`（本文のうち署名対象にするバイト数）も含められる。
 - 秘密鍵は送信メールサーバだけが保持し、DNSへ公開するのは公開鍵である。
 - 本文とFrom・To・Subjectなどの送信ヘッダは、送信者のメールソフトや業務アプリがメールサーバへ渡す。送信サーバもDateやMessage-IDなどを付加でき、その中から署名対象の既存ヘッダを選んで署名する。
 - DKIMが守るのは署名対象に含めた本文・ヘッダだけである。署名対象外のヘッダ追加や、メーリングリストによる本文変更などは、構成によって検証結果へ影響する。
