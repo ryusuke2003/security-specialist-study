@@ -11,22 +11,22 @@ sequenceDiagram
     U->>R: www.example.jp の A レコードを問い合わせ
     Note right of R: ルートの信頼アンカー（ルートDNSKEY）は事前に保持する
     R->>Z: .jp の DS RRset と RRSIG(DS) を問い合わせ
-    Z-->>R: .jp の DS RRset と RRSIG(DS)
-    R->>R: 信頼済みのルートDNSKEYで RRSIG(DS) を検証
+    Z-->>R: .jp の DS RRset（平文）と RRSIG(DS)
+    R->>R: 受信したDS RRsetと信頼済みのルートDNSKEYで RRSIG(DS) を検証
     R->>P: .jp の DNSKEY RRset と RRSIG(DNSKEY) を問い合わせ
-    P-->>R: .jp の DNSKEY RRset と RRSIG(DNSKEY)
+    P-->>R: .jp の DNSKEY RRset（平文）と RRSIG(DNSKEY)
     R->>R: DSに対応する .jp のDNSKEYをハッシュ化し、ルートのDSと一致した鍵を信頼する
-    R->>R: そのDNSKEYで .jp のDNSKEY RRsetの RRSIG(DNSKEY) を検証
+    R->>R: 受信したDNSKEY RRsetとそのDNSKEYで RRSIG(DNSKEY) を検証
     R->>P: example.jp の DS RRset と RRSIG(DS) を問い合わせ
-    P-->>R: DS RRset と RRSIG(DS)
-    R->>R: .jp のDNSKEYで RRSIG(DS) を検証
+    P-->>R: example.jp の DS RRset（平文）と RRSIG(DS)
+    R->>R: 受信したDS RRsetと .jp のDNSKEYで RRSIG(DS) を検証
     R->>A: DNSKEY RRset と RRSIG(DNSKEY) を問い合わせ
-    A-->>R: DNSKEY RRset と RRSIG(DNSKEY)
+    A-->>R: example.jp の DNSKEY RRset（平文）と RRSIG(DNSKEY)
     R->>R: DSに対応する example.jp のDNSKEYをハッシュ化し、親のDSと一致した鍵を信頼する
-    R->>R: そのDNSKEYで example.jp のDNSKEY RRsetの RRSIG(DNSKEY) を検証
+    R->>R: 受信したDNSKEY RRsetとそのDNSKEYで RRSIG(DNSKEY) を検証
     R->>A: A RRset と RRSIG(A) を問い合わせ
-    A-->>R: A RRset と RRSIG(A)
-    R->>R: 検証済みDNSKEY RRset内の適切なDNSKEYで RRSIG(A) を検証
+    A-->>R: A RRset（平文）と RRSIG(A)
+    R->>R: 受信したA RRsetと検証済みDNSKEY RRset内の適切なDNSKEYで RRSIG(A) を検証
 
     alt 信頼の連鎖と署名が有効
         R-->>U: 真正性・完全性を確認したA RRsetを返す
@@ -42,4 +42,5 @@ sequenceDiagram
 - `RRSIG`はDNSレコード群（RRset）に付く電子署名、`DNSKEY`はその署名を検証する公開鍵である。
 - `DS`は親ゾーンに置かれる、子ゾーンの**特定のDNSKEY**から計算したダイジェスト（ハッシュ値）を含むレコードである。親ゾーンのDNSKEYで`RRSIG(DS)`を検証してから、DSに対応する子ゾーンDNSKEYのハッシュとDSを照合する。これにより、そのDNSKEYが親ゾーンから信頼される鍵だと確認できる。
 - `DS`と`DNSKEY`の照合によって、親ゾーンから子ゾーンのDNSKEYへ信頼をつなぐ。電子署名を検証する組合せは`DNSKEY`と`RRSIG`であり、DSに対応するDNSKEYを起点としてDNSKEY RRsetを検証し、その検証済みDNSKEY RRsetに含まれる適切なDNSKEYでA RRsetなどの`RRSIG`を検証する。典型的にはKSKがDNSKEY RRsetへ、ZSKがA・AAAA・MX・TXTなどのRRsetへ署名する。
+- 署名検証は、受信した**RRset本体（平文）**、その`RRSIG`、検証用の`DNSKEY`の3点を入力として行う。`RRSIG`だけをDNSKEYで処理するものではない。
 - DNSSECは、問い合わせや応答を暗号化する仕組みではない。DNS応答が正当なゾーンの秘密鍵によって署名され、途中で改ざんされていないことを検証する仕組みである。
