@@ -15,16 +15,14 @@ sequenceDiagram
     R->>R: 信頼済みのルートDNSKEYで RRSIG(DS) を検証
     R->>P: .jp の DNSKEY RRset と RRSIG(DNSKEY) を問い合わせ
     P-->>R: .jp の DNSKEY RRset と RRSIG(DNSKEY)
-    R->>R: DSに対応する .jp のDNSKEYをハッシュし、ルートのDSと一致するか確認
-    R->>R: DSに対応する .jp のDNSKEYを信頼できる鍵として確認
+    R->>R: DSに対応する .jp のDNSKEYをハッシュ化し、ルートのDSと一致した鍵を信頼する
     R->>R: そのDNSKEYで .jp のDNSKEY RRsetの RRSIG(DNSKEY) を検証
     R->>P: example.jp の DS RRset と RRSIG(DS) を問い合わせ
     P-->>R: DS RRset と RRSIG(DS)
     R->>R: .jp のDNSKEYで RRSIG(DS) を検証
     R->>A: DNSKEY RRset と RRSIG(DNSKEY) を問い合わせ
     A-->>R: DNSKEY RRset と RRSIG(DNSKEY)
-    R->>R: DSに対応する example.jp のDNSKEYをハッシュし、DSと一致するか確認
-    R->>R: DSに対応する example.jp のDNSKEYを信頼できる鍵として確認
+    R->>R: DSに対応する example.jp のDNSKEYをハッシュ化し、親のDSと一致した鍵を信頼する
     R->>R: そのDNSKEYで example.jp のDNSKEY RRsetの RRSIG(DNSKEY) を検証
     R->>A: A RRset と RRSIG(A) を問い合わせ
     A-->>R: A RRset と RRSIG(A)
