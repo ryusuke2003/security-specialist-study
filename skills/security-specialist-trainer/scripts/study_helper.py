@@ -813,23 +813,41 @@ def render_motivation(root: Path) -> str:
     """Render a compact, derived study-coverage dashboard."""
     catalog = load_catalog(root)
     records = load_terms(root)
-    assessed = {term for term, record in records.items() if record.attempts > 0}
-    assessed_catalog = [item for item in catalog if item.term in assessed]
     total = len(catalog)
-    completed = len(assessed_catalog)
+    assessed = {term for term, record in records.items() if record.attempts > 0}
+    categories = {
+        "未評価": 0,
+        "触れた": 0,
+        "80点以上": 0,
+        "応用まで確認": 0,
+    }
+    for item in catalog:
+        record = records.get(item.term)
+        if record is None or record.attempts == 0:
+            categories["未評価"] += 1
+        elif record.explanation_attempts > 0:
+            categories["応用まで確認"] += 1
+        elif record.score >= 80:
+            categories["80点以上"] += 1
+        else:
+            categories["触れた"] += 1
+    completed = total - categories["未評価"]
     lines = [
         "# モチベーション",
         "",
-        "採点済みの語句数を、出題分類と概念カタログの語句数に対して表示します。採点時に自動更新されます。",
+        "カタログ語句を、未評価・触れた・80点以上・応用まで確認の4区分で表示します。通常の理解・応用問題を解いた語句は「応用まで確認」を優先し、採点時に自動更新します。",
         "",
         "```mermaid",
         "pie showData",
-        '    title 全体の語彙カバレッジ',
-        f'    "評価済み" : {completed}',
-        f'    "未評価" : {total - completed}',
+        '    title 全体の語彙カバレッジと理解の積み上がり',
+        f'    "未評価" : {categories["未評価"]}',
+        f'    "触れた" : {categories["触れた"]}',
+        f'    "80点以上" : {categories["80点以上"]}',
+        f'    "応用まで確認" : {categories["応用まで確認"]}',
         "```",
         "",
         f"**全体**: {completed} / {total} 語（{round(100 * completed / total) if total else 0}%）",
+        f"内訳: 触れた {categories['触れた']}語 / 80点以上 {categories['80点以上']}語 / 応用まで確認 {categories['応用まで確認']}語",
         "",
         "| 分野 | 評価済み | 全語彙 | カバレッジ |",
         "|---|---:|---:|---:|",
