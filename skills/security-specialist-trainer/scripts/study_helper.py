@@ -817,40 +817,40 @@ def render_motivation(root: Path) -> str:
     assessed = {term for term, record in records.items() if record.attempts > 0}
     categories = {
         "未評価": 0,
-        "触れた": 0,
-        "80点以上": 0,
-        "応用まで確認": 0,
+        "暗記のみ": 0,
+        "応用のみ": 0,
+        "両方確認": 0,
     }
     for item in catalog:
         record = records.get(item.term)
         if record is None or record.attempts == 0:
             categories["未評価"] += 1
-        elif record.explanation_attempts > 0:
-            categories["応用まで確認"] += 1
-        elif record.score >= 80:
-            categories["80点以上"] += 1
+        elif record.recall_attempts > 0 and record.explanation_attempts > 0:
+            categories["両方確認"] += 1
+        elif record.recall_attempts > 0:
+            categories["暗記のみ"] += 1
         else:
-            categories["触れた"] += 1
+            categories["応用のみ"] += 1
     completed = total - categories["未評価"]
     lines = [
         "# モチベーション",
         "",
-        "カタログ語句を、未評価・触れた・80点以上・応用まで確認の4区分で表示します。通常の理解・応用問題を解いた語句は「応用まで確認」を優先し、採点時に自動更新します。",
+        "カタログ語句を、未評価・暗記のみ・応用のみ・両方確認の重複しない4区分で表示します。採点時に自動更新します。",
         "",
         "```mermaid",
         "pie showData",
-        '    title 全体の語彙カバレッジと理解の積み上がり',
+        '    title 全体の語彙カバレッジと学習形式の内訳',
         f'    "未評価" : {categories["未評価"]}',
-        f'    "触れた" : {categories["触れた"]}',
-        f'    "80点以上" : {categories["80点以上"]}',
-        f'    "応用まで確認" : {categories["応用まで確認"]}',
+        f'    "暗記のみ" : {categories["暗記のみ"]}',
+        f'    "応用のみ" : {categories["応用のみ"]}',
+        f'    "両方確認" : {categories["両方確認"]}',
         "```",
         "",
         f"**全体**: {completed} / {total} 語（{round(100 * completed / total) if total else 0}%）",
-        f"内訳: 触れた {categories['触れた']}語 / 80点以上 {categories['80点以上']}語 / 応用まで確認 {categories['応用まで確認']}語",
+        f"内訳: 暗記のみ {categories['暗記のみ']}語 / 応用のみ {categories['応用のみ']}語 / 両方確認 {categories['両方確認']}語",
         "",
-        "| 分野 | 評価済み | 全語彙 | カバレッジ |",
-        "|---|---:|---:|---:|",
+        "| 分野 | 暗記のみ | 応用のみ | 両方確認 | 未評価 | 全語彙 | カバレッジ |",
+        "|---|---:|---:|---:|---:|---:|---:|",
     ]
     domains: list[str] = []
     for item in catalog:
@@ -858,10 +858,23 @@ def render_motivation(root: Path) -> str:
             domains.append(item.domain)
     for domain in domains:
         domain_items = [item for item in catalog if item.domain == domain]
-        done = sum(item.term in assessed for item in domain_items)
+        recall_only = sum(
+            bool(records.get(item.term) and records[item.term].recall_attempts > 0 and records[item.term].explanation_attempts == 0)
+            for item in domain_items
+        )
+        explanation_only = sum(
+            bool(records.get(item.term) and records[item.term].recall_attempts == 0 and records[item.term].explanation_attempts > 0)
+            for item in domain_items
+        )
+        both = sum(
+            bool(records.get(item.term) and records[item.term].recall_attempts > 0 and records[item.term].explanation_attempts > 0)
+            for item in domain_items
+        )
         count = len(domain_items)
-        percent = round(100 * done / count) if count else 0
-        lines.append(f"| {domain} | {done} | {count} | {percent}% |")
+        coverage = round(100 * (recall_only + explanation_only + both) / count) if count else 0
+        lines.append(
+            f"| {domain} | {recall_only} | {explanation_only} | {both} | {count - recall_only - explanation_only - both} | {count} | {coverage}% |"
+        )
     return "\n".join(lines) + "\n"
 
 
