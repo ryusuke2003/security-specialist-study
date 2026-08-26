@@ -1146,6 +1146,47 @@ Score: 100 / 100
             self.assertEqual("100", history_row["Average"])
             self.assertEqual(100, record.recall_score)
 
+    def test_同日の後から記録した履歴もセッション番号順に並ぶ(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            (root / "progress").mkdir()
+            (root / "progress" / "history.md").write_text(
+                study_helper.render_history([]), encoding="utf-8"
+            )
+            record = study_helper.TermRecord(
+                term="CSRF",
+                domain="Webセキュリティ",
+                score=70,
+                last_studied=date(2026, 8, 12),
+                attempts=1,
+                average=70,
+                last_level=1,
+                next_review=date(2026, 8, 17),
+                related="",
+                notes="",
+            )
+            question = study_helper.GradedQuestion(
+                1, "Webセキュリティ", "B", 1, ("CSRF",), (), 70, "", ""
+            )
+            study_helper.update_history(
+                root,
+                date(2026, 8, 12),
+                3,
+                [question],
+                {record.term: record},
+                root / "sessions" / "理解・応用問題" / "2026-08-12.md",
+            )
+            study_helper.update_history(
+                root,
+                date(2026, 8, 12),
+                2,
+                [question],
+                {record.term: record},
+                root / "sessions" / "理解・応用問題" / "2026-08-12.md",
+            )
+            rows = study_helper.read_table(root / "progress" / "history.md", "Date")
+            self.assertEqual(["2", "3"], [row["Session"] for row in rows])
+
     def test_カバレッジは暗記と応用と高難度安定を区別する(self) -> None:
         recall = study_helper.GradedQuestion(
             1, "Webセキュリティ", "B", 1, ("CSRF",), (), 100, "", "",

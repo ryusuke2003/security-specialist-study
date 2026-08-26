@@ -1671,6 +1671,7 @@ def update_history(
             break
     if not replaced:
         rows.append(row)
+    rows.sort(key=lambda item: (item.get("Date", ""), as_int(item.get("Session", ""), 0)))
     atomic_write(progress_file(root, "学習履歴.md", "history.md"), render_history(rows))
     return {
         "average": average,
