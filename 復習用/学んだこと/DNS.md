@@ -36,6 +36,19 @@
 
 ## 2026-08-27
 
+### DNSSECの信頼の連鎖（`.jp` → `example.jp` の例）
+
+- 目標は、たとえば `www.example.jp` の **A RRset が正規のゾーンで署名され、改ざんされていないこと（真正性・完全性）**を確認することである。その `RRSIG(A)` を検証するには、`example.jp` の検証済み `DNSKEY RRset` が必要になる。
+- あらかじめ信頼している起点は、検証リゾルバに設定されたルートゾーンの **Trust Anchor（ルートDNSKEY）**だけである。以下を上から順に検証して、信頼を子ゾーンへ渡す。
+
+  1. ルートDNSKEYで、親であるルートが署名した `.jp` の `DS RRset` の `RRSIG(DS)` を検証する。
+  2. 取得した `.jp` の `DNSKEY` のうち、上のDSのダイジェストと一致する鍵を確認する。その鍵で `RRSIG(DNSKEY)` を検証し、`.jp` の `DNSKEY RRset` 全体を信頼する。
+  3. 検証済みの `.jp` DNSKEYで、`.jp` が署名した `example.jp` の `DS RRset` を検証する。
+  4. `example.jp` のDNSKEYとDSを照合し、その鍵で `RRSIG(DNSKEY)` を検証して、`example.jp` の `DNSKEY RRset` を信頼する。
+  5. 検証済みの `example.jp` DNSKEYで、目的の `A RRset` に付く `RRSIG(A)` を検証する。
+
+- 覚え方は、**DSは親から子のDNSKEYを信頼するための照合値、RRSIGは各RRsetが改ざんされていないことを確かめる署名**。`DS → 子DNSKEYの照合 → RRSIG(DNSKEY)の検証` をゾーンごとに繰り返し、最後に `RRSIG(A)` を検証する。
+
 ### 再帰DNSサーバーとキャッシュDNSサーバーは役割の呼び分け
 
 - **再帰DNSサーバー**は、利用者端末の代わりにルートDNS、TLD DNS、権威DNSをたどり、名前解決を完了させる役割である。
