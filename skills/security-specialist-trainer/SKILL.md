@@ -18,11 +18,13 @@ Choose one workflow:
 - Requests such as「未復習一覧を更新して」refresh the generated unreviewed index with the command below; do not edit the date-based review notes themselves.
 - Combine requests only when the user clearly asks for both; finish grading before generating later adaptive questions.
 
-Read [セッション形式.md](../../参照資料/セッション形式.md) before writing or grading a session, then read only the matching mode detail it links to. Before selecting adaptive questions, read [出題選定ルール.md](references/出題選定ルール.md). Before assigning scores, read [採点・理解度・復習ルール.md](../../参照資料/採点・理解度・復習ルール.md). Read [出題分類と概念カタログ.md](../../参照資料/出題分類と概念カタログ.md) when introducing concepts, checking prerequisites, or resolving domains and related terms.
+Read [セッション形式.md](../../参照資料/セッション形式.md) before writing or grading a session, then read only the matching mode detail it links to. Before selecting adaptive questions, read [出題選定ルール.md](references/出題選定ルール.md) and [カタログ部分参照.md](references/カタログ部分参照.md). During routine generation, retrieve only the selected candidates' catalog rows and the needed direct related or prerequisite rows; do not read [出題分類と概念カタログ.md](../../参照資料/出題分類と概念カタログ.md) in full. Read it in full only for catalog expansion, broad unfocused cross-domain generation, or catalog-consistency investigation. Before assigning scores, read [採点・理解度・復習ルール.md](../../参照資料/採点・理解度・復習ルール.md).
 
 ## Generate a session
 
 Read [問題作成ワークフロー.md](references/問題作成ワークフロー.md) before writing. It defines the mandatory study-date and daily-review checks, planning and selection, each Session mode, and post-creation validation.
+
+For routine generation, start from `study_helper.py briefing`; it aggregates progress and recent-session warnings. Read source progress files or Session files only when the briefing identifies a specific need for verification.
 
 During routine generation, do **not** inspect past-question materials or expand the concept catalog. Do so only when the user explicitly requests catalog expansion or a past-question-informed catalog review; then read [カタログ拡張.md](references/カタログ拡張.md).
 

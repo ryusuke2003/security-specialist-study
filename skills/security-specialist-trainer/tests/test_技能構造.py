@@ -15,6 +15,7 @@ class 技能構造テスト(unittest.TestCase):
             cls.skill / "references" / "採点ワークフロー.md"
         )
         cls.catalog_expansion = cls.skill / "references" / "カタログ拡張.md"
+        cls.catalog_lookup = cls.skill / "references" / "カタログ部分参照.md"
         cls.question_workflow = cls.skill / "references" / "問題作成ワークフロー.md"
         cls.selection_rules = cls.skill / "references" / "出題選定ルール.md"
         cls.normal_session_format = cls.root / "参照資料" / "通常・暗記語句Session形式.md"
@@ -43,6 +44,7 @@ class 技能構造テスト(unittest.TestCase):
             self.quick_review_format,
             self.grading_workflow,
             self.catalog_expansion,
+            self.catalog_lookup,
             self.question_workflow,
             self.selection_rules,
         ]
@@ -243,6 +245,34 @@ class 技能構造テスト(unittest.TestCase):
         self.assertIn("根拠がある語句だけ", catalog_text)
         self.assertIn("自動では実行しません", logic_text)
         self.assertIn("明示した場合だけ行う", taxonomy_text)
+
+    def test_日常の作問は概念カタログを候補周辺だけ参照する(self) -> None:
+        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        workflow_text = self.question_workflow.read_text(encoding="utf-8")
+        lookup_text = self.catalog_lookup.read_text(encoding="utf-8")
+
+        self.assertIn("do not read [出題分類と概念カタログ.md]", skill_text)
+        self.assertIn("カタログ部分参照.md", workflow_text)
+        self.assertIn("study_helper.py briefing", lookup_text)
+        self.assertIn("rg -n -F", lookup_text)
+        self.assertIn("直接のPrerequisitesだけ", lookup_text)
+        self.assertIn("再帰的に広げない", lookup_text)
+        self.assertIn("全読みに戻す場合", lookup_text)
+        self.assertIn("分野指定なしで幅広く出題", lookup_text)
+
+    def test_日常の作問は進捗全体の代わりにブリーフィングを使う(self) -> None:
+        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        workflow_text = self.question_workflow.read_text(encoding="utf-8")
+        selection_text = self.selection_rules.read_text(encoding="utf-8")
+        script_text = (self.skill / "scripts" / "study_helper.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("study_helper.py briefing", skill_text)
+        self.assertIn("study_helper.py briefing", workflow_text)
+        self.assertIn("手で全読みにしない", workflow_text)
+        self.assertIn("briefingは出題の自動確定ではない", selection_text)
+        self.assertIn('subparsers.add_parser(\n        "briefing"', script_text)
 
     def test_ローカル過去問は明示指示時だけ参照する(self) -> None:
         skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")

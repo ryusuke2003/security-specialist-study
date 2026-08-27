@@ -1372,6 +1372,42 @@ def recent_term_counts(root: Path, today: date, limit_sessions: int = 5) -> dict
     return counts
 
 
+def recent_term_sources(
+    root: Path,
+    limit_sessions: int = 3,
+) -> dict[str, list[tuple[date, int, Path]]]:
+    """Return recent Session sources for each primary term without judging prose overlap."""
+    sections: list[tuple[date, int, Path, str]] = []
+    for path in session_file_paths(root):
+        session_day = as_date(path.stem)
+        if session_day is None:
+            continue
+        text = path.read_text(encoding="utf-8")
+        for match in re.finditer(r"^## Session (\d+)[ \t]*$", text, flags=re.MULTILINE):
+            session_number = int(match.group(1))
+            try:
+                session_mode_for_path(root, path, text, session_number)
+            except ValueError:
+                continue
+            start, end = session_bounds(text, session_number)
+            sections.append((session_day, session_number, path, text[start:end]))
+
+    sources: dict[str, list[tuple[date, int, Path]]] = {}
+    ordered_sections = sorted(
+        sections,
+        key=lambda section: (section[0], section[1], str(section[2])),
+        reverse=True,
+    )
+    for session_day, session_number, path, section in ordered_sections[:limit_sessions]:
+        for question in re.split(r"(?=^### Q\d+[ \t]*$)", section, flags=re.MULTILINE)[1:]:
+            terms = parse_list_field(question, "Primary Terms")
+            if not terms:
+                terms = parse_list_field(question, "Terms")
+            for term in terms:
+                sources.setdefault(term, []).append((session_day, session_number, path))
+    return sources
+
+
 def all_scored_questions(root: Path) -> list[tuple[date, int, GradedQuestion]]:
     results: list[tuple[date, int, GradedQuestion]] = []
     for path in session_file_paths(root):
@@ -1399,6 +1435,21 @@ def all_scored_questions(root: Path) -> list[tuple[date, int, GradedQuestion]]:
                 continue
             results.extend((study_date, number, question) for question in questions)
     return sorted(results, key=lambda item: (item[0], item[1], item[2].number))
+
+
+def recent_mode_scores(
+    root: Path,
+    mode: str,
+) -> dict[str, tuple[date, int, int]]:
+    """Return the latest scored evidence for the mode used by an authoring plan."""
+    question_mode = TERM_RECALL_MODE if mode == TERM_RECALL_MODE else EXPLANATION_MODE
+    latest: dict[str, tuple[date, int, int]] = {}
+    for study_date, session_number, question in all_scored_questions(root):
+        if question.question_mode != question_mode:
+            continue
+        for term in question.primary_terms:
+            latest[term] = (study_date, session_number, question.score)
+    return latest
 
 
 def quick_review_incorrect_terms(root: Path) -> set[str]:
@@ -2392,6 +2443,76 @@ def render_plan(
     return "\n".join(lines)
 
 
+def render_briefing(
+    root: Path,
+    plan: list[tuple[str, Candidate]],
+    phase: str,
+    today: date,
+    mode: str,
+) -> str:
+    """Render bounded authoring context; it deliberately does not choose final wording."""
+    lines = [
+        "# 作問ブリーフィング",
+        "",
+        f"- Date: {today.isoformat()}",
+        f"- Phase: {phase}",
+        f"- Mode: {mode}",
+        f"- Questions: {len(plan)}",
+        "",
+        "## 今回の候補",
+        "",
+    ]
+    mode_scores = recent_mode_scores(root, mode)
+    for bucket, candidate in plan:
+        item = candidate.item
+        lines.append(
+            f"- [{bucket}] {item.term}（{item.domain} / Level {candidate.suggested_level}）: {candidate.reason}"
+        )
+        previous_score = mode_scores.get(item.term)
+        if previous_score:
+            study_date, session_number, score = previous_score
+            lines.append(
+                f"  - このモードの前回得点: {score} / 100（{study_date.isoformat()}#{session_number}）"
+            )
+        if item.related:
+            lines.append(f"  - Related: {item.related}")
+        if item.prerequisites:
+            lines.append(f"  - 直接前提: {item.prerequisites}")
+
+    domain_counts: dict[str, int] = {}
+    for _, candidate in plan:
+        domain = candidate.item.domain
+        domain_counts[domain] = domain_counts.get(domain, 0) + 1
+    lines.extend(["", "## 分野バランス", ""])
+    for domain, count in sorted(domain_counts.items()):
+        lines.append(f"- {domain}: {count}問")
+
+    recent_sources = recent_term_sources(root)
+    lines.extend(["", "## 注意", ""])
+    repeated = False
+    for _, candidate in plan:
+        sources = recent_sources.get(candidate.item.term, [])
+        if not sources:
+            continue
+        repeated = True
+        rendered_sources = ", ".join(
+            f"{session_day.isoformat()} Session {session_number} ({Path(os.path.relpath(path, root)).as_posix()})"
+            for session_day, session_number, path in sources
+        )
+        lines.append(
+            f"- {candidate.item.term}: 直近3 Sessionに既出（{rendered_sources}）。問題文の論点重複を元Sessionで確認する。"
+        )
+    if not repeated:
+        lines.append("- 採用候補は直近3 SessionのPrimary Termにはありません。問題文の意味上の重複は、必要な元Sessionだけで確認する。")
+    lines.extend(
+        [
+            "- この出力は候補と警告の集約であり、出題の自動確定ではない。採用後は候補行、必要な関連語・直接前提の行、警告に出た元Sessionだけを確認する。",
+            "- `plan` と同じ選定ロジックを使うため、期限・弱点・重要度・直近出題・分野配分はここで確認する。",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def default_root() -> Path:
     return Path(__file__).resolve().parents[3]
 
@@ -2412,6 +2533,23 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Allow terms already assigned to unanswered questions; use only for an explicit review request.",
     )
     plan_parser.add_argument(
+        "--mode",
+        choices=["standard", "weak", "new", "subject-b", "light", TERM_RECALL_MODE, QUICK_REVIEW_MODE],
+    )
+    briefing_parser = subparsers.add_parser(
+        "briefing",
+        help="Print bounded authoring context from progress and recent Sessions without changing files.",
+    )
+    briefing_parser.add_argument("--root", type=Path, default=default_root())
+    briefing_parser.add_argument("--date", type=as_date)
+    briefing_parser.add_argument("--count", type=int)
+    briefing_parser.add_argument("--focus", default="")
+    briefing_parser.add_argument(
+        "--include-unanswered",
+        action="store_true",
+        help="Allow terms already assigned to unanswered questions; use only for an explicit review request.",
+    )
+    briefing_parser.add_argument(
         "--mode",
         choices=["standard", "weak", "new", "subject-b", "light", TERM_RECALL_MODE, QUICK_REVIEW_MODE],
     )
@@ -2603,7 +2741,10 @@ def main(argv: Optional[list[str]] = None) -> int:
             exclude_unanswered_candidates(candidates, pending_terms, args.include_unanswered), count, mode
         )
         phase = "adaptive"
-    print(render_plan(plan, phase, today, mode))
+    if args.command == "briefing":
+        print(render_briefing(root, plan, phase, today, mode))
+    else:
+        print(render_plan(plan, phase, today, mode))
     return 0
 
 

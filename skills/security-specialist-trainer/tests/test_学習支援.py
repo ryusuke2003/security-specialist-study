@@ -1276,6 +1276,32 @@ Score: 100 / 100
         self.assertEqual(0, exit_code)
         self.assertIn("- Questions: 6", output.getvalue())
 
+    def test_作問ブリーフィングは候補と分野配分と既出警告を集約する(self) -> None:
+        output = io.StringIO()
+        with redirect_stdout(output):
+            exit_code = study_helper.main(
+                [
+                    "briefing",
+                    "--root",
+                    str(self.root),
+                    "--date",
+                    "2026-08-28",
+                    "--mode",
+                    "standard",
+                    "--count",
+                    "6",
+                ]
+            )
+
+        self.assertEqual(0, exit_code)
+        briefing = output.getvalue()
+        self.assertIn("# 作問ブリーフィング", briefing)
+        self.assertIn("## 今回の候補", briefing)
+        self.assertIn("## 分野バランス", briefing)
+        self.assertIn("## 注意", briefing)
+        self.assertIn("出題の自動確定ではない", briefing)
+        self.assertIn("`plan` と同じ選定ロジック", briefing)
+
     def test_直近高得点は復習期でなく将来の発展候補になる(self) -> None:
         item = next(item for item in self.catalog if item.term == "DMARC")
         record = study_helper.TermRecord(
