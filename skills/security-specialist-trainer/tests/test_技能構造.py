@@ -17,6 +17,8 @@ class 技能構造テスト(unittest.TestCase):
         cls.catalog_expansion = cls.skill / "references" / "カタログ拡張.md"
         cls.question_workflow = cls.skill / "references" / "問題作成ワークフロー.md"
         cls.selection_rules = cls.skill / "references" / "出題選定ルール.md"
+        cls.normal_session_format = cls.root / "参照資料" / "通常・暗記語句Session形式.md"
+        cls.quick_review_format = cls.root / "参照資料" / "10分復習Session形式.md"
 
     def test_必須ファイルが存在する(self) -> None:
         expected = [
@@ -37,6 +39,8 @@ class 技能構造テスト(unittest.TestCase):
             self.root / "参照資料" / "出題分類と概念カタログ.md",
             self.root / "参照資料" / "採点・理解度・復習ルール.md",
             self.root / "参照資料" / "セッション形式.md",
+            self.normal_session_format,
+            self.quick_review_format,
             self.grading_workflow,
             self.catalog_expansion,
             self.question_workflow,
@@ -161,17 +165,34 @@ class 技能構造テスト(unittest.TestCase):
         skill_text = self.question_workflow.read_text(encoding="utf-8")
         selection_text = self.selection_rules.read_text(encoding="utf-8")
         session_text = (self.root / "参照資料" / "セッション形式.md").read_text(encoding="utf-8")
+        normal_text = self.normal_session_format.read_text(encoding="utf-8")
         scoring_text = (self.root / "参照資料" / "採点・理解度・復習ルール.md").read_text(encoding="utf-8")
         self.assertIn("--mode term-recall", skill_text)
         self.assertIn("指定がなければ10問", selection_text)
-        self.assertIn("- Mode: term-recall", session_text)
+        self.assertIn("- Mode: term-recall", normal_text)
         self.assertIn("Recall Score", scoring_text)
         self.assertIn("Explanation Score", scoring_text)
         self.assertIn("学習記録/理解・応用問題/YYYY-MM-DD.md", session_text)
         self.assertIn("学習記録/暗記語句問題/YYYY-MM-DD.md", session_text)
-        self.assertIn("--mode standard", session_text)
-        self.assertIn("--mode term-recall", session_text)
-        self.assertIn("1〜30問", session_text)
+        self.assertIn("--mode standard", normal_text)
+        self.assertIn("--mode term-recall", normal_text)
+        self.assertIn("1〜30問", normal_text)
+
+    def test_セッション形式は共通とモード別の詳細に分かれる(self) -> None:
+        common_text = (self.root / "参照資料" / "セッション形式.md").read_text(
+            encoding="utf-8"
+        )
+        normal_text = self.normal_session_format.read_text(encoding="utf-8")
+        quick_text = self.quick_review_format.read_text(encoding="utf-8")
+        grading_text = self.grading_workflow.read_text(encoding="utf-8")
+
+        self.assertIn("通常・暗記語句Session形式", common_text)
+        self.assertIn("10分復習Session形式", common_text)
+        self.assertIn("### 回答", normal_text)
+        self.assertNotIn("\n### 回答\n", quick_text)
+        self.assertIn("- [ ] A.", quick_text)
+        self.assertNotIn("- [ ] A.", common_text)
+        self.assertIn("### 採点", grading_text)
 
     def test_生成時は出題選定ルールを用い採点全文を要求しない(self) -> None:
         skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
@@ -251,7 +272,7 @@ class 技能構造テスト(unittest.TestCase):
             encoding="utf-8"
         )
         usage_text = (self.root / "docs" / "使い方.md").read_text(encoding="utf-8")
-        for text in (workflow_text, session_text, scoring_text, usage_text):
+        for text in (workflow_text, scoring_text, usage_text):
             with self.subTest(text=text[:30]):
                 self.assertIn("わかりません", text)
                 self.assertIn("0 / 100", text)
@@ -291,9 +312,6 @@ class 技能構造テスト(unittest.TestCase):
 
     def test_採点対象は回答内容で選び全件を時系列で処理する(self) -> None:
         skill_text = self.grading_workflow.read_text(encoding="utf-8")
-        session_text = (self.root / "参照資料" / "セッション形式.md").read_text(
-            encoding="utf-8"
-        )
         usage_text = (self.root / "docs" / "使い方.md").read_text(encoding="utf-8")
         logic_text = (self.root / "docs" / "出題・採点ロジック.md").read_text(
             encoding="utf-8"
@@ -302,9 +320,8 @@ class 技能構造テスト(unittest.TestCase):
         self.assertIn("Git差分、コミット履歴で絞らない", skill_text)
         self.assertIn("候補全件", skill_text)
         self.assertIn("日付、Session番号の昇順", skill_text)
-        self.assertIn("全回答が記入済みで、かつ採点とprogress更新が完了していないSessionをすべて", session_text)
-        self.assertIn("Status`の値で対象を選ばない", session_text)
-        self.assertIn("コミット履歴、作業ツリーの状態を判定材料にしない", session_text)
+        self.assertIn("全問回答済みで、採点ブロックまたはProgress更新が欠けるSessionだけ", skill_text)
+        self.assertIn("見た目の `Status`、Git差分、コミット履歴で絞らない", skill_text)
         self.assertIn("空欄を含むSessionは飛ばされ", usage_text)
         self.assertIn("新しい未回答Sessionが古い回答済みSessionの採点を妨げません", logic_text)
 
@@ -313,13 +330,9 @@ class 技能構造テスト(unittest.TestCase):
             encoding="utf-8"
         )
         skill_text = self.grading_workflow.read_text(encoding="utf-8")
-        session_text = (self.root / "参照資料" / "セッション形式.md").read_text(
-            encoding="utf-8"
-        )
         self.assertIn("def rebuild_progress", script_text)
         self.assertIn('subparsers.add_parser(\n        "rebuild"', script_text)
         self.assertIn("study_helper.py rebuild --root .", skill_text)
-        self.assertIn("study_helper.py rebuild --root .", session_text)
 
     def test_自動テストが全てのプッシュで実行される(self) -> None:
         workflow = (
