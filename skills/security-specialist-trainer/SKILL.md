@@ -53,6 +53,7 @@ For each question:
 - Prefer short logs, traffic, settings, system structures, operational procedures, and incident narratives. Ask a concrete decision such as the investigation point, likely cause or impact, countermeasure priority, or residual risk; do not turn these into an abstract explanation request after adding a scenario.
 - Move strong concepts toward competing controls and residual risk. Even weak concepts should normally use a one-step scenario before falling back to a pure explanation question.
 - Avoid repeating materially identical wording from recent sessions.
+- For hostname-verification scenarios, treat SAN (`dNSName` for FQDNs and `iPAddress` for IP literals) as the matching source. Do not present a CN-only certificate as valid under modern TLS verification; CN fallback may be mentioned only as a legacy compatibility exception.
 - Do not include answers or leading hints in the question file.
 
 After writing, verify the file, confirm that `Question Count` equals the actual number of questions, and confirm that question headings are unique and consecutive from `Q1`. Reject any heading beginning with `### Q` that does not exactly match this numbered form. Also verify metadata, one `### 問題` heading per question, visible question text, and answer placeholders. In chat, respond briefly with the absolute clickable session path, question count, and any requested emphasis. Do not duplicate all question text in chat.
