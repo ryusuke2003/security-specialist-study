@@ -18,7 +18,7 @@ Choose one workflow:
 - Requests such as「未復習一覧を更新して」refresh the generated unreviewed index with the command below; do not edit the date-based review notes themselves.
 - Combine requests only when the user clearly asks for both; finish grading before generating later adaptive questions.
 
-Read [セッション形式.md](../../参照資料/セッション形式.md) before writing or grading a session. Read [採点・理解度・復習ルール.md](../../参照資料/採点・理解度・復習ルール.md) before selecting adaptive questions or assigning scores. Read [出題分類と概念カタログ.md](../../参照資料/出題分類と概念カタログ.md) when introducing concepts, checking prerequisites, or resolving domains and related terms.
+Read [セッション形式.md](../../参照資料/セッション形式.md) before writing or grading a session. Before selecting adaptive questions, read [出題選定ルール.md](references/出題選定ルール.md). Before assigning scores, read [採点・理解度・復習ルール.md](../../参照資料/採点・理解度・復習ルール.md). Read [出題分類と概念カタログ.md](../../参照資料/出題分類と概念カタログ.md) when introducing concepts, checking prerequisites, or resolving domains and related terms.
 
 ## Generate a session
 

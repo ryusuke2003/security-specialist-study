@@ -16,6 +16,7 @@ class 技能構造テスト(unittest.TestCase):
         )
         cls.catalog_expansion = cls.skill / "references" / "カタログ拡張.md"
         cls.question_workflow = cls.skill / "references" / "問題作成ワークフロー.md"
+        cls.selection_rules = cls.skill / "references" / "出題選定ルール.md"
 
     def test_必須ファイルが存在する(self) -> None:
         expected = [
@@ -39,6 +40,7 @@ class 技能構造テスト(unittest.TestCase):
             self.grading_workflow,
             self.catalog_expansion,
             self.question_workflow,
+            self.selection_rules,
         ]
         self.assertEqual([], [str(path) for path in expected if not path.is_file()])
         self.assertTrue((self.root / "学習記録" / "理解・応用問題").is_dir())
@@ -157,10 +159,11 @@ class 技能構造テスト(unittest.TestCase):
 
     def test_暗記語句の手順と形式が文書化される(self) -> None:
         skill_text = self.question_workflow.read_text(encoding="utf-8")
+        selection_text = self.selection_rules.read_text(encoding="utf-8")
         session_text = (self.root / "参照資料" / "セッション形式.md").read_text(encoding="utf-8")
         scoring_text = (self.root / "参照資料" / "採点・理解度・復習ルール.md").read_text(encoding="utf-8")
         self.assertIn("--mode term-recall", skill_text)
-        self.assertIn("指定がなければ10問", skill_text)
+        self.assertIn("指定がなければ10問", selection_text)
         self.assertIn("- Mode: term-recall", session_text)
         self.assertIn("Recall Score", scoring_text)
         self.assertIn("Explanation Score", scoring_text)
@@ -169,6 +172,15 @@ class 技能構造テスト(unittest.TestCase):
         self.assertIn("--mode standard", session_text)
         self.assertIn("--mode term-recall", session_text)
         self.assertIn("1〜30問", session_text)
+
+    def test_生成時は出題選定ルールを用い採点全文を要求しない(self) -> None:
+        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        selection_text = self.selection_rules.read_text(encoding="utf-8")
+
+        self.assertIn("Before selecting adaptive questions, read [出題選定ルール.md]", skill_text)
+        self.assertIn("Before assigning scores, read [採点・理解度・復習ルール.md]", skill_text)
+        self.assertIn("難易度と復習期限", selection_text)
+        self.assertIn("通常Sessionは既定6問", selection_text)
 
     def test_未解答一覧を問題作成と採点の後に更新する(self) -> None:
         script_text = (self.skill / "scripts" / "study_helper.py").read_text(
