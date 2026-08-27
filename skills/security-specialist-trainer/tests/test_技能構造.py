@@ -11,6 +11,10 @@ class 技能構造テスト(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.skill = Path(__file__).resolve().parents[1]
         cls.root = cls.skill.parents[1]
+        cls.grading_workflow = (
+            cls.skill / "references" / "採点ワークフロー.md"
+        )
+        cls.catalog_expansion = cls.skill / "references" / "カタログ拡張.md"
 
     def test_必須ファイルが存在する(self) -> None:
         expected = [
@@ -31,6 +35,8 @@ class 技能構造テスト(unittest.TestCase):
             self.root / "参照資料" / "出題分類と概念カタログ.md",
             self.root / "参照資料" / "採点・理解度・復習ルール.md",
             self.root / "参照資料" / "セッション形式.md",
+            self.grading_workflow,
+            self.catalog_expansion,
         ]
         self.assertEqual([], [str(path) for path in expected if not path.is_file()])
         self.assertTrue((self.root / "学習記録" / "理解・応用問題").is_dir())
@@ -62,46 +68,42 @@ class 技能構造テスト(unittest.TestCase):
         )
 
         skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
-        self.assertIn("復習用/流れ図/<topic>.md", skill_text)
-        self.assertIn("流れ図` bullet", skill_text)
-        self.assertIn("復習用/学んだこと/<分野>.md", skill_text)
-        self.assertIn("## YYYY-MM-DD", skill_text)
-        self.assertIn("normal and `term-recall` sessions with `Score < 100`", skill_text)
-        self.assertIn("every incorrect `quick-review` answer", skill_text)
-        self.assertIn("You may also reorganize the domain notes", skill_text)
-        self.assertIn("復習用/明日復習するべきところ/YYYY-MM-DD.md", skill_text)
-        self.assertIn("Include every normal or `term-recall` answer with `Score < 100`", skill_text)
-        self.assertIn("`10分復習`", skill_text)
-        self.assertIn("standalone short explanation", skill_text)
-        self.assertIn("関連する新語", skill_text)
-        self.assertIn("Importance >= 4", skill_text)
-        self.assertIn("Track B", skill_text)
+        workflow_text = self.grading_workflow.read_text(encoding="utf-8")
+        self.assertIn("復習ノート作成", skill_text)
+        for expected in (
+            "復習用/流れ図/<topic>.md",
+            "復習用/学んだこと/<分野>.md",
+            "## YYYY-MM-DD",
+            "Score < 100",
+            "誤答した10分復習",
+            "復習用/明日復習するべきところ/YYYY-MM-DD.md",
+            "関連する新語",
+            "Importance 4以上",
+        ):
+            self.assertIn(expected, workflow_text)
 
     def test_翌日復習に全件掲載と点数順表示の規則がある(self) -> None:
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        skill_text = self.grading_workflow.read_text(encoding="utf-8")
         review_readme = (
             self.root / "復習用" / "明日復習するべきところ" / "README.md"
         ).read_text(encoding="utf-8")
-        self.assertIn("Include every normal or `term-recall` answer with `Score < 100`", skill_text)
-        self.assertIn("every incorrect `quick-review` answer", skill_text)
+        self.assertIn("通常・暗記語句の `Score < 100`", skill_text)
+        self.assertIn("誤答した10分復習", skill_text)
         self.assertIn("10分復習で不正解だった問題", review_readme)
-        self.assertIn("Do not group entries by problem type or score range", skill_text)
-        self.assertIn("sorted by score ascending", skill_text)
-        self.assertIn("Break ties by source date, then Session number, then Q number ascending", skill_text)
+        self.assertIn("点数・日付・Session・Q番号の順", skill_text)
         self.assertIn("100点未満なら必ず掲載", review_readme)
         self.assertIn("問題形式を区別せず点数の低い順", review_readme)
         self.assertIn("同点は出典の日付・Session番号・Q番号の順", review_readme)
         self.assertIn("流れ図", review_readme)
-        self.assertIn("either an existing diagram or a newly created/materially expanded diagram", skill_text)
-        self.assertIn("Reuse the existing diagram instead of creating a duplicate, but still add the link.", skill_text)
+        self.assertIn("既存図を再利用", skill_text)
 
     def test_翌日復習から流れ図へのリンクは兄弟ディレクトリを参照する(self) -> None:
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        skill_text = self.grading_workflow.read_text(encoding="utf-8")
         review_files = sorted(
             (self.root / "復習用" / "明日復習するべきところ").glob("*.md")
         )
 
-        self.assertIn("[SAMLによるSSO](../流れ図/SAMLによるSSO.md)", skill_text)
+        self.assertIn("元Qへの正確な相対リンク", skill_text)
         self.assertNotIn("../" * 2 + "流れ図/", skill_text)
         for review_file in review_files:
             links = re.findall(r"\]\((\.\./流れ図/[^)]+\.md)\)", review_file.read_text(encoding="utf-8"))
@@ -190,22 +192,24 @@ class 技能構造テスト(unittest.TestCase):
         self.assertIn("study_helper.py unreviewed --root .", skill_text)
         self.assertIn("study_helper.py unreviewed --root .", session_text)
 
-    def test_暗記語句を一周した後にカタログを拡張する(self) -> None:
+    def test_カタログ拡張は明示依頼時だけ行う(self) -> None:
         skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        catalog_text = self.catalog_expansion.read_text(encoding="utf-8")
         logic_text = (self.root / "docs" / "出題・採点ロジック.md").read_text(
             encoding="utf-8"
         )
         taxonomy_text = (self.root / "参照資料" / "出題分類と概念カタログ.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("all 151 terms, then all roughly 250 terms, have `Recall Attempts >= 1`", skill_text)
-        self.assertIn("80〜120 previously absent high-priority terms", skill_text)
-        self.assertIn("20〜40 concrete-gap terms for later expansions", skill_text)
-        self.assertIn("初回の151語すべてに`Recall Attempts`が1回以上", logic_text)
-        self.assertIn("全151語に暗記語句問題として1回以上回答した後", taxonomy_text)
+        self.assertIn("only when the user explicitly asks for catalog expansion", skill_text)
+        self.assertIn("通常の問題作成・採点・復習では読まない", catalog_text)
+        self.assertIn("根拠がある語句だけ", catalog_text)
+        self.assertIn("自動では実行しません", logic_text)
+        self.assertIn("明示した場合だけ行う", taxonomy_text)
 
-    def test_ローカル過去問は周回時又は明示指示時だけ参照する(self) -> None:
+    def test_ローカル過去問は明示指示時だけ参照する(self) -> None:
         skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        catalog_text = self.catalog_expansion.read_text(encoding="utf-8")
         gitignore_text = (self.root / ".gitignore").read_text(encoding="utf-8")
         structure_text = (self.root / "docs" / "リポジトリ構成.md").read_text(
             encoding="utf-8"
@@ -213,16 +217,17 @@ class 技能構造テスト(unittest.TestCase):
         index_text = (self.root / "参照資料" / "過去問分析索引.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("catalog-expansion review is due", skill_text)
-        self.assertIn("If the user explicitly asks to refer to past questions", skill_text)
+        self.assertIn("Do **not** inspect past-question materials", skill_text)
+        self.assertIn("利用者が明示的に", catalog_text)
         self.assertIn("do not open past-question PDFs", skill_text)
         self.assertIn("/過去問/", gitignore_text)
-        self.assertIn("151語または約250語の暗記一周時", structure_text)
+        self.assertIn("利用者がカタログ拡張", structure_text)
         self.assertIn("日々の出題ではPDFも索引も読まず", structure_text)
         self.assertIn("根拠年度", index_text)
 
     def test_わかりませんは回答済みとして採点するルールが文書化される(self) -> None:
         skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        workflow_text = self.grading_workflow.read_text(encoding="utf-8")
         session_text = (self.root / "参照資料" / "セッション形式.md").read_text(
             encoding="utf-8"
         )
@@ -230,39 +235,31 @@ class 技能構造テスト(unittest.TestCase):
             encoding="utf-8"
         )
         usage_text = (self.root / "docs" / "使い方.md").read_text(encoding="utf-8")
-        for text in (skill_text, session_text, scoring_text, usage_text):
+        for text in (workflow_text, session_text, scoring_text, usage_text):
             with self.subTest(text=text[:30]):
                 self.assertIn("わかりません", text)
                 self.assertIn("0 / 100", text)
-        self.assertIn("normal (understanding/application)", skill_text)
+        self.assertIn("採点前チェック", skill_text)
         self.assertIn("理解・応用問題", session_text)
         self.assertIn("理解・応用問題", scoring_text)
         self.assertIn("理解・応用問題", usage_text)
 
     def test_設問外の補足不足で減点しない採点規則が文書化される(self) -> None:
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        workflow_text = self.grading_workflow.read_text(encoding="utf-8")
         scoring_text = (self.root / "参照資料" / "採点・理解度・復習ルール.md").read_text(
             encoding="utf-8"
         )
         logic_text = (self.root / "docs" / "出題・採点ロジック.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("explicitly asks for", skill_text)
-        self.assertIn("optional enrichment", skill_text)
+        self.assertIn("問題文が求めた観点だけ", workflow_text)
+        self.assertIn("未要求の補足知識を理由に減点しない", workflow_text)
         self.assertIn("問題文で明示していない観点", scoring_text)
         self.assertIn("満点とし", scoring_text)
         self.assertIn("補足知識がないことを理由に部分点へ下げません", logic_text)
 
     def test_採点手順は現在と旧セッション保存先を全て明記する(self) -> None:
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
-        grade_section_match = re.search(
-            r"^## Grade a session\n(?P<body>.*?)(?=^## |\Z)",
-            skill_text,
-            flags=re.MULTILINE | re.DOTALL,
-        )
-        self.assertIsNotNone(grade_section_match)
-        assert grade_section_match
-        grade_section = grade_section_match.group("body")
+        grade_section = self.grading_workflow.read_text(encoding="utf-8")
         for session_path in (
             "学習記録/理解・応用問題/",
             "学習記録/暗記語句問題/",
@@ -272,15 +269,12 @@ class 技能構造テスト(unittest.TestCase):
         ):
             with self.subTest(session_path=session_path):
                 self.assertIn(session_path, grade_section)
-        self.assertIn(
-            "the literal `A` or `B` (including the literal `A/B`)",
-            grade_section,
-        )
-        self.assertIn("exactly one integer `Question Count` from 1 to 30", grade_section)
-        self.assertIn("unique and consecutive from `Q1`", grade_section)
+        self.assertIn("Track A/Bの配分", grade_section)
+        self.assertIn("問題数", grade_section)
+        self.assertIn("Q1からの連番", grade_section)
 
     def test_採点対象は回答内容で選び全件を時系列で処理する(self) -> None:
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        skill_text = self.grading_workflow.read_text(encoding="utf-8")
         session_text = (self.root / "参照資料" / "セッション形式.md").read_text(
             encoding="utf-8"
         )
@@ -289,10 +283,9 @@ class 技能構造テスト(unittest.TestCase):
             encoding="utf-8"
         )
 
-        self.assertIn("Do **not** select by `Status`", skill_text)
-        self.assertIn("or use `git diff`, commit history, or working-tree state", skill_text)
-        self.assertIn("select **all** grading candidates", skill_text)
-        self.assertIn("chronological order", skill_text)
+        self.assertIn("Git差分、コミット履歴で絞らない", skill_text)
+        self.assertIn("候補全件", skill_text)
+        self.assertIn("日付、Session番号の昇順", skill_text)
         self.assertIn("全回答が記入済みで、かつ採点とprogress更新が完了していないSessionをすべて", session_text)
         self.assertIn("Status`の値で対象を選ばない", session_text)
         self.assertIn("コミット履歴、作業ツリーの状態を判定材料にしない", session_text)
@@ -303,7 +296,7 @@ class 技能構造テスト(unittest.TestCase):
         script_text = (self.skill / "scripts" / "study_helper.py").read_text(
             encoding="utf-8"
         )
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        skill_text = self.grading_workflow.read_text(encoding="utf-8")
         session_text = (self.root / "参照資料" / "セッション形式.md").read_text(
             encoding="utf-8"
         )
