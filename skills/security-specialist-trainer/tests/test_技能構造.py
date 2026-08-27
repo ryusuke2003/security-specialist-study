@@ -15,6 +15,7 @@ class 技能構造テスト(unittest.TestCase):
             cls.skill / "references" / "採点ワークフロー.md"
         )
         cls.catalog_expansion = cls.skill / "references" / "カタログ拡張.md"
+        cls.question_workflow = cls.skill / "references" / "問題作成ワークフロー.md"
 
     def test_必須ファイルが存在する(self) -> None:
         expected = [
@@ -37,6 +38,7 @@ class 技能構造テスト(unittest.TestCase):
             self.root / "参照資料" / "セッション形式.md",
             self.grading_workflow,
             self.catalog_expansion,
+            self.question_workflow,
         ]
         self.assertEqual([], [str(path) for path in expected if not path.is_file()])
         self.assertTrue((self.root / "学習記録" / "理解・応用問題").is_dir())
@@ -114,12 +116,14 @@ class 技能構造テスト(unittest.TestCase):
     def test_十分復習の自動作成は学習操作に限定する(self) -> None:
         agents_text = (self.root / "AGENTS.md").read_text(encoding="utf-8")
         skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        workflow_text = self.question_workflow.read_text(encoding="utf-8")
         readme_text = (self.root / "README.md").read_text(encoding="utf-8")
 
         self.assertIn("When starting question generation or session grading", agents_text)
         self.assertNotIn("On every user interaction", agents_text)
-        self.assertIn("At the start of every question-generation or session-grading workflow", skill_text)
-        self.assertNotIn("At the start of every user interaction", skill_text)
+        self.assertIn("問題作成ワークフロー", skill_text)
+        self.assertIn("問題作成または採点では", workflow_text)
+        self.assertNotIn("毎回のユーザー操作", workflow_text)
         self.assertIn("問題作成または採点を始めるとき", readme_text)
 
     def test_ルート説明書から詳細文書を参照できる(self) -> None:
@@ -152,11 +156,11 @@ class 技能構造テスト(unittest.TestCase):
         self.assertIn("$security-specialist-trainer", text)
 
     def test_暗記語句の手順と形式が文書化される(self) -> None:
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        skill_text = self.question_workflow.read_text(encoding="utf-8")
         session_text = (self.root / "参照資料" / "セッション形式.md").read_text(encoding="utf-8")
         scoring_text = (self.root / "参照資料" / "採点・理解度・復習ルール.md").read_text(encoding="utf-8")
         self.assertIn("--mode term-recall", skill_text)
-        self.assertIn("create exactly 10 questions", skill_text)
+        self.assertIn("指定がなければ10問", skill_text)
         self.assertIn("- Mode: term-recall", session_text)
         self.assertIn("Recall Score", scoring_text)
         self.assertIn("Explanation Score", scoring_text)
@@ -170,7 +174,7 @@ class 技能構造テスト(unittest.TestCase):
         script_text = (self.skill / "scripts" / "study_helper.py").read_text(
             encoding="utf-8"
         )
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        skill_text = self.question_workflow.read_text(encoding="utf-8")
         session_text = (self.root / "参照資料" / "セッション形式.md").read_text(
             encoding="utf-8"
         )
@@ -183,7 +187,7 @@ class 技能構造テスト(unittest.TestCase):
         script_text = (self.skill / "scripts" / "study_helper.py").read_text(
             encoding="utf-8"
         )
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
+        skill_text = self.question_workflow.read_text(encoding="utf-8")
         session_text = (self.root / "参照資料" / "セッション形式.md").read_text(
             encoding="utf-8"
         )
@@ -201,7 +205,7 @@ class 技能構造テスト(unittest.TestCase):
         taxonomy_text = (self.root / "参照資料" / "出題分類と概念カタログ.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("only when the user explicitly asks for catalog expansion", skill_text)
+        self.assertIn("only when the user explicitly requests catalog expansion", skill_text)
         self.assertIn("通常の問題作成・採点・復習では読まない", catalog_text)
         self.assertIn("根拠がある語句だけ", catalog_text)
         self.assertIn("自動では実行しません", logic_text)
@@ -217,9 +221,9 @@ class 技能構造テスト(unittest.TestCase):
         index_text = (self.root / "参照資料" / "過去問分析索引.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("Do **not** inspect past-question materials", skill_text)
+        self.assertIn("do **not** inspect past-question materials", skill_text)
         self.assertIn("利用者が明示的に", catalog_text)
-        self.assertIn("do not open past-question PDFs", skill_text)
+        self.assertIn("During routine generation", skill_text)
         self.assertIn("/過去問/", gitignore_text)
         self.assertIn("利用者がカタログ拡張", structure_text)
         self.assertIn("日々の出題ではPDFも索引も読まず", structure_text)
