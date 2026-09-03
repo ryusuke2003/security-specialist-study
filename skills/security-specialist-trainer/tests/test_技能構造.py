@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import ast
+import builtins
 import importlib.util
 import re
+import symtable
 import sys
 import unittest
 from pathlib import Path
@@ -435,6 +437,34 @@ class 技能構造テスト(unittest.TestCase):
             with self.subTest(filename=filename):
                 self.assertIn(function_name, defined)
                 self.assertLessEqual(dependencies, allowed_dependencies[filename])
+
+    def test_責務別モジュールに未解決のグローバル参照がない(self) -> None:
+        module_paths = sorted(
+            (self.skill / "scripts" / "trainer").glob("*.py")
+        )
+        self.assertTrue(module_paths)
+        for path in module_paths:
+            table = symtable.symtable(
+                path.read_text(encoding="utf-8"), str(path), "exec"
+            )
+            module_names = {symbol.get_name() for symbol in table.get_symbols()}
+            unresolved: set[str] = set()
+            scopes = [table]
+            while scopes:
+                scope = scopes.pop()
+                for symbol in scope.get_symbols():
+                    if (
+                        scope is not table
+                        and symbol.is_referenced()
+                        and symbol.is_global()
+                        and symbol.get_name() not in module_names
+                        and not hasattr(builtins, symbol.get_name())
+                        and symbol.get_name() != "__file__"
+                    ):
+                        unresolved.add(symbol.get_name())
+                scopes.extend(scope.get_children())
+            with self.subTest(module=path.name):
+                self.assertEqual(set(), unresolved)
 
     def test_自動テストが全てのプッシュで実行される(self) -> None:
         workflow = (

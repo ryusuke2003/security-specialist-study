@@ -9,6 +9,7 @@ import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from unittest.mock import patch
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "study_helper.py"
@@ -17,6 +18,9 @@ assert SPEC and SPEC.loader
 study_helper = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = study_helper
 SPEC.loader.exec_module(study_helper)
+
+from trainer import cli as trainer_cli
+from trainer import progress as trainer_progress
 
 
 def 採点済みセッション(
@@ -437,6 +441,23 @@ Score: 0 / 100
             )
             unanswered_path = root / "学習記録" / "未解答一覧.md"
             unanswered_path.write_text("古い未解答一覧\n", encoding="utf-8")
+            with patch.object(
+                trainer_progress,
+                "write_activity_log",
+                side_effect=RuntimeError("活動ログ更新失敗"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "活動ログ更新失敗"):
+                    study_helper.record_progress(
+                        root,
+                        date(2026, 8, 22),
+                        1,
+                        study_helper.QUICK_REVIEW_MODE,
+                    )
+            self.assertIn(
+                "- Status: grading",
+                (review_dir / "2026-08-22.md").read_text(encoding="utf-8"),
+            )
+
             result = study_helper.record_progress(
                 root, date(2026, 8, 22), 1, study_helper.QUICK_REVIEW_MODE
             )
@@ -446,6 +467,10 @@ Score: 0 / 100
             session = (review_dir / "2026-08-22.md").read_text(encoding="utf-8")
             self.assertIn("- Status: graded", session)
             self.assertIn("Mastery updated: いいえ", session)
+            self.assertIn(
+                "[2026-08-22 / Session 1 / 1問](10分復習/2026-08-22.md)",
+                (root / "学習記録" / "行ったこと.md").read_text(encoding="utf-8"),
+            )
             self.assertEqual(
                 "# 未解答一覧\n\n未解答はありません。\n",
                 unanswered_path.read_text(encoding="utf-8"),
@@ -591,6 +616,39 @@ CSRFが成立する条件と対策を説明してください。
                     root, date(2026, 8, 22), 1, study_helper.STANDARD_SESSION_MODE
                 )
 
+            invalid_unanswered_states = [
+                (
+                    valid.replace(
+                        "<!-- この行の下に回答を書いてください -->",
+                        "CSRFトークンを検証する。",
+                    ),
+                    "回答 must be empty",
+                ),
+                (
+                    valid.replace("- Status: awaiting_answers", "- Status: graded"),
+                    "awaiting_answers Status",
+                ),
+                (
+                    valid.replace("- Status: awaiting_answers", "- Status: cancelled"),
+                    "awaiting_answers Status",
+                ),
+                (
+                    valid.rstrip()
+                    + "\n\n### 採点\n\nScore: 100 / 100\n",
+                    "must not have grading",
+                ),
+            ]
+            for invalid, message in invalid_unanswered_states:
+                with self.subTest(message=message):
+                    session_path.write_text(invalid, encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, message):
+                        study_helper.validate_authored_session(
+                            root,
+                            date(2026, 8, 22),
+                            1,
+                            study_helper.STANDARD_SESSION_MODE,
+                        )
+
     def test_作成直後の十分復習は三択形式を検証する(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -635,6 +693,18 @@ CSRF対策として適切なものはどれですか？
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "A/B/C checkbox choices"):
+                study_helper.validate_authored_session(
+                    root, date(2026, 8, 22), 1, study_helper.QUICK_REVIEW_MODE
+                )
+
+            session_path.write_text(
+                valid.replace(
+                    "- [ ] A. CSRFトークンを検証する。",
+                    "- [x] A. CSRFトークンを検証する。",
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "unchecked A/B/C checkbox choices"):
                 study_helper.validate_authored_session(
                     root, date(2026, 8, 22), 1, study_helper.QUICK_REVIEW_MODE
                 )
@@ -1506,6 +1576,151 @@ Score: 100 / 100
         self.assertIn("出題の自動確定ではない", briefing)
         self.assertIn("`plan` と同じ選定ロジック", briefing)
 
+    def test_全コマンドラインサブコマンドの実行分岐を確認する(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            today = date(2026, 8, 28)
+            item = self.catalog[0]
+            candidate = study_helper.build_candidates([item], {}, today, {})[0]
+            commands = {
+                "plan": ["plan", "--root", str(root), "--date", today.isoformat(), "--count", "1"],
+                "briefing": ["briefing", "--root", str(root), "--date", today.isoformat(), "--count", "1"],
+                "record": ["record", "--root", str(root), "--date", today.isoformat(), "--session", "1"],
+                "validate-session": ["validate-session", "--root", str(root), "--date", today.isoformat(), "--session", "1"],
+                "rebuild": ["rebuild", "--root", str(root)],
+                "unanswered": ["unanswered", "--root", str(root)],
+                "unreviewed": ["unreviewed", "--root", str(root)],
+                "activity-log": ["activity-log", "--root", str(root), "--date", today.isoformat()],
+                "motivation": ["motivation", "--root", str(root)],
+                "grading-candidates": ["grading-candidates", "--root", str(root)],
+                "quick-review-status": ["quick-review-status", "--root", str(root), "--date", today.isoformat()],
+                "study-date": ["study-date", "--root", str(root)],
+            }
+            grading_candidate = study_helper.GradingCandidate(
+                today,
+                1,
+                "理解・応用問題",
+                root / "学習記録" / "理解・応用問題" / "2026-08-28.md",
+                1,
+            )
+            with (
+                patch.object(trainer_cli, "current_study_date", return_value=today),
+                patch.object(trainer_cli, "load_catalog", return_value=[item]),
+                patch.object(trainer_cli, "load_terms", return_value={}),
+                patch.object(trainer_cli, "diagnostic_plan", return_value=[("新規", candidate)]),
+                patch.object(
+                    trainer_cli,
+                    "validate_authored_session",
+                    return_value={
+                        "questions": 1,
+                        "mode": study_helper.STANDARD_SESSION_MODE,
+                        "path": grading_candidate.path,
+                    },
+                ),
+                patch.object(
+                    trainer_cli,
+                    "record_progress",
+                    return_value={"questions": 1, "average": 80, "next_review": today},
+                ),
+                patch.object(
+                    trainer_cli,
+                    "rebuild_progress",
+                    return_value={"sessions": 1, "questions": 1},
+                ),
+                patch.object(trainer_cli, "write_unanswered_index", return_value=root / "unanswered.md"),
+                patch.object(trainer_cli, "unanswered_questions", return_value=[]),
+                patch.object(trainer_cli, "write_unreviewed_index", return_value=root / "unreviewed.md"),
+                patch.object(trainer_cli, "unreviewed_items", return_value=[]),
+                patch.object(trainer_cli, "write_activity_log", return_value=root / "activity.md"),
+                patch.object(trainer_cli, "graded_activities", return_value=[]),
+                patch.object(trainer_cli, "write_motivation", return_value=root / "motivation.md"),
+                patch.object(trainer_cli, "grading_candidates", return_value=[grading_candidate]),
+                patch.object(trainer_cli, "quick_review_exists", return_value=True),
+            ):
+                for command, arguments in commands.items():
+                    with self.subTest(command=command), redirect_stdout(io.StringIO()):
+                        self.assertEqual(0, trainer_cli.main(arguments))
+
+    def test_作問ブリーフィングは既出候補の相対パスを表示する(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            session_dir = root / "学習記録" / "理解・応用問題"
+            session_dir.mkdir(parents=True)
+            (session_dir / "2026-08-27.md").write_text(
+                """## Session 1
+
+- Status: awaiting_answers
+- Mode: adaptive
+- Question Count: 1
+
+### Q1
+
+- Domain: Webセキュリティ
+- Primary Terms:
+  - `CSRF`
+- Related Terms:
+  - `CSRFトークン`
+- Level: 2
+- Track: B
+""",
+                encoding="utf-8",
+            )
+            item = next(item for item in self.catalog if item.term == "CSRF")
+            candidate = study_helper.build_candidates(
+                [item], {}, date(2026, 8, 28), {}
+            )[0]
+
+            briefing = study_helper.render_briefing(
+                root,
+                [("新規", candidate)],
+                "adaptive",
+                date(2026, 8, 28),
+                "standard",
+            )
+
+            self.assertIn("CSRF: 直近3 Sessionに既出", briefing)
+            self.assertIn(
+                "学習記録/理解・応用問題/2026-08-27.md", briefing
+            )
+
+    def test_採点候補コマンドは候補の相対パスを表示する(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            session_dir = root / "学習記録" / "理解・応用問題"
+            session_dir.mkdir(parents=True)
+            (session_dir / "2026-08-27.md").write_text(
+                """## Session 1
+
+- Status: awaiting_answers
+- Mode: adaptive
+- Question Count: 1
+
+### Q1
+
+- Primary Terms:
+  - `CSRF`
+
+### 回答
+
+CSRFトークンを検証する。
+""",
+                encoding="utf-8",
+            )
+            output = io.StringIO()
+
+            with redirect_stdout(output):
+                exit_code = study_helper.main(
+                    ["grading-candidates", "--root", str(root)]
+                )
+
+            self.assertEqual(0, exit_code)
+            self.assertIn("# 採点候補", output.getvalue())
+            self.assertIn(
+                "2026-08-27 / Session 1 / 理解・応用問題 / 1問 / "
+                "学習記録/理解・応用問題/2026-08-27.md",
+                output.getvalue(),
+            )
+
     def test_直近高得点は復習期でなく将来の発展候補になる(self) -> None:
         item = next(item for item in self.catalog if item.term == "DMARC")
         record = study_helper.TermRecord(
@@ -2110,6 +2325,18 @@ Score: 70 / 100
             self.assertEqual(1, partial_records["CRL / OCSP"].attempts)
             self.assertIn("- Status: grading", session_path.read_text(encoding="utf-8"))
             self.assertEqual([], study_helper.read_table(root / "progress" / "history.md", "Date"))
+
+            with patch.object(
+                trainer_progress,
+                "write_activity_log",
+                side_effect=RuntimeError("活動ログ更新失敗"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "活動ログ更新失敗"):
+                    study_helper.record_progress(root, date(2026, 8, 9), 1)
+            self.assertIn("- Status: grading", session_path.read_text(encoding="utf-8"))
+            self.assertNotIn(
+                "Progress updated:", session_path.read_text(encoding="utf-8")
+            )
 
             first = study_helper.record_progress(root, date(2026, 8, 9), 1)
             records = study_helper.load_terms(root)
