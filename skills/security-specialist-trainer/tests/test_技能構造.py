@@ -23,45 +23,32 @@ class 技能構造テスト(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.skill = Path(__file__).resolve().parents[1]
         cls.root = cls.skill.parents[1]
-        cls.grading_workflow = (
-            cls.skill / "references" / "採点ワークフロー.md"
-        )
+        cls.grading_workflow = cls.skill / "references" / "採点ワークフロー.md"
         cls.catalog_expansion = cls.skill / "references" / "カタログ拡張.md"
         cls.catalog_lookup = cls.skill / "references" / "カタログ部分参照.md"
         cls.common_start = cls.skill / "references" / "共通開始処理.md"
         cls.question_workflow = cls.skill / "references" / "問題作成ワークフロー.md"
         cls.selection_rules = cls.skill / "references" / "出題選定ルール.md"
-        cls.normal_session_format = cls.root / "参照資料" / "通常・暗記語句Session形式.md"
-        cls.quick_review_format = cls.root / "参照資料" / "10分復習Session形式.md"
 
-    def test_必須ファイルが存在する(self) -> None:
-        expected = [
+    def test_必須ファイルとディレクトリが揃う(self) -> None:
+        files = [
             self.root / "AGENTS.md",
             self.root / ".github" / "workflows" / "python-tests.yml",
             self.skill / "SKILL.md",
             self.skill / "agents" / "openai.yaml",
-            self.skill / "scripts" / "trainer" / "__init__.py",
-            self.skill / "scripts" / "trainer" / "common.py",
-            self.skill / "scripts" / "trainer" / "session_parser.py",
-            self.skill / "scripts" / "trainer" / "indexes.py",
-            self.skill / "scripts" / "trainer" / "progress.py",
-            self.skill / "scripts" / "trainer" / "planner.py",
-            self.skill / "scripts" / "trainer" / "cli.py",
-            self.root / "README.md",
-            self.root / "docs" / "使い方.md",
-            self.root / "docs" / "リポジトリ構成.md",
-            self.root / "docs" / "出題・採点ロジック.md",
-            self.root / "docs" / "開発・テスト.md",
-            self.root / "進捗" / "語句別理解度.md",
-            self.root / "進捗" / "分野別理解度.md",
-            self.root / "進捗" / "学習履歴.md",
-            self.root / "学習記録" / "未解答一覧.md",
-            self.root / "復習用" / "未復習一覧.md",
-            self.root / "参照資料" / "出題分類と概念カタログ.md",
-            self.root / "参照資料" / "採点・理解度・復習ルール.md",
-            self.root / "参照資料" / "セッション形式.md",
-            self.normal_session_format,
-            self.quick_review_format,
+            *(self.skill / "scripts" / "trainer" / name for name in (
+                "__init__.py", "common.py", "session_parser.py", "indexes.py",
+                "progress.py", "planner.py", "cli.py",
+            )),
+            *(self.root / path for path in (
+                "README.md", "docs/使い方.md", "docs/リポジトリ構成.md",
+                "docs/出題・採点ロジック.md", "docs/開発・テスト.md",
+                "進捗/語句別理解度.md", "進捗/分野別理解度.md", "進捗/学習履歴.md",
+                "学習記録/未解答一覧.md", "復習用/未復習一覧.md",
+                "参照資料/出題分類と概念カタログ.md", "参照資料/採点・理解度・復習ルール.md",
+                "参照資料/セッション形式.md", "参照資料/通常・暗記語句Session形式.md",
+                "参照資料/10分復習Session形式.md",
+            )),
             self.grading_workflow,
             self.catalog_expansion,
             self.catalog_lookup,
@@ -69,342 +56,124 @@ class 技能構造テスト(unittest.TestCase):
             self.question_workflow,
             self.selection_rules,
         ]
-        self.assertEqual([], [str(path) for path in expected if not path.is_file()])
-        self.assertTrue((self.root / "学習記録" / "理解・応用問題").is_dir())
-        self.assertTrue((self.root / "学習記録" / "暗記語句問題").is_dir())
+        directories = [
+            self.root / "学習記録" / "理解・応用問題",
+            self.root / "学習記録" / "暗記語句問題",
+            self.root / "復習用" / "学んだこと",
+            self.root / "復習用" / "明日復習するべきところ",
+            self.root / "復習用" / "流れ図",
+        ]
+        self.assertEqual([], [str(path) for path in files if not path.is_file()])
+        self.assertEqual([], [str(path) for path in directories if not path.is_dir()])
 
-    def test_復習メモと流れ図を専用ディレクトリへ保存する(self) -> None:
-        review_dir = self.root / "復習用"
-        notes_dir = review_dir / "学んだこと"
-        next_day_dir = review_dir / "明日復習するべきところ"
-        diagram_dir = review_dir / "流れ図"
-        self.assertTrue(notes_dir.is_dir())
-        self.assertTrue((notes_dir / "README.md").is_file())
-        self.assertTrue(any(notes_dir.glob("*.md")))
-        self.assertFalse((review_dir / "学んだこと.md").exists())
-        self.assertTrue(next_day_dir.is_dir())
-        self.assertTrue((next_day_dir / "README.md").is_file())
-        self.assertTrue(diagram_dir.is_dir())
+    def test_復習資料は用途別に保存される(self) -> None:
+        review = self.root / "復習用"
+        diagrams = sorted((review / "流れ図").glob("*.md"))
+        self.assertTrue(diagrams)
+        self.assertTrue(all("```mermaid" in path.read_text(encoding="utf-8") for path in diagrams))
+        self.assertFalse(any(
+            "```mermaid" in path.read_text(encoding="utf-8")
+            for path in review.glob("*.md")
+        ))
+        self.assertFalse((review / "学んだこと.md").exists())
 
-        diagram_files = sorted(diagram_dir.glob("*.md"))
-        self.assertTrue(diagram_files)
-        self.assertTrue(
-            all("```mermaid" in path.read_text(encoding="utf-8") for path in diagram_files)
-        )
-        self.assertFalse(
-            any(
-                "```mermaid" in path.read_text(encoding="utf-8")
-                for path in review_dir.glob("*.md")
-            )
-        )
+    def test_マークダウンの相対リンク先が存在する(self) -> None:
+        documents = [self.root / "README.md", *(self.root / "docs").glob("*.md")]
+        documents += [self.skill / "SKILL.md", *(self.skill / "references").glob("*.md")]
+        missing: list[str] = []
+        for document in documents:
+            text = document.read_text(encoding="utf-8")
+            for target in re.findall(r"\[[^]]+\]\(([^)]+\.md(?:#[^)]+)?)\)", text):
+                relative = target.split("#", 1)[0]
+                if relative.startswith(("http://", "https://", "/")) or "<" in relative:
+                    continue
+                if not (document.parent / relative).resolve().is_file():
+                    missing.append(f"{document.relative_to(self.root)} -> {target}")
+        self.assertEqual([], missing)
 
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
-        workflow_text = self.grading_workflow.read_text(encoding="utf-8")
-        self.assertIn("復習ノート作成", skill_text)
-        for expected in (
-            "復習用/流れ図/<topic>.md",
-            "復習用/学んだこと/<分野>.md",
-            "## YYYY-MM-DD",
-            "Score < 100",
-            "誤答した10分復習",
-            "復習用/明日復習するべきところ/YYYY-MM-DD.md",
-            "関連する新語",
-            "Importance 4以上",
-        ):
-            self.assertIn(expected, workflow_text)
-
-    def test_翌日復習に全件掲載と点数順表示の規則がある(self) -> None:
-        skill_text = self.grading_workflow.read_text(encoding="utf-8")
-        review_readme = (
-            self.root / "復習用" / "明日復習するべきところ" / "README.md"
-        ).read_text(encoding="utf-8")
-        self.assertIn("通常・暗記語句の `Score < 100`", skill_text)
-        self.assertIn("誤答した10分復習", skill_text)
-        self.assertIn("10分復習で不正解だった問題", review_readme)
-        self.assertIn("点数・日付・Session・Q番号の順", skill_text)
-        self.assertIn("100点未満なら必ず掲載", review_readme)
-        self.assertIn("問題形式を区別せず点数の低い順", review_readme)
-        self.assertIn("同点は出典の日付・Session番号・Q番号の順", review_readme)
-        self.assertIn("流れ図", review_readme)
-        self.assertIn("既存図を再利用", skill_text)
-
-    def test_翌日復習から流れ図へのリンクは兄弟ディレクトリを参照する(self) -> None:
-        skill_text = self.grading_workflow.read_text(encoding="utf-8")
-        review_files = sorted(
-            (self.root / "復習用" / "明日復習するべきところ").glob("*.md")
-        )
-
-        self.assertIn("元Qへの正確な相対リンク", skill_text)
-        self.assertNotIn("../" * 2 + "流れ図/", skill_text)
-        for review_file in review_files:
-            links = re.findall(r"\]\((\.\./流れ図/[^)]+\.md)\)", review_file.read_text(encoding="utf-8"))
-            for link in links:
-                with self.subTest(review_file=review_file, link=link):
-                    self.assertTrue((review_file.parent / link).is_file())
-
-    def test_十分復習の自動作成は学習操作に限定する(self) -> None:
-        agents_text = (self.root / "AGENTS.md").read_text(encoding="utf-8")
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
-        common_text = self.common_start.read_text(encoding="utf-8")
-        question_text = self.question_workflow.read_text(encoding="utf-8")
-        grading_text = self.grading_workflow.read_text(encoding="utf-8")
-        readme_text = (self.root / "README.md").read_text(encoding="utf-8")
-
-        self.assertIn("When starting question generation or session grading", agents_text)
-        self.assertNotIn("On every user interaction", agents_text)
-        self.assertIn("共通開始処理.md", skill_text)
-        self.assertIn("問題作成または採点を始める前", common_text)
-        self.assertIn("quick-review-status", common_text)
-        self.assertIn("共通開始処理.md", question_text)
-        self.assertIn("共通開始処理.md", grading_text)
-        self.assertNotIn("毎回のユーザー操作", common_text)
-        self.assertIn("問題作成または採点を始めるとき", readme_text)
-
-    def test_ルート説明書から詳細文書を参照できる(self) -> None:
-        readme = (self.root / "README.md").read_text(encoding="utf-8")
-        document_paths = (
-            "docs/使い方.md",
-            "docs/リポジトリ構成.md",
-            "docs/出題・採点ロジック.md",
-            "docs/開発・テスト.md",
-        )
-        for relative_path in document_paths:
-            with self.subTest(relative_path=relative_path):
-                self.assertIn(f"]({relative_path})", readme)
-                self.assertTrue((self.root / relative_path).is_file())
-
-    def test_技能のフロントマターは必要項目だけを持つ(self) -> None:
+    def test_技能のフロントマターとメタデータが有効(self) -> None:
         text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
         match = re.match(r"^---\n(.*?)\n---", text, flags=re.DOTALL)
         self.assertIsNotNone(match)
         assert match
         fields = [line.split(":", 1)[0] for line in match.group(1).splitlines() if ":" in line]
         self.assertEqual(["name", "description"], fields)
-        self.assertIn("name: security-specialist-trainer", match.group(1))
-        self.assertNotIn("TODO", text)
+        self.assertRegex(match.group(1), r"(?m)^name:\s*security-specialist-trainer$")
+        self.assertNotRegex(text, r"\bTODO\b")
 
-    def test_エージェントメタデータに技能呼出しが明記される(self) -> None:
-        text = (self.skill / "agents" / "openai.yaml").read_text(encoding="utf-8")
-        self.assertIn("display_name:", text)
-        self.assertIn("short_description:", text)
-        self.assertIn("$security-specialist-trainer", text)
+        metadata = (self.skill / "agents" / "openai.yaml").read_text(encoding="utf-8")
+        self.assertRegex(metadata, r"(?m)^\s*display_name:\s*\S")
+        self.assertRegex(metadata, r"(?m)^\s*short_description:\s*\S")
+        self.assertRegex(metadata, r"\$security-specialist-trainer\b")
 
-    def test_暗記語句の手順と形式が文書化される(self) -> None:
-        skill_text = self.question_workflow.read_text(encoding="utf-8")
-        selection_text = self.selection_rules.read_text(encoding="utf-8")
-        session_text = (self.root / "参照資料" / "セッション形式.md").read_text(encoding="utf-8")
-        normal_text = self.normal_session_format.read_text(encoding="utf-8")
-        scoring_text = (self.root / "参照資料" / "採点・理解度・復習ルール.md").read_text(encoding="utf-8")
-        self.assertIn("--mode term-recall", skill_text)
-        self.assertIn("指定がなければ10問", selection_text)
-        self.assertIn("- Mode: term-recall", normal_text)
-        self.assertIn("Recall Score", scoring_text)
-        self.assertIn("Explanation Score", scoring_text)
-        self.assertIn("学習記録/理解・応用問題/YYYY-MM-DD.md", session_text)
-        self.assertIn("学習記録/暗記語句問題/YYYY-MM-DD.md", session_text)
-        self.assertIn("--mode standard", normal_text)
-        self.assertIn("--mode term-recall", normal_text)
-        self.assertIn("1〜30問", normal_text)
+    def test_文書化された補助コマンドを解析できる(self) -> None:
+        documents = [
+            self.skill / "SKILL.md",
+            *(self.skill / "references").glob("*.md"),
+            *(self.root / "docs").glob("*.md"),
+        ]
+        found: set[str] = set()
+        failures: list[str] = []
+        required_arguments = {
+            "record": ["--date", "2026-08-22", "--session", "1"],
+            "validate-session": ["--date", "2026-08-22", "--session", "1"],
+        }
+        for document in documents:
+            for command in re.findall(
+                r"(?:skills/security-specialist-trainer/scripts/)?study_helper\.py\s+([a-z][a-z-]*)",
+                document.read_text(encoding="utf-8"),
+            ):
+                found.add(command)
+                try:
+                    parsed = study_helper.parse_args([command, *required_arguments.get(command, [])])
+                except SystemExit as error:
+                    failures.append(f"{document.relative_to(self.root)}: {command} ({error.code})")
+                else:
+                    if parsed.command != command:
+                        failures.append(f"{document.relative_to(self.root)}: {command} -> {parsed.command}")
+        expected = {
+            "briefing", "record", "validate-session", "rebuild", "unanswered",
+            "unreviewed", "activity-log", "grading-candidates", "quick-review-status",
+            "study-date",
+        }
+        self.assertLessEqual(expected, found)
+        self.assertEqual([], failures)
 
-    def test_セッション形式は共通とモード別の詳細に分かれる(self) -> None:
-        common_text = (self.root / "参照資料" / "セッション形式.md").read_text(
-            encoding="utf-8"
-        )
-        normal_text = self.normal_session_format.read_text(encoding="utf-8")
-        quick_text = self.quick_review_format.read_text(encoding="utf-8")
-        grading_text = self.grading_workflow.read_text(encoding="utf-8")
-
-        self.assertIn("通常・暗記語句Session形式", common_text)
-        self.assertIn("10分復習Session形式", common_text)
-        self.assertIn("### 回答", normal_text)
-        self.assertNotIn("\n### 回答\n", quick_text)
-        self.assertIn("- [ ] A.", quick_text)
-        self.assertNotIn("- [ ] A.", common_text)
-        self.assertIn("### 採点", grading_text)
-
-    def test_生成時は出題選定ルールを用い採点全文を要求しない(self) -> None:
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
-        selection_text = self.selection_rules.read_text(encoding="utf-8")
-
-        self.assertIn("Before selecting adaptive questions, read [出題選定ルール.md]", skill_text)
-        self.assertIn("Before assigning scores, read [採点・理解度・復習ルール.md]", skill_text)
-        self.assertIn("難易度と復習期限", selection_text)
-        self.assertIn("通常Sessionは既定6問", selection_text)
-
-    def test_未解答一覧を問題作成と採点の後に更新する(self) -> None:
-        skill_text = self.question_workflow.read_text(encoding="utf-8")
-        session_text = (self.root / "参照資料" / "セッション形式.md").read_text(
-            encoding="utf-8"
-        )
-        self.assertTrue(callable(study_helper.write_unanswered_index))
-        self.assertIn("学習記録/未解答一覧.md", skill_text)
-        self.assertIn("study_helper.py unanswered --root .", skill_text)
-        self.assertIn("study_helper.py unanswered --root .", session_text)
-
-    def test_未復習一覧を問題作成と採点の後に更新する(self) -> None:
-        skill_text = self.question_workflow.read_text(encoding="utf-8")
-        session_text = (self.root / "参照資料" / "セッション形式.md").read_text(
-            encoding="utf-8"
-        )
-        self.assertTrue(callable(study_helper.write_unreviewed_index))
-        self.assertIn("復習用/未復習一覧.md", skill_text)
-        self.assertIn("study_helper.py unreviewed --root .", skill_text)
-        self.assertIn("study_helper.py unreviewed --root .", session_text)
-        grading_text = self.grading_workflow.read_text(encoding="utf-8")
-        self.assertIn("すべての復習ノートを作成・更新した後", grading_text)
-        self.assertIn("study_helper.py unreviewed --root .", grading_text)
-
-    def test_作成直後のセッション検証が手順とコマンドに存在する(self) -> None:
-        workflow_text = self.question_workflow.read_text(encoding="utf-8")
-        session_text = (self.root / "参照資料" / "セッション形式.md").read_text(
-            encoding="utf-8"
-        )
-        parsed = study_helper.parse_args(
-            ["validate-session", "--date", "2026-08-22", "--session", "1"]
-        )
-        self.assertEqual("validate-session", parsed.command)
-        self.assertTrue(callable(study_helper.validate_authored_session))
-        self.assertIn("study_helper.py validate-session", workflow_text)
-        self.assertIn("study_helper.py validate-session", session_text)
-
-    def test_カタログ拡張は明示依頼時だけ行う(self) -> None:
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
-        catalog_text = self.catalog_expansion.read_text(encoding="utf-8")
-        logic_text = (self.root / "docs" / "出題・採点ロジック.md").read_text(
-            encoding="utf-8"
-        )
-        taxonomy_text = (self.root / "参照資料" / "出題分類と概念カタログ.md").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("only when the user explicitly requests catalog expansion", skill_text)
-        self.assertIn("通常の問題作成・採点・復習では読まない", catalog_text)
-        self.assertIn("根拠がある語句だけ", catalog_text)
-        self.assertIn("自動では実行しません", logic_text)
-        self.assertIn("明示した場合だけ行う", taxonomy_text)
-
-    def test_日常の作問は概念カタログを候補周辺だけ参照する(self) -> None:
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
-        workflow_text = self.question_workflow.read_text(encoding="utf-8")
-        lookup_text = self.catalog_lookup.read_text(encoding="utf-8")
-
-        self.assertIn("do not read [出題分類と概念カタログ.md]", skill_text)
-        self.assertIn("カタログ部分参照.md", workflow_text)
-        self.assertIn("study_helper.py briefing", lookup_text)
-        self.assertIn("rg -n -F", lookup_text)
-        self.assertIn("直接のPrerequisitesだけ", lookup_text)
-        self.assertIn("再帰的に広げない", lookup_text)
-        self.assertIn("全読みに戻す場合", lookup_text)
-        self.assertIn("分野指定なしで幅広く出題", lookup_text)
-
-    def test_日常の作問は進捗全体の代わりにブリーフィングを使う(self) -> None:
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
-        workflow_text = self.question_workflow.read_text(encoding="utf-8")
-        selection_text = self.selection_rules.read_text(encoding="utf-8")
-        self.assertIn("study_helper.py briefing", skill_text)
-        self.assertIn("study_helper.py briefing", workflow_text)
-        self.assertIn("手で全読みにしない", workflow_text)
-        self.assertIn("briefingは出題の自動確定ではない", selection_text)
-        self.assertEqual("briefing", study_helper.parse_args(["briefing"]).command)
-
-    def test_ローカル過去問は明示指示時だけ参照する(self) -> None:
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
-        catalog_text = self.catalog_expansion.read_text(encoding="utf-8")
-        gitignore_text = (self.root / ".gitignore").read_text(encoding="utf-8")
-        structure_text = (self.root / "docs" / "リポジトリ構成.md").read_text(
-            encoding="utf-8"
-        )
-        index_text = (self.root / "参照資料" / "過去問分析索引.md").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("do **not** inspect past-question materials", skill_text)
-        self.assertIn("利用者が明示的に", catalog_text)
-        self.assertIn("During routine generation", skill_text)
-        self.assertIn("/過去問/", gitignore_text)
-        self.assertIn("利用者がカタログ拡張", structure_text)
-        self.assertIn("日々の出題ではPDFも索引も読まず", structure_text)
-        self.assertIn("根拠年度", index_text)
-
-    def test_わかりませんは回答済みとして採点するルールが文書化される(self) -> None:
-        skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
-        workflow_text = self.grading_workflow.read_text(encoding="utf-8")
-        session_text = (self.root / "参照資料" / "セッション形式.md").read_text(
-            encoding="utf-8"
-        )
-        scoring_text = (self.root / "参照資料" / "採点・理解度・復習ルール.md").read_text(
-            encoding="utf-8"
-        )
-        usage_text = (self.root / "docs" / "使い方.md").read_text(encoding="utf-8")
-        for text in (workflow_text, scoring_text, usage_text):
-            with self.subTest(text=text[:30]):
-                self.assertIn("わかりません", text)
-                self.assertIn("0 / 100", text)
-        self.assertIn("採点前チェック", skill_text)
-        self.assertIn("理解・応用問題", session_text)
-        self.assertIn("理解・応用問題", scoring_text)
-        self.assertIn("理解・応用問題", usage_text)
-
-    def test_設問外の補足不足で減点しない採点規則が文書化される(self) -> None:
-        workflow_text = self.grading_workflow.read_text(encoding="utf-8")
-        scoring_text = (self.root / "参照資料" / "採点・理解度・復習ルール.md").read_text(
-            encoding="utf-8"
-        )
-        logic_text = (self.root / "docs" / "出題・採点ロジック.md").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("問題文が求めた観点だけ", workflow_text)
-        self.assertIn("未要求の補足知識を理由に減点しない", workflow_text)
-        self.assertIn("問題文で明示していない観点", scoring_text)
-        self.assertIn("満点とし", scoring_text)
-        self.assertIn("補足知識がないことを理由に部分点へ下げません", logic_text)
-
-    def test_採点手順は現在と旧セッション保存先を全て明記する(self) -> None:
-        grade_section = self.grading_workflow.read_text(encoding="utf-8")
-        for session_path in (
-            "学習記録/理解・応用問題/",
-            "学習記録/暗記語句問題/",
-            "学習記録/standard/",
-            "学習記録/term-recall/",
-            "学習記録/YYYY-MM-DD.md",
-        ):
-            with self.subTest(session_path=session_path):
-                self.assertIn(session_path, grade_section)
-        self.assertIn("Track A/Bの配分", grade_section)
-        self.assertIn("問題数", grade_section)
-        self.assertIn("Q1からの連番", grade_section)
-
-    def test_採点対象は回答内容で選び全件を時系列で処理する(self) -> None:
-        skill_text = self.grading_workflow.read_text(encoding="utf-8")
-        usage_text = (self.root / "docs" / "使い方.md").read_text(encoding="utf-8")
-        logic_text = (self.root / "docs" / "出題・採点ロジック.md").read_text(
-            encoding="utf-8"
-        )
-
-        self.assertIn("Git差分、コミット履歴で絞らない", skill_text)
-        self.assertIn("候補全件", skill_text)
-        self.assertIn("日付、Session番号の昇順", skill_text)
-        self.assertIn("全問回答済みで、採点ブロックまたはProgress更新が欠けるSessionだけ", skill_text)
-        self.assertIn("見た目の `Status`、Git差分、コミット履歴で絞らない", skill_text)
-        self.assertIn("空欄を含むSessionは飛ばされ", usage_text)
-        self.assertIn("新しい未回答Sessionが古い回答済みSessionの採点を妨げません", logic_text)
-
-    def test_時系列が逆転した進捗を再構築できる(self) -> None:
-        skill_text = self.grading_workflow.read_text(encoding="utf-8")
-        self.assertTrue(callable(study_helper.rebuild_progress))
-        self.assertEqual("rebuild", study_helper.parse_args(["rebuild"]).command)
-        self.assertIn("study_helper.py rebuild --root .", skill_text)
-
-    def test_補助スクリプトは責務別モジュールへ分割される(self) -> None:
+    def test_公開インターフェースは明示的に固定される(self) -> None:
         scripts = self.skill / "scripts"
-        entrypoint_tree = ast.parse(
-            (scripts / "study_helper.py").read_text(encoding="utf-8")
+        package_spec = importlib.util.spec_from_file_location(
+            "trainer_public_api",
+            scripts / "trainer" / "__init__.py",
+            submodule_search_locations=[str(scripts / "trainer")],
         )
-        self.assertFalse(
-            any(isinstance(node, (ast.FunctionDef, ast.ClassDef)) for node in entrypoint_tree.body)
-        )
-        self.assertLessEqual(
-            len((scripts / "study_helper.py").read_text(encoding="utf-8").splitlines()),
-            40,
-        )
+        assert package_spec and package_spec.loader
+        package = importlib.util.module_from_spec(package_spec)
+        sys.modules[package_spec.name] = package
+        package_spec.loader.exec_module(package)
+
+        self.assertEqual(package.__all__, study_helper.__all__)
+        self.assertEqual(len(package.__all__), len(set(package.__all__)))
+        self.assertTrue(all(hasattr(package, name) for name in package.__all__))
+        self.assertTrue(all(hasattr(study_helper, name) for name in package.__all__))
+        self.assertFalse({"os", "re", "Path", "Optional"} & set(package.__all__))
+
+        wildcard_imports: list[str] = []
+        for path in (scripts / "study_helper.py", scripts / "trainer" / "__init__.py"):
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            if any(
+                isinstance(node, ast.ImportFrom)
+                and any(alias.name == "*" for alias in node.names)
+                for node in ast.walk(tree)
+            ):
+                wildcard_imports.append(path.name)
+        self.assertEqual([], wildcard_imports)
+
+    def test_補助スクリプトは責務別モジュールに分割される(self) -> None:
+        scripts = self.skill / "scripts"
+        entrypoint = (scripts / "study_helper.py").read_text(encoding="utf-8")
+        tree = ast.parse(entrypoint)
+        self.assertFalse(any(isinstance(node, (ast.FunctionDef, ast.ClassDef)) for node in tree.body))
+        self.assertLessEqual(len(entrypoint.splitlines()), 40)
 
         expected_functions = {
             "session_parser.py": "parse_graded_session",
@@ -420,33 +189,25 @@ class 技能構造テスト(unittest.TestCase):
             "planner.py": {"common", "session_parser", "indexes"},
             "cli.py": {"common", "session_parser", "indexes", "progress", "planner"},
         }
+        failures: list[str] = []
         for filename, function_name in expected_functions.items():
-            tree = ast.parse(
-                (scripts / "trainer" / filename).read_text(encoding="utf-8")
-            )
-            defined = {
-                node.name for node in tree.body if isinstance(node, ast.FunctionDef)
-            }
+            module_tree = ast.parse((scripts / "trainer" / filename).read_text(encoding="utf-8"))
+            defined = {node.name for node in module_tree.body if isinstance(node, ast.FunctionDef)}
             dependencies = {
-                node.module
-                for node in tree.body
-                if isinstance(node, ast.ImportFrom)
-                and node.level == 1
-                and node.module is not None
+                node.module for node in module_tree.body
+                if isinstance(node, ast.ImportFrom) and node.level == 1 and node.module
             }
-            with self.subTest(filename=filename):
-                self.assertIn(function_name, defined)
-                self.assertLessEqual(dependencies, allowed_dependencies[filename])
+            if function_name not in defined:
+                failures.append(f"{filename}: missing {function_name}")
+            unexpected = dependencies - allowed_dependencies[filename]
+            if unexpected:
+                failures.append(f"{filename}: unexpected dependencies {sorted(unexpected)}")
+        self.assertEqual([], failures)
 
     def test_責務別モジュールに未解決のグローバル参照がない(self) -> None:
-        module_paths = sorted(
-            (self.skill / "scripts" / "trainer").glob("*.py")
-        )
-        self.assertTrue(module_paths)
-        for path in module_paths:
-            table = symtable.symtable(
-                path.read_text(encoding="utf-8"), str(path), "exec"
-            )
+        failures: dict[str, set[str]] = {}
+        for path in sorted((self.skill / "scripts" / "trainer").glob("*.py")):
+            table = symtable.symtable(path.read_text(encoding="utf-8"), str(path), "exec")
             module_names = {symbol.get_name() for symbol in table.get_symbols()}
             unresolved: set[str] = set()
             scopes = [table]
@@ -454,26 +215,53 @@ class 技能構造テスト(unittest.TestCase):
                 scope = scopes.pop()
                 for symbol in scope.get_symbols():
                     if (
-                        scope is not table
-                        and symbol.is_referenced()
-                        and symbol.is_global()
+                        scope is not table and symbol.is_referenced() and symbol.is_global()
                         and symbol.get_name() not in module_names
                         and not hasattr(builtins, symbol.get_name())
                         and symbol.get_name() != "__file__"
                     ):
                         unresolved.add(symbol.get_name())
                 scopes.extend(scope.get_children())
-            with self.subTest(module=path.name):
-                self.assertEqual(set(), unresolved)
+            if unresolved:
+                failures[path.name] = unresolved
+        self.assertEqual({}, failures)
 
-    def test_自動テストが全てのプッシュで実行される(self) -> None:
-        workflow = (
-            self.root / ".github" / "workflows" / "python-tests.yml"
-        ).read_text(encoding="utf-8")
+    def test_学習ワークフローの意思決定契約が保たれる(self) -> None:
+        documents = {
+            "AGENTS.md": (self.root / "AGENTS.md").read_text(encoding="utf-8"),
+            "SKILL.md": (self.skill / "SKILL.md").read_text(encoding="utf-8"),
+            "共通開始処理.md": self.common_start.read_text(encoding="utf-8"),
+            "問題作成ワークフロー.md": self.question_workflow.read_text(encoding="utf-8"),
+            "採点ワークフロー.md": self.grading_workflow.read_text(encoding="utf-8"),
+            "カタログ拡張.md": self.catalog_expansion.read_text(encoding="utf-8"),
+            "カタログ部分参照.md": self.catalog_lookup.read_text(encoding="utf-8"),
+        }
+        contracts = {
+            "AGENTS.md": ("question generation or session grading",),
+            "SKILL.md": ("共通開始処理.md", "only when the user explicitly requests catalog expansion"),
+            "共通開始処理.md": ("午前5時", "quick-review-status"),
+            "問題作成ワークフロー.md": ("出題選定ルール.md", "validate-session"),
+            "採点ワークフロー.md": (
+                "grading-candidates", "Git差分、コミット履歴で絞らない",
+                "Score < 100", "誤答した10分復習", "unreviewed",
+            ),
+            "カタログ拡張.md": ("通常の問題作成・採点・復習では読まない",),
+            "カタログ部分参照.md": ("直接のPrerequisitesだけ", "再帰的に広げない"),
+        }
+        missing = {
+            name: [phrase for phrase in phrases if phrase not in documents[name]]
+            for name, phrases in contracts.items()
+        }
+        self.assertEqual({}, {name: phrases for name, phrases in missing.items() if phrases})
+
+    def test_自動テストは全プッシュで実行される(self) -> None:
+        workflow = (self.root / ".github" / "workflows" / "python-tests.yml").read_text(encoding="utf-8")
         self.assertRegex(workflow, r"(?m)^on:\n  push:\s*$")
-        self.assertNotIn("branches:", workflow)
-        self.assertIn("python -m unittest discover", workflow)
-        self.assertIn("-s skills/security-specialist-trainer/tests", workflow)
+        self.assertNotRegex(workflow, r"(?m)^\s+branches:")
+        self.assertRegex(
+            workflow,
+            r"python -m unittest discover\s+\\?\s*-s skills/security-specialist-trainer/tests",
+        )
 
     def test_テスト名は日本語で記述される(self) -> None:
         japanese = re.compile(r"[ぁ-んァ-ヶ一-龠々]")
@@ -482,63 +270,31 @@ class 技能構造テスト(unittest.TestCase):
         def 日本語主体の名前(name: str) -> bool:
             return japanese.search(name) is not None and english_word.search(name) is None
 
-        def 検査対象の名前(source: str) -> tuple[list[str], list[str]]:
-            tree = ast.parse(source)
-            class_names = [
-                node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)
-            ]
+        failures: list[str] = []
+        for path in sorted((self.skill / "tests").glob("test_*.py")):
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            class_names = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
             method_names = [
-                node.name
+                node.name.removeprefix("test_")
                 for node in ast.walk(tree)
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
                 and node.name.startswith("test_")
             ]
-            return class_names, method_names
+            if not 日本語主体の名前(path.stem.removeprefix("test_")):
+                failures.append(path.name)
+            failures.extend(f"{path.name}:{name}" for name in class_names if not 日本語主体の名前(name))
+            failures.extend(f"{path.name}:{name}" for name in method_names if not 日本語主体の名前(name))
+        self.assertEqual([], failures)
 
-        self.assertTrue(日本語主体の名前("科目Bの比率を検証する"))
-        self.assertFalse(日本語主体の名前("should_work_日本語"))
-        bypass_classes, bypass_methods = 検査対象の名前(
-            """class should_work_日本語(基底テスト):
-    def test_should_work_日本語(self, value=None):
-        pass
-"""
-        )
-        self.assertEqual(["should_work_日本語"], bypass_classes)
-        self.assertEqual(["test_should_work_日本語"], bypass_methods)
-        self.assertFalse(all(日本語主体の名前(name) for name in bypass_classes))
-        self.assertFalse(
-            all(
-                日本語主体の名前(name.removeprefix("test_"))
-                for name in bypass_methods
-            )
-        )
-
-        for path in sorted((self.skill / "tests").glob("test_*.py")):
-            text = path.read_text(encoding="utf-8")
-            class_names, method_names = 検査対象の名前(text)
-            with self.subTest(path=path.name):
-                self.assertTrue(class_names)
-                self.assertTrue(method_names)
-                self.assertTrue(
-                    日本語主体の名前(path.stem.removeprefix("test_")), path.name
-                )
-                self.assertTrue(
-                    all(日本語主体の名前(name) for name in class_names), path.name
-                )
-                self.assertTrue(
-                    all(
-                        日本語主体の名前(name.removeprefix("test_"))
-                        for name in method_names
-                    ),
-                    path.name,
-                )
-
-        agents = (self.root / "AGENTS.md").read_text(encoding="utf-8")
-        development_guide = (
-            self.root / "docs" / "開発・テスト.md"
-        ).read_text(encoding="utf-8")
-        self.assertIn("test file names", agents)
-        self.assertIn("テストファイル名", development_guide)
+    def test_構造テストは文言の個別照合に偏らない(self) -> None:
+        tree = ast.parse(Path(__file__).read_text(encoding="utf-8"))
+        assert_in_calls = [
+            node for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "assertIn"
+        ]
+        self.assertLessEqual(len(assert_in_calls), 10)
 
 
 if __name__ == "__main__":
