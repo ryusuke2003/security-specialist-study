@@ -199,16 +199,9 @@ def validate_authored_session(
     status_values = re.findall(
         r"^- Status:[ \t]*(\S+)[ \t]*$", session, flags=re.MULTILINE
     )
-    allowed_statuses = {
-        "awaiting_answers",
-        "ready_for_grading",
-        "grading",
-        "graded",
-        "cancelled",
-    }
-    if len(status_values) != 1 or status_values[0] not in allowed_statuses:
+    if len(status_values) != 1 or status_values[0] != "awaiting_answers":
         raise ValueError(
-            f"Session {session_number} must have exactly one supported Status"
+            f"Session {session_number} must have exactly one awaiting_answers Status"
         )
 
     question_count_values = re.findall(
@@ -309,25 +302,46 @@ def validate_authored_session(
         if not problem_text:
             raise ValueError(f"Q{number} 問題 must not be empty")
 
-        answer_count = len(
-            re.findall(r"^### 回答[ \t]*$", block, flags=re.MULTILINE)
+        answer_matches = list(
+            re.finditer(r"^### 回答[ \t]*$", block, flags=re.MULTILINE)
         )
         if actual_mode == QUICK_REVIEW_MODE:
-            if answer_count:
+            if answer_matches:
                 raise ValueError(f"Q{number} quick-review must not have a 回答 heading")
             checkbox_lines = re.findall(
                 r"^- \[[^\]]*\] [A-Z]\.\s+.*$", problem_text, flags=re.MULTILINE
             )
             choices = re.findall(
-                r"^- \[[ xX]\] ([ABC])\.\s+\S.*$", problem_text, flags=re.MULTILINE
+                r"^- \[ \] ([ABC])\.\s+\S.*$", problem_text, flags=re.MULTILINE
             )
             if len(checkbox_lines) != 3 or choices != ["A", "B", "C"]:
                 raise ValueError(
-                    f"Q{number} quick-review must have exactly A/B/C checkbox choices"
+                    f"Q{number} quick-review must have exactly three unchecked "
+                    "A/B/C checkbox choices"
                 )
         else:
-            if answer_count != 1:
+            if len(answer_matches) != 1:
                 raise ValueError(f"Q{number} must have exactly one 回答 heading")
+            answer_start = answer_matches[0].end()
+            next_heading = re.search(
+                r"^### ", block[answer_start:], flags=re.MULTILINE
+            )
+            answer_end = (
+                answer_start + next_heading.start()
+                if next_heading
+                else len(block)
+            )
+            answer_text = block[answer_start:answer_end]
+            visible_answer = re.sub(
+                r"<!--.*?-->", "", answer_text, flags=re.DOTALL
+            ).strip()
+            if visible_answer:
+                raise ValueError(
+                    f"Q{number} 回答 must be empty before the learner answers"
+                )
+
+        if re.search(r"^### 採点[ \t]*$", block, flags=re.MULTILINE):
+            raise ValueError(f"Q{number} must not have grading before the learner answers")
 
         if actual_mode == TERM_RECALL_MODE:
             if len(primary) != 1:
