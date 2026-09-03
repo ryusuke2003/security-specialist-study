@@ -290,10 +290,39 @@ def render_activity_section(graded_date: date, activities: list[GradedActivity])
     return "\n".join(lines).rstrip() + "\n"
 
 
-def write_activity_log(root: Path, graded_date: date) -> Path:
-    """Append or replace one study-date section without discarding prior dates."""
+def write_activity_log(
+    root: Path,
+    graded_date: date,
+    pending_activity: GradedActivity | None = None,
+) -> Path:
+    """Write one study-date section, optionally including a Session not finalized yet."""
     path = sessions_directory(root) / "行ったこと.md"
-    section = render_activity_section(graded_date, graded_activities(root, graded_date))
+    activities = graded_activities(root, graded_date)
+    if pending_activity is not None:
+        pending_key = (
+            pending_activity.study_date,
+            pending_activity.session_number,
+            pending_activity.session_link_path,
+        )
+        activities = [
+            activity
+            for activity in activities
+            if (
+                activity.study_date,
+                activity.session_number,
+                activity.session_link_path,
+            )
+            != pending_key
+        ]
+        activities.append(pending_activity)
+        activities.sort(
+            key=lambda item: (
+                item.study_date,
+                item.session_number,
+                item.session_link_path,
+            )
+        )
+    section = render_activity_section(graded_date, activities)
     if not path.exists():
         atomic_write(path, "# 行ったこと\n\n" + section)
         return path

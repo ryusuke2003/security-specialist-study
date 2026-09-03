@@ -9,6 +9,7 @@ from typing import Optional
 
 from .common import (
     CatalogItem,
+    GradedActivity,
     GradedQuestion,
     QUICK_REVIEW_MODE,
     TERM_RECALL_MODE,
@@ -25,6 +26,7 @@ from .common import (
     progress_directory,
     progress_file,
     read_table,
+    sessions_directory,
     updated_mastery,
     updated_recall_mastery,
 )
@@ -543,16 +545,28 @@ def record_progress(
         raise ValueError("Cannot record a cancelled session")
     session_mode = session_mode_for_path(root, session_path, text, session_number)
     graded_date = current_study_date()
+    pending_activity = GradedActivity(
+        study_date=study_date,
+        session_number=session_number,
+        session_kind={
+            TERM_RECALL_MODE: "暗記語句問題",
+            QUICK_REVIEW_MODE: "10分復習",
+        }.get(session_mode, "理解・応用問題"),
+        question_count=len(questions),
+        session_link_path=Path(
+            os.path.relpath(session_path, sessions_directory(root))
+        ).as_posix(),
+    )
     if session_mode == QUICK_REVIEW_MODE:
         if status not in {"grading", "graded"}:
             raise ValueError("Set Session Status to grading after writing all scores, then run record")
         correct = sum(question.score == 100 for question in questions)
+        write_motivation(root)
+        write_unanswered_index(root)
+        write_activity_log(root, graded_date, pending_activity)
         finalize_quick_review_session(
             session_path, session_number, correct, len(questions), graded_date
         )
-        write_activity_log(root, graded_date)
-        write_motivation(root)
-        write_unanswered_index(root)
         return {
             "average": round(100 * correct / len(questions)),
             "weak": [],
@@ -569,10 +583,10 @@ def record_progress(
     summary = update_history(
         root, study_date, session_number, questions, records, session_path, session_mode
     )
-    finalize_session(session_path, session_number, summary, graded_date)
-    write_activity_log(root, graded_date)
     write_motivation(root)
     write_unanswered_index(root)
+    write_activity_log(root, graded_date, pending_activity)
+    finalize_session(session_path, session_number, summary, graded_date)
     return {**summary, "questions": len(questions), "session_path": session_path}
 
 
