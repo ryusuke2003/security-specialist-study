@@ -130,3 +130,7 @@ flowchart TD
 > 覚え方: **ECDHEで共有秘密を作る → HKDFで用途別・方向別の鍵材料を作る → AEADで暗号文と認証タグを一緒に作る。**
 
 補足: `EncryptedExtensions` はServerHelloの後、Certificateの前に送られるサーバ設定のメッセージである。この図では、8段階の主な流れに集中するため省略している。
+
+## 参考資料
+
+- [イラストで正しく理解するTLS 1.3の暗号技術（光成滋生）](https://zenn.dev/herumi/articles/tls1_3_crypto): ECDH鍵共有、HKDFによる鍵導出、AEAD、署名の役割を図で確認するための補助資料。
