@@ -15,14 +15,16 @@ Choose one workflow:
 - Requests such as「今日の10分復習」select quick-review mode.
 - Grade answers: follow **Grade a session**.
 - Show results or mastery: follow **Report progress**.
-- Requests such as「未復習一覧を更新して」refresh the generated unreviewed index with the command below; do not edit the date-based review notes themselves.
+- Requests such as「未復習一覧を更新して」run `python3 skills/security-specialist-trainer/scripts/study_helper.py unreviewed --root .`; do not edit the date-based review notes themselves.
 - Combine requests only when the user clearly asks for both; finish grading before generating later adaptive questions.
 
 Read [セッション形式.md](../../参照資料/セッション形式.md) before writing or grading a session, then read only the matching mode detail it links to. Before selecting adaptive questions, read [出題選定ルール.md](references/出題選定ルール.md) and [カタログ部分参照.md](references/カタログ部分参照.md). During routine generation, retrieve only the selected candidates' catalog rows and the needed direct related or prerequisite rows; do not read [出題分類と概念カタログ.md](../../参照資料/出題分類と概念カタログ.md) in full. Read it in full only for catalog expansion, broad unfocused cross-domain generation, or catalog-consistency investigation. Before assigning scores, read [採点・理解度・復習ルール.md](../../参照資料/採点・理解度・復習ルール.md).
 
+Before either question generation or grading, read and complete [共通開始処理.md](references/共通開始処理.md). It owns the JST study-date and daily quick-review preflight used by both workflows. Do not run it for progress reports or other non-learning requests.
+
 ## Generate a session
 
-Read [問題作成ワークフロー.md](references/問題作成ワークフロー.md) before writing. It defines the mandatory study-date and daily-review checks, planning and selection, each Session mode, and post-creation validation.
+After the common preflight, read [問題作成ワークフロー.md](references/問題作成ワークフロー.md) before writing. It defines planning and selection, each Session mode, and post-creation validation.
 
 For routine generation, start from `study_helper.py briefing`; it aggregates progress and recent-session warnings. Read source progress files or Session files only when the briefing identifies a specific need for verification.
 
@@ -32,7 +34,7 @@ Keep questions adaptive, scenario-oriented where appropriate, and free of answer
 
 ## Grade a session
 
-Use [採点ワークフロー.md](references/採点ワークフロー.md) in this order:
+After the common preflight, use [採点ワークフロー.md](references/採点ワークフロー.md) in this order:
 
 1. Read **採点前チェック** before inspecting answer prose. It determines the complete worklist and order.
 2. For each selected Session, read **採点・記録**. It covers scoring, progress updates, recovery, and verification.

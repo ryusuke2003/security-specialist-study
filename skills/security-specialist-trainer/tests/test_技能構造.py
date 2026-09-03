@@ -1,9 +1,19 @@
 from __future__ import annotations
 
 import ast
+import importlib.util
 import re
+import sys
 import unittest
 from pathlib import Path
+
+
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "study_helper.py"
+SPEC = importlib.util.spec_from_file_location("study_helper_structure", SCRIPT)
+assert SPEC and SPEC.loader
+study_helper = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = study_helper
+SPEC.loader.exec_module(study_helper)
 
 
 class 技能構造テスト(unittest.TestCase):
@@ -16,6 +26,7 @@ class 技能構造テスト(unittest.TestCase):
         )
         cls.catalog_expansion = cls.skill / "references" / "カタログ拡張.md"
         cls.catalog_lookup = cls.skill / "references" / "カタログ部分参照.md"
+        cls.common_start = cls.skill / "references" / "共通開始処理.md"
         cls.question_workflow = cls.skill / "references" / "問題作成ワークフロー.md"
         cls.selection_rules = cls.skill / "references" / "出題選定ルール.md"
         cls.normal_session_format = cls.root / "参照資料" / "通常・暗記語句Session形式.md"
@@ -27,6 +38,13 @@ class 技能構造テスト(unittest.TestCase):
             self.root / ".github" / "workflows" / "python-tests.yml",
             self.skill / "SKILL.md",
             self.skill / "agents" / "openai.yaml",
+            self.skill / "scripts" / "trainer" / "__init__.py",
+            self.skill / "scripts" / "trainer" / "common.py",
+            self.skill / "scripts" / "trainer" / "session_parser.py",
+            self.skill / "scripts" / "trainer" / "indexes.py",
+            self.skill / "scripts" / "trainer" / "progress.py",
+            self.skill / "scripts" / "trainer" / "planner.py",
+            self.skill / "scripts" / "trainer" / "cli.py",
             self.root / "README.md",
             self.root / "docs" / "使い方.md",
             self.root / "docs" / "リポジトリ構成.md",
@@ -45,6 +63,7 @@ class 技能構造テスト(unittest.TestCase):
             self.grading_workflow,
             self.catalog_expansion,
             self.catalog_lookup,
+            self.common_start,
             self.question_workflow,
             self.selection_rules,
         ]
@@ -124,14 +143,19 @@ class 技能構造テスト(unittest.TestCase):
     def test_十分復習の自動作成は学習操作に限定する(self) -> None:
         agents_text = (self.root / "AGENTS.md").read_text(encoding="utf-8")
         skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
-        workflow_text = self.question_workflow.read_text(encoding="utf-8")
+        common_text = self.common_start.read_text(encoding="utf-8")
+        question_text = self.question_workflow.read_text(encoding="utf-8")
+        grading_text = self.grading_workflow.read_text(encoding="utf-8")
         readme_text = (self.root / "README.md").read_text(encoding="utf-8")
 
         self.assertIn("When starting question generation or session grading", agents_text)
         self.assertNotIn("On every user interaction", agents_text)
-        self.assertIn("問題作成ワークフロー", skill_text)
-        self.assertIn("問題作成または採点では", workflow_text)
-        self.assertNotIn("毎回のユーザー操作", workflow_text)
+        self.assertIn("共通開始処理.md", skill_text)
+        self.assertIn("問題作成または採点を始める前", common_text)
+        self.assertIn("quick-review-status", common_text)
+        self.assertIn("共通開始処理.md", question_text)
+        self.assertIn("共通開始処理.md", grading_text)
+        self.assertNotIn("毎回のユーザー操作", common_text)
         self.assertIn("問題作成または採点を始めるとき", readme_text)
 
     def test_ルート説明書から詳細文書を参照できる(self) -> None:
@@ -206,30 +230,40 @@ class 技能構造テスト(unittest.TestCase):
         self.assertIn("通常Sessionは既定6問", selection_text)
 
     def test_未解答一覧を問題作成と採点の後に更新する(self) -> None:
-        script_text = (self.skill / "scripts" / "study_helper.py").read_text(
-            encoding="utf-8"
-        )
         skill_text = self.question_workflow.read_text(encoding="utf-8")
         session_text = (self.root / "参照資料" / "セッション形式.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn('subparsers.add_parser(\n        "unanswered"', script_text)
+        self.assertTrue(callable(study_helper.write_unanswered_index))
         self.assertIn("学習記録/未解答一覧.md", skill_text)
         self.assertIn("study_helper.py unanswered --root .", skill_text)
         self.assertIn("study_helper.py unanswered --root .", session_text)
 
     def test_未復習一覧を問題作成と採点の後に更新する(self) -> None:
-        script_text = (self.skill / "scripts" / "study_helper.py").read_text(
-            encoding="utf-8"
-        )
         skill_text = self.question_workflow.read_text(encoding="utf-8")
         session_text = (self.root / "参照資料" / "セッション形式.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn('subparsers.add_parser(\n        "unreviewed"', script_text)
+        self.assertTrue(callable(study_helper.write_unreviewed_index))
         self.assertIn("復習用/未復習一覧.md", skill_text)
         self.assertIn("study_helper.py unreviewed --root .", skill_text)
         self.assertIn("study_helper.py unreviewed --root .", session_text)
+        grading_text = self.grading_workflow.read_text(encoding="utf-8")
+        self.assertIn("すべての復習ノートを作成・更新した後", grading_text)
+        self.assertIn("study_helper.py unreviewed --root .", grading_text)
+
+    def test_作成直後のセッション検証が手順とコマンドに存在する(self) -> None:
+        workflow_text = self.question_workflow.read_text(encoding="utf-8")
+        session_text = (self.root / "参照資料" / "セッション形式.md").read_text(
+            encoding="utf-8"
+        )
+        parsed = study_helper.parse_args(
+            ["validate-session", "--date", "2026-08-22", "--session", "1"]
+        )
+        self.assertEqual("validate-session", parsed.command)
+        self.assertTrue(callable(study_helper.validate_authored_session))
+        self.assertIn("study_helper.py validate-session", workflow_text)
+        self.assertIn("study_helper.py validate-session", session_text)
 
     def test_カタログ拡張は明示依頼時だけ行う(self) -> None:
         skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
@@ -264,15 +298,11 @@ class 技能構造テスト(unittest.TestCase):
         skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
         workflow_text = self.question_workflow.read_text(encoding="utf-8")
         selection_text = self.selection_rules.read_text(encoding="utf-8")
-        script_text = (self.skill / "scripts" / "study_helper.py").read_text(
-            encoding="utf-8"
-        )
-
         self.assertIn("study_helper.py briefing", skill_text)
         self.assertIn("study_helper.py briefing", workflow_text)
         self.assertIn("手で全読みにしない", workflow_text)
         self.assertIn("briefingは出題の自動確定ではない", selection_text)
-        self.assertIn('subparsers.add_parser(\n        "briefing"', script_text)
+        self.assertEqual("briefing", study_helper.parse_args(["briefing"]).command)
 
     def test_ローカル過去問は明示指示時だけ参照する(self) -> None:
         skill_text = (self.skill / "SKILL.md").read_text(encoding="utf-8")
@@ -356,13 +386,55 @@ class 技能構造テスト(unittest.TestCase):
         self.assertIn("新しい未回答Sessionが古い回答済みSessionの採点を妨げません", logic_text)
 
     def test_時系列が逆転した進捗を再構築できる(self) -> None:
-        script_text = (self.skill / "scripts" / "study_helper.py").read_text(
-            encoding="utf-8"
-        )
         skill_text = self.grading_workflow.read_text(encoding="utf-8")
-        self.assertIn("def rebuild_progress", script_text)
-        self.assertIn('subparsers.add_parser(\n        "rebuild"', script_text)
+        self.assertTrue(callable(study_helper.rebuild_progress))
+        self.assertEqual("rebuild", study_helper.parse_args(["rebuild"]).command)
         self.assertIn("study_helper.py rebuild --root .", skill_text)
+
+    def test_補助スクリプトは責務別モジュールへ分割される(self) -> None:
+        scripts = self.skill / "scripts"
+        entrypoint_tree = ast.parse(
+            (scripts / "study_helper.py").read_text(encoding="utf-8")
+        )
+        self.assertFalse(
+            any(isinstance(node, (ast.FunctionDef, ast.ClassDef)) for node in entrypoint_tree.body)
+        )
+        self.assertLessEqual(
+            len((scripts / "study_helper.py").read_text(encoding="utf-8").splitlines()),
+            40,
+        )
+
+        expected_functions = {
+            "session_parser.py": "parse_graded_session",
+            "indexes.py": "write_unreviewed_index",
+            "progress.py": "record_progress",
+            "planner.py": "adaptive_plan",
+            "cli.py": "main",
+        }
+        allowed_dependencies = {
+            "session_parser.py": {"common"},
+            "indexes.py": {"common", "session_parser"},
+            "progress.py": {"common", "session_parser", "indexes"},
+            "planner.py": {"common", "session_parser", "indexes"},
+            "cli.py": {"common", "session_parser", "indexes", "progress", "planner"},
+        }
+        for filename, function_name in expected_functions.items():
+            tree = ast.parse(
+                (scripts / "trainer" / filename).read_text(encoding="utf-8")
+            )
+            defined = {
+                node.name for node in tree.body if isinstance(node, ast.FunctionDef)
+            }
+            dependencies = {
+                node.module
+                for node in tree.body
+                if isinstance(node, ast.ImportFrom)
+                and node.level == 1
+                and node.module is not None
+            }
+            with self.subTest(filename=filename):
+                self.assertIn(function_name, defined)
+                self.assertLessEqual(dependencies, allowed_dependencies[filename])
 
     def test_自動テストが全てのプッシュで実行される(self) -> None:
         workflow = (

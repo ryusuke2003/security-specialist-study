@@ -403,7 +403,9 @@ class 学習支援テスト(unittest.TestCase):
             for name in ("語句別理解度.md", "分野別理解度.md", "学習履歴.md"):
                 (progress_dir / name).write_text("変更しない\n", encoding="utf-8")
             (review_dir / "2026-08-22.md").write_text(
-                """## Session 1
+                """# 2026-08-22 10分復習
+
+## Session 1
 
 - Status: grading
 - Mode: quick-review
@@ -419,12 +421,22 @@ class 学習支援テスト(unittest.TestCase):
 - Level: 2
 - Track: B
 
+### 問題
+
+CSRF対策として適切なものはどれですか？
+
+- [x] A. CSRFトークンを検証する。
+- [ ] B. Cookieを常に削除する。
+- [ ] C. ログを削除する。
+
 ### 採点
 
 Score: 0 / 100
 """,
                 encoding="utf-8",
             )
+            unanswered_path = root / "学習記録" / "未解答一覧.md"
+            unanswered_path.write_text("古い未解答一覧\n", encoding="utf-8")
             result = study_helper.record_progress(
                 root, date(2026, 8, 22), 1, study_helper.QUICK_REVIEW_MODE
             )
@@ -434,6 +446,198 @@ Score: 0 / 100
             session = (review_dir / "2026-08-22.md").read_text(encoding="utf-8")
             self.assertIn("- Status: graded", session)
             self.assertIn("Mastery updated: いいえ", session)
+            self.assertEqual(
+                "# 未解答一覧\n\n未解答はありません。\n",
+                unanswered_path.read_text(encoding="utf-8"),
+            )
+
+    def test_採点から復習一覧更新までを統合して検証する(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            session_dir = root / "学習記録" / "10分復習"
+            progress_dir = root / "進捗"
+            session_dir.mkdir(parents=True)
+            progress_dir.mkdir()
+            for name in ("語句別理解度.md", "分野別理解度.md", "学習履歴.md"):
+                (progress_dir / name).write_text("変更しない\n", encoding="utf-8")
+
+            session_path = session_dir / "2026-08-22.md"
+            unanswered_session = """# 2026-08-22 10分復習
+
+## Session 1
+
+- Created: 2026-08-22
+- Status: awaiting_answers
+- Mode: quick-review
+- Question Count: 1
+
+### Q1
+
+- Domain: Webセキュリティ
+- Primary Terms:
+  - `CSRF`
+- Related Terms:
+  - `CSRFトークン`
+- Level: 2
+- Track: B
+
+### 問題
+
+CSRF対策として適切なものはどれですか？
+
+- [ ] A. CSRFトークンを検証する。
+- [ ] B. Cookieを常に削除する。
+- [ ] C. ログを削除する。
+"""
+            session_path.write_text(unanswered_session, encoding="utf-8")
+            unanswered_index = study_helper.write_unanswered_index(root)
+            self.assertIn("2026-08-22 / Session 1 / Q1", unanswered_index.read_text(encoding="utf-8"))
+
+            scored_session = (
+                unanswered_session.replace("- Status: awaiting_answers", "- Status: grading")
+                .replace("- [ ] A. CSRFトークン", "- [x] A. CSRFトークン")
+                .rstrip()
+                + """
+
+### 採点
+
+Score: 0 / 100
+
+#### 良かった点
+
+- 回答を選択した
+
+#### 次回確認する観点
+
+- CSRFトークンの役割
+"""
+            )
+            session_path.write_text(scored_session, encoding="utf-8")
+            study_helper.record_progress(
+                root, date(2026, 8, 22), 1, study_helper.QUICK_REVIEW_MODE
+            )
+            self.assertNotIn(
+                "2026-08-22 / Session 1 / Q1",
+                unanswered_index.read_text(encoding="utf-8"),
+            )
+
+            review_dir = root / "復習用" / "明日復習するべきところ"
+            review_dir.mkdir(parents=True)
+            (review_dir / "2026-08-23.md").write_text(
+                """# 2026-08-23に復習するべきところ
+
+#### CSRF — 0点
+
+- [ ] 復習済み
+- 出典: 2026-08-22 / Session 1 / Q1
+- 復習の要点: CSRFトークンをサーバ側で検証する。
+""",
+                encoding="utf-8",
+            )
+            unreviewed_index = study_helper.write_unreviewed_index(root)
+            self.assertIn(
+                "[2026-08-23 / CSRF — 0点]",
+                unreviewed_index.read_text(encoding="utf-8"),
+            )
+
+    def test_作成直後にセッション形式を検証する(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            session_dir = root / "学習記録" / "理解・応用問題"
+            session_dir.mkdir(parents=True)
+            session_path = session_dir / "2026-08-22.md"
+            valid = """# 2026-08-22 セキスペ学習
+
+## Session 1
+
+- Created: 2026-08-22
+- Status: awaiting_answers
+- Mode: adaptive
+- Question Count: 1
+
+### Q1
+
+- Domain: Webセキュリティ
+- Primary Terms:
+  - `CSRF`
+- Related Terms:
+  - `CSRFトークン`
+- Level: 3
+- Track: B
+
+### 問題
+
+CSRFが成立する条件と対策を説明してください。
+
+### 回答
+
+<!-- この行の下に回答を書いてください -->
+"""
+            session_path.write_text(valid, encoding="utf-8")
+
+            result = study_helper.validate_authored_session(
+                root, date(2026, 8, 22), 1, study_helper.STANDARD_SESSION_MODE
+            )
+            self.assertEqual(1, result["questions"])
+            self.assertEqual(study_helper.STANDARD_SESSION_MODE, result["mode"])
+            self.assertEqual(session_path, result["path"])
+
+            session_path.write_text(
+                valid.replace("- Question Count: 1", "- Question Count: 2"),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "found 1 question headings"):
+                study_helper.validate_authored_session(
+                    root, date(2026, 8, 22), 1, study_helper.STANDARD_SESSION_MODE
+                )
+
+    def test_作成直後の十分復習は三択形式を検証する(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            session_dir = root / "学習記録" / "10分復習"
+            session_dir.mkdir(parents=True)
+            session_path = session_dir / "2026-08-22.md"
+            valid = """# 2026-08-22 10分復習
+
+## Session 1
+
+- Created: 2026-08-22
+- Status: awaiting_answers
+- Mode: quick-review
+- Question Count: 1
+
+### Q1
+
+- Domain: Webセキュリティ
+- Primary Terms:
+  - `CSRF`
+- Related Terms:
+  - `CSRFトークン`
+- Level: 2
+- Track: B
+
+### 問題
+
+CSRF対策として適切なものはどれですか？
+
+- [ ] A. CSRFトークンを検証する。
+- [ ] B. Cookieを常に削除する。
+- [ ] C. ログを削除する。
+"""
+            session_path.write_text(valid, encoding="utf-8")
+            result = study_helper.validate_authored_session(
+                root, date(2026, 8, 22), 1, study_helper.QUICK_REVIEW_MODE
+            )
+            self.assertEqual(study_helper.QUICK_REVIEW_MODE, result["mode"])
+
+            session_path.write_text(
+                valid.replace("- [ ] C. ログを削除する。\n", ""),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "A/B/C checkbox choices"):
+                study_helper.validate_authored_session(
+                    root, date(2026, 8, 22), 1, study_helper.QUICK_REVIEW_MODE
+                )
 
     def test_十分復習は選択肢のチェックボックスで回答済みを判定する(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
