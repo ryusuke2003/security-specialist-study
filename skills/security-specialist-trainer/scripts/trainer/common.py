@@ -69,6 +69,7 @@ STUDY_TIMEZONE = ZoneInfo("Asia/Tokyo")
 
 
 STUDY_DAY_START_HOUR = 5
+ANSWER_PLACEHOLDER = "<!-- この行の下に回答を書いてください -->"
 
 
 @dataclass(frozen=True)

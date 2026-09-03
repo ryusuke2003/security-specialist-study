@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import os
 import re
+import stat
+from contextlib import contextmanager
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Optional
@@ -528,7 +530,40 @@ def finalize_quick_review_session(
     atomic_write(path, text[:start] + session + text[end:])
 
 
-def record_progress(
+@contextmanager
+def _restore_record_files_on_error(paths: list[Path]):
+    """Restore every record target when an in-process update raises an exception."""
+    snapshots: dict[Path, tuple[str, int] | None] = {}
+    for path in dict.fromkeys(paths):
+        snapshots[path] = (
+            (path.read_text(encoding="utf-8"), stat.S_IMODE(path.stat().st_mode))
+            if path.exists()
+            else None
+        )
+    try:
+        yield
+    except BaseException as error:
+        rollback_errors: list[str] = []
+        for path, snapshot in snapshots.items():
+            try:
+                if snapshot is None:
+                    if path.exists():
+                        path.unlink()
+                    continue
+                text, mode = snapshot
+                atomic_write(path, text)
+                path.chmod(mode)
+            except OSError as rollback_error:
+                rollback_errors.append(f"{path}: {rollback_error}")
+        if rollback_errors:
+            raise RuntimeError(
+                "record failed and rollback was incomplete: "
+                + "; ".join(rollback_errors)
+            ) from error
+        raise
+
+
+def _record_progress_without_transaction(
     root: Path,
     study_date: date,
     session_number: int,
@@ -588,6 +623,29 @@ def record_progress(
     write_activity_log(root, graded_date, pending_activity)
     finalize_session(session_path, session_number, summary, graded_date)
     return {**summary, "questions": len(questions), "session_path": session_path}
+
+
+def record_progress(
+    root: Path,
+    study_date: date,
+    session_number: int,
+    mode: Optional[str] = None,
+) -> dict[str, object]:
+    """Record a scored Session and roll back every touched Markdown file on failure."""
+    session_path = resolve_session_path(root, study_date, session_number, mode)
+    transaction_paths = [
+        session_path,
+        progress_file(root, "語句別理解度.md", "terms.md"),
+        progress_file(root, "分野別理解度.md", "domains.md"),
+        progress_file(root, "学習履歴.md", "history.md"),
+        sessions_directory(root) / "行ったこと.md",
+        progress_directory(root) / "モチベ.md",
+        sessions_directory(root) / "未解答一覧.md",
+    ]
+    with _restore_record_files_on_error(transaction_paths):
+        return _record_progress_without_transaction(
+            root, study_date, session_number, mode
+        )
 
 
 def rebuild_progress(root: Path) -> dict[str, int]:

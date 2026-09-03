@@ -57,6 +57,13 @@ Score: 80 / 100
     )
 
 
+def ファイル状態(paths: list[Path]) -> dict[Path, bytes | None]:
+    return {
+        path: path.read_bytes() if path.exists() else None
+        for path in paths
+    }
+
+
 class 学習支援テスト(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -441,21 +448,32 @@ Score: 0 / 100
             )
             unanswered_path = root / "学習記録" / "未解答一覧.md"
             unanswered_path.write_text("古い未解答一覧\n", encoding="utf-8")
+            transaction_paths = [
+                review_dir / "2026-08-22.md",
+                *(progress_dir / name for name in (
+                    "語句別理解度.md",
+                    "分野別理解度.md",
+                    "学習履歴.md",
+                    "モチベ.md",
+                )),
+                root / "学習記録" / "行ったこと.md",
+                unanswered_path,
+            ]
+            before_failure = ファイル状態(transaction_paths)
             with patch.object(
                 trainer_progress,
-                "write_activity_log",
-                side_effect=RuntimeError("活動ログ更新失敗"),
+                "finalize_quick_review_session",
+                side_effect=RuntimeError("Session確定失敗"),
             ):
-                with self.assertRaisesRegex(RuntimeError, "活動ログ更新失敗"):
+                with self.assertRaisesRegex(RuntimeError, "Session確定失敗"):
                     study_helper.record_progress(
                         root,
                         date(2026, 8, 22),
                         1,
                         study_helper.QUICK_REVIEW_MODE,
                     )
-            self.assertIn(
-                "- Status: grading",
-                (review_dir / "2026-08-22.md").read_text(encoding="utf-8"),
+            self.assertEqual(
+                before_failure, ファイル状態(transaction_paths)
             )
 
             result = study_helper.record_progress(
@@ -622,7 +640,14 @@ CSRFが成立する条件と対策を説明してください。
                         "<!-- この行の下に回答を書いてください -->",
                         "CSRFトークンを検証する。",
                     ),
-                    "回答 must be empty",
+                    "standard answer placeholder",
+                ),
+                (
+                    valid.replace(
+                        "<!-- この行の下に回答を書いてください -->",
+                        "<!-- 正解はCSRFトークンを検証すること -->",
+                    ),
+                    "standard answer placeholder",
                 ),
                 (
                     valid.replace("- Status: awaiting_answers", "- Status: graded"),
@@ -2326,16 +2351,25 @@ Score: 70 / 100
             self.assertIn("- Status: grading", session_path.read_text(encoding="utf-8"))
             self.assertEqual([], study_helper.read_table(root / "progress" / "history.md", "Date"))
 
+            transaction_paths = [
+                session_path,
+                root / "progress" / "terms.md",
+                root / "progress" / "domains.md",
+                root / "progress" / "history.md",
+                root / "progress" / "モチベ.md",
+                root / "sessions" / "行ったこと.md",
+                root / "sessions" / "未解答一覧.md",
+            ]
+            before_failure = ファイル状態(transaction_paths)
             with patch.object(
                 trainer_progress,
-                "write_activity_log",
-                side_effect=RuntimeError("活動ログ更新失敗"),
+                "finalize_session",
+                side_effect=RuntimeError("Session確定失敗"),
             ):
-                with self.assertRaisesRegex(RuntimeError, "活動ログ更新失敗"):
+                with self.assertRaisesRegex(RuntimeError, "Session確定失敗"):
                     study_helper.record_progress(root, date(2026, 8, 9), 1)
-            self.assertIn("- Status: grading", session_path.read_text(encoding="utf-8"))
-            self.assertNotIn(
-                "Progress updated:", session_path.read_text(encoding="utf-8")
+            self.assertEqual(
+                before_failure, ファイル状態(transaction_paths)
             )
 
             first = study_helper.record_progress(root, date(2026, 8, 9), 1)

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 from .common import (
+    ANSWER_PLACEHOLDER,
     EXPLANATION_MODE,
     GradedQuestion,
     LEGACY_SESSION_DIRECTORIES,
@@ -331,13 +332,10 @@ def validate_authored_session(
                 if next_heading
                 else len(block)
             )
-            answer_text = block[answer_start:answer_end]
-            visible_answer = re.sub(
-                r"<!--.*?-->", "", answer_text, flags=re.DOTALL
-            ).strip()
-            if visible_answer:
+            answer_text = block[answer_start:answer_end].strip()
+            if answer_text != ANSWER_PLACEHOLDER:
                 raise ValueError(
-                    f"Q{number} 回答 must be empty before the learner answers"
+                    f"Q{number} 回答 must contain only the standard answer placeholder"
                 )
 
         if re.search(r"^### 採点[ \t]*$", block, flags=re.MULTILINE):
