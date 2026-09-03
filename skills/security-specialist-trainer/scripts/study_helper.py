@@ -9,12 +9,12 @@ _SCRIPT_DIRECTORY = Path(__file__).resolve().parent
 if str(_SCRIPT_DIRECTORY) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIRECTORY))
 
-from trainer.common import *
-from trainer.session_parser import *
-from trainer.indexes import *
-from trainer.progress import *
-from trainer.planner import *
-from trainer.cli import main, parse_args
+import trainer as _trainer
+
+__all__ = _trainer.__all__
+for _name in __all__:
+    globals()[_name] = getattr(_trainer, _name)
+del _name
 
 if __name__ == "__main__":
     raise SystemExit(main())
