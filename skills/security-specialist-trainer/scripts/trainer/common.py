@@ -135,6 +135,7 @@ class GradedQuestion:
     good_point: str
     review_focus: str
     question_mode: str = EXPLANATION_MODE
+    explanation: str = ""
 
 
 @dataclass(frozen=True)
@@ -491,6 +492,19 @@ def _first_feedback_bullet(section: str, heading: str) -> str:
         if bullet:
             return bullet.group(1).strip()
     return ""
+
+
+def _feedback_text(section: str, heading: str) -> str:
+    """Return the plain Markdown body under one level-four feedback heading."""
+    match = re.search(rf"^#### {re.escape(heading)}[ \t]*$", section, flags=re.MULTILINE)
+    if not match:
+        return ""
+    lines = []
+    for line in section[match.end() :].splitlines():
+        if line.startswith("#### ") or line.startswith("### "):
+            break
+        lines.append(line)
+    return "\n".join(lines).strip()
 
 
 def quick_review_checked_choices(question: str) -> tuple[str, ...]:

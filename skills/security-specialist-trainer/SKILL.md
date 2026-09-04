@@ -37,7 +37,7 @@ Keep questions adaptive, scenario-oriented where appropriate, and free of answer
 After the common preflight, use [採点ワークフロー.md](references/採点ワークフロー.md) in this order:
 
 1. Read **採点前チェック** before inspecting answer prose. It determines the complete worklist and order.
-2. For each selected Session, read **採点・記録**. It covers scoring, progress updates, recovery, and verification.
+2. For each selected Session, read **採点・記録**. It covers scoring, progress updates, recovery, and verification. Use only `Score` and `解説` for quick-review grading; keep the full feedback block, including `次回確認する観点`, for standard and term-recall Sessions.
 3. Read **復習ノート作成** before creating or updating diagrams, learned notes, or next-day review entries.
 
 Use `../../参照資料/採点・理解度・復習ルール.md` as the arithmetic authority. Update only Primary Terms numerically; Related Terms remain context until directly assessed.

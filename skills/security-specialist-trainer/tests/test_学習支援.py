@@ -404,6 +404,118 @@ class 学習支援テスト(unittest.TestCase):
         self.assertEqual(2, labels.count("今日の復習"))
         self.assertEqual(2, labels.count("低得点"))
 
+    def test_十分復習の簡略採点形式を解析し誤答語句だけを次回候補にする(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            review_dir = root / "学習記録" / "10分復習"
+            review_dir.mkdir(parents=True)
+            (review_dir / "2026-08-22.md").write_text(
+                """# 2026-08-22 10分復習
+
+## Session 1
+
+- Status: graded
+- Mode: quick-review
+- Question Count: 2
+
+### Q1
+
+- Domain: 認証・認可 / IAM
+- Primary Terms:
+  - `誤答語句`
+- Related Terms:
+  - `関連語句`
+- Level: 2
+- Track: B
+
+### 問題
+
+- [x] A. 誤答。
+- [ ] B. 正答。
+- [ ] C. 誤答。
+
+### 採点
+
+Score: 0 / 100
+
+#### 解説
+
+正答はBである。
+
+### Q2
+
+- Domain: Webセキュリティ
+- Primary Terms:
+  - `正答語句`
+- Related Terms:
+  - `関連語句`
+- Level: 2
+- Track: B
+
+### 問題
+
+- [ ] A. 誤答。
+- [x] B. 正答。
+- [ ] C. 誤答。
+
+### 採点
+
+Score: 100 / 100
+
+#### 解説
+
+正答はBである。
+""",
+                encoding="utf-8",
+            )
+
+            _, questions = study_helper.parse_graded_session(
+                (review_dir / "2026-08-22.md").read_text(encoding="utf-8"), 1,
+                allow_missing_mode=False,
+            )
+            self.assertEqual("正答はBである。", questions[0].explanation)
+            self.assertEqual("", questions[0].good_point)
+            self.assertEqual("", questions[0].review_focus)
+
+            legacy_text = (review_dir / "2026-08-22.md").read_text(encoding="utf-8").replace(
+                "#### 解説\n\n正答はBである。",
+                "#### 良かった点\n\n- 選択できた\n\n"
+                "#### 次回確認する観点\n\n- 関連条件",
+            )
+            _, legacy_questions = study_helper.parse_graded_session(
+                legacy_text, 1, allow_missing_mode=False
+            )
+            self.assertEqual("選択できた", legacy_questions[0].good_point)
+            self.assertEqual("関連条件", legacy_questions[0].review_focus)
+            self.assertEqual("", legacy_questions[0].explanation)
+
+            incorrect_terms = study_helper.quick_review_incorrect_terms(root)
+            self.assertEqual({"誤答語句"}, incorrect_terms)
+
+            items = [
+                study_helper.CatalogItem(term, f"分野{index}", "B", 5, 2, False, "", "")
+                for index, term in enumerate(
+                    ("誤答語句", "正答語句", "語句3", "語句4", "語句5", "語句6", "語句7", "語句8"),
+                    1,
+                )
+            ]
+            records = {
+                item.term: study_helper.TermRecord(
+                    item.term, item.domain, 80, date(2026, 8, 21), 1, 80, 2,
+                    date(2026, 8, 30), "", "",
+                )
+                for item in items
+            }
+            candidates = study_helper.build_candidates(
+                items, records, date(2026, 8, 22), {}
+            )
+            plan = study_helper.quick_review_plan(
+                candidates, records, date(2026, 8, 22), 8, incorrect_terms
+            )
+            labels = {candidate.item.term: label for label, candidate in plan}
+            self.assertEqual("低得点", labels["誤答語句"])
+            self.assertNotEqual("低得点", labels["正答語句"])
+
     def test_十分復習の記録は理解度進捗を更新しない(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -443,6 +555,10 @@ CSRF対策として適切なものはどれですか？
 ### 採点
 
 Score: 0 / 100
+
+#### 解説
+
+CSRFトークンを検証する。
 """,
                 encoding="utf-8",
             )
@@ -546,16 +662,13 @@ CSRF対策として適切なものはどれですか？
 
 Score: 0 / 100
 
-#### 良かった点
+#### 解説
 
-- 回答を選択した
-
-#### 次回確認する観点
-
-- CSRFトークンの役割
+CSRFトークンをサーバ側で検証する。
 """
             )
             session_path.write_text(scored_session, encoding="utf-8")
+            self.assertNotIn("次回確認する観点", scored_session)
             study_helper.record_progress(
                 root, date(2026, 8, 22), 1, study_helper.QUICK_REVIEW_MODE
             )

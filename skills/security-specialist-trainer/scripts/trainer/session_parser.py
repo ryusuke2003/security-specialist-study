@@ -19,6 +19,7 @@ from .common import (
     STANDARD_SESSION_MODE,
     TERM_RECALL_MODE,
     TERM_RECALL_SESSION_DIRECTORY,
+    _feedback_text,
     _first_feedback_bullet,
     as_date,
     parse_list_field,
@@ -470,6 +471,11 @@ def parse_graded_session(
                 good_point=_first_feedback_bullet(block, "良かった点"),
                 review_focus=_first_feedback_bullet(block, "次回確認する観点"),
                 question_mode=question_mode,
+                explanation=(
+                    _feedback_text(block, "解説")
+                    if question_mode == QUICK_REVIEW_MODE
+                    else ""
+                ),
             )
         )
     if not questions:
