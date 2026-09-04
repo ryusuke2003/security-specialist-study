@@ -461,10 +461,6 @@ Score: 0 / 100
 ### 採点
 
 Score: 100 / 100
-
-#### 解説
-
-正答はBである。
 """,
                 encoding="utf-8",
             )
@@ -474,13 +470,35 @@ Score: 100 / 100
                 allow_missing_mode=False,
             )
             self.assertEqual("正答はBである。", questions[0].explanation)
+            self.assertEqual("", questions[1].explanation)
             self.assertEqual("", questions[0].good_point)
             self.assertEqual("", questions[0].review_focus)
 
-            legacy_text = (review_dir / "2026-08-22.md").read_text(encoding="utf-8").replace(
-                "#### 解説\n\n正答はBである。",
-                "#### 良かった点\n\n- 選択できた\n\n"
-                "#### 次回確認する観点\n\n- 関連条件",
+            legacy_explanation_text = (
+                (review_dir / "2026-08-22.md").read_text(encoding="utf-8")
+                .replace(
+                    "Score: 100 / 100",
+                    "Score: 100 / 100\n\n#### 解説\n\n正答はBである。",
+                )
+            )
+            _, legacy_explanation_questions = study_helper.parse_graded_session(
+                legacy_explanation_text, 1, allow_missing_mode=False
+            )
+            self.assertEqual("正答はBである。", legacy_explanation_questions[1].explanation)
+
+            legacy_text = (
+                (review_dir / "2026-08-22.md").read_text(encoding="utf-8")
+                .replace(
+                    "#### 解説\n\n正答はBである。",
+                    "#### 良かった点\n\n- 選択できた\n\n"
+                    "#### 次回確認する観点\n\n- 関連条件",
+                )
+                .replace(
+                    "Score: 100 / 100",
+                    "Score: 100 / 100\n\n"
+                    "#### 良かった点\n\n- 正答できた\n\n"
+                    "#### 次回確認する観点\n\n- 発展条件",
+                )
             )
             _, legacy_questions = study_helper.parse_graded_session(
                 legacy_text, 1, allow_missing_mode=False
@@ -488,6 +506,8 @@ Score: 100 / 100
             self.assertEqual("選択できた", legacy_questions[0].good_point)
             self.assertEqual("関連条件", legacy_questions[0].review_focus)
             self.assertEqual("", legacy_questions[0].explanation)
+            self.assertEqual("正答できた", legacy_questions[1].good_point)
+            self.assertEqual("発展条件", legacy_questions[1].review_focus)
 
             incorrect_terms = study_helper.quick_review_incorrect_terms(root)
             self.assertEqual({"誤答語句"}, incorrect_terms)
@@ -554,11 +574,7 @@ CSRF対策として適切なものはどれですか？
 
 ### 採点
 
-Score: 0 / 100
-
-#### 解説
-
-CSRFトークンを検証する。
+Score: 100 / 100
 """,
                 encoding="utf-8",
             )
@@ -595,7 +611,7 @@ CSRFトークンを検証する。
             result = study_helper.record_progress(
                 root, date(2026, 8, 22), 1, study_helper.QUICK_REVIEW_MODE
             )
-            self.assertEqual(0, result["average"])
+            self.assertEqual(100, result["average"])
             for name in ("語句別理解度.md", "分野別理解度.md", "学習履歴.md"):
                 self.assertEqual("変更しない\n", (progress_dir / name).read_text(encoding="utf-8"))
             session = (review_dir / "2026-08-22.md").read_text(encoding="utf-8")

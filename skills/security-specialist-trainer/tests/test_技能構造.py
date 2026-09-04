@@ -24,6 +24,7 @@ class 技能構造テスト(unittest.TestCase):
         cls.skill = Path(__file__).resolve().parents[1]
         cls.root = cls.skill.parents[1]
         cls.grading_workflow = cls.skill / "references" / "採点ワークフロー.md"
+        cls.quick_grading_workflow = cls.skill / "references" / "10分復習採点ワークフロー.md"
         cls.catalog_expansion = cls.skill / "references" / "カタログ拡張.md"
         cls.catalog_lookup = cls.skill / "references" / "カタログ部分参照.md"
         cls.common_start = cls.skill / "references" / "共通開始処理.md"
@@ -50,6 +51,7 @@ class 技能構造テスト(unittest.TestCase):
                 "参照資料/10分復習Session形式.md",
             )),
             self.grading_workflow,
+            self.quick_grading_workflow,
             self.catalog_expansion,
             self.catalog_lookup,
             self.common_start,
@@ -233,18 +235,26 @@ class 技能構造テスト(unittest.TestCase):
             "共通開始処理.md": self.common_start.read_text(encoding="utf-8"),
             "問題作成ワークフロー.md": self.question_workflow.read_text(encoding="utf-8"),
             "採点ワークフロー.md": self.grading_workflow.read_text(encoding="utf-8"),
+            "10分復習採点ワークフロー.md": self.quick_grading_workflow.read_text(encoding="utf-8"),
             "カタログ拡張.md": self.catalog_expansion.read_text(encoding="utf-8"),
             "カタログ部分参照.md": self.catalog_lookup.read_text(encoding="utf-8"),
         }
         contracts = {
             "AGENTS.md": ("question generation or session grading",),
-            "SKILL.md": ("共通開始処理.md", "only when the user explicitly requests catalog expansion"),
+            "SKILL.md": (
+                "共通開始処理.md", "10分復習採点ワークフロー.md",
+                "only when the user explicitly requests catalog expansion",
+            ),
             "共通開始処理.md": ("午前5時", "quick-review-status"),
             "問題作成ワークフロー.md": ("出題選定ルール.md", "validate-session"),
             "採点ワークフロー.md": (
                 "grading-candidates", "Git差分、コミット履歴で絞らない",
-                "Score < 100", "誤答した10分復習", "Sessionのファイル名や`Created`から逆算しない",
+                "Score < 100", "Sessionのファイル名や`Created`から逆算しない",
                 "- [ ] 復習済み", "unreviewed",
+            ),
+            "10分復習採点ワークフロー.md": (
+                "Score: 100 / 100", "Score: 0 / 100", "#### 解説",
+                "誤答したPrimary Termだけ", "record", "unreviewed",
             ),
             "カタログ拡張.md": ("通常の問題作成・採点・復習では読まない",),
             "カタログ部分参照.md": ("直接のPrerequisitesだけ", "再帰的に広げない"),

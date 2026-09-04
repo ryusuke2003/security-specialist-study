@@ -18,7 +18,7 @@ Choose one workflow:
 - Requests such as「未復習一覧を更新して」run `python3 skills/security-specialist-trainer/scripts/study_helper.py unreviewed --root .`; do not edit the date-based review notes themselves.
 - Combine requests only when the user clearly asks for both; finish grading before generating later adaptive questions.
 
-Read [セッション形式.md](../../参照資料/セッション形式.md) before writing or grading a session, then read only the matching mode detail it links to. Before selecting adaptive questions, read [出題選定ルール.md](references/出題選定ルール.md) and [カタログ部分参照.md](references/カタログ部分参照.md). During routine generation, retrieve only the selected candidates' catalog rows and the needed direct related or prerequisite rows; do not read [出題分類と概念カタログ.md](../../参照資料/出題分類と概念カタログ.md) in full. Read it in full only for catalog expansion, broad unfocused cross-domain generation, or catalog-consistency investigation. Before assigning scores, read [採点・理解度・復習ルール.md](../../参照資料/採点・理解度・復習ルール.md).
+Read [セッション形式.md](../../参照資料/セッション形式.md) before writing a session, then read only the matching mode detail it links to. For grading, use the mode-specific route below. Before selecting adaptive questions, read [出題選定ルール.md](references/出題選定ルール.md) and [カタログ部分参照.md](references/カタログ部分参照.md). During routine generation, retrieve only the selected candidates' catalog rows and the needed direct related or prerequisite rows; do not read [出題分類と概念カタログ.md](../../参照資料/出題分類と概念カタログ.md) in full. Read it in full only for catalog expansion, broad unfocused cross-domain generation, or catalog-consistency investigation.
 
 Before either question generation or grading, read and complete [共通開始処理.md](references/共通開始処理.md). It owns the JST study-date and daily quick-review preflight used by both workflows. Do not run it for progress reports or other non-learning requests.
 
@@ -34,13 +34,12 @@ Keep questions adaptive, scenario-oriented where appropriate, and free of answer
 
 ## Grade a session
 
-After the common preflight, use [採点ワークフロー.md](references/採点ワークフロー.md) in this order:
+After the common preflight, run `python3 skills/security-specialist-trainer/scripts/study_helper.py grading-candidates --root .` before reading answer prose. Use every candidate in date and Session order.
 
-1. Read **採点前チェック** before inspecting answer prose. It determines the complete worklist and order.
-2. For each selected Session, read **採点・記録**. It covers scoring, progress updates, recovery, and verification. Use only `Score` and `解説` for quick-review grading; keep the full feedback block, including `次回確認する観点`, for standard and term-recall Sessions.
-3. Read **復習ノート作成** before creating or updating diagrams, learned notes, or next-day review entries.
+- If every candidate is `10分復習`, read only [10分復習採点ワークフロー.md](references/10分復習採点ワークフロー.md).
+- If any candidate is a normal or term-recall Session, read [セッション形式.md](../../参照資料/セッション形式.md), its matching mode detail, [採点ワークフロー.md](references/採点ワークフロー.md), and [採点・理解度・復習ルール.md](../../参照資料/採点・理解度・復習ルール.md). For a mixed worklist, also read the quick-review workflow and use it only for quick-review Sessions.
 
-Use `../../参照資料/採点・理解度・復習ルール.md` as the arithmetic authority. Update only Primary Terms numerically; Related Terms remain context until directly assessed.
+Only normal and term-recall Sessions update Primary Terms numerically; Related Terms remain context until directly assessed. Quick-review results never update mastery numerically.
 
 ## Report progress
 
