@@ -243,7 +243,8 @@ class 技能構造テスト(unittest.TestCase):
             "問題作成ワークフロー.md": ("出題選定ルール.md", "validate-session"),
             "採点ワークフロー.md": (
                 "grading-candidates", "Git差分、コミット履歴で絞らない",
-                "Score < 100", "誤答した10分復習", "unreviewed",
+                "Score < 100", "誤答した10分復習", "Sessionのファイル名や`Created`から逆算しない",
+                "- [ ] 復習済み", "unreviewed",
             ),
             "カタログ拡張.md": ("通常の問題作成・採点・復習では読まない",),
             "カタログ部分参照.md": ("直接のPrerequisitesだけ", "再帰的に広げない"),

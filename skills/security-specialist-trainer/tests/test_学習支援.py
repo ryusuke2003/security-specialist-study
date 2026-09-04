@@ -275,7 +275,7 @@ class 学習支援テスト(unittest.TestCase):
             ),
         )
 
-    def test_未復習一覧は未チェック項目だけを点数順に表示する(self) -> None:
+    def test_未復習一覧はチェック欄の文言によらず未完了項目を点数順に表示する(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             review_dir = root / "復習用" / "明日復習するべきところ"
@@ -285,7 +285,7 @@ class 学習支援テスト(unittest.TestCase):
 
 #### SAML — 15点
 
-- [ ] 復習済み
+- [ ] 復習する
 
 #### DNSSEC — 0点
 

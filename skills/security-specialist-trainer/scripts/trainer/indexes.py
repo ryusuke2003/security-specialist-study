@@ -446,7 +446,10 @@ def unreviewed_items(root: Path) -> list[UnreviewedItem]:
         for order, heading in enumerate(headings):
             end = headings[order + 1].start() if order + 1 < len(headings) else len(text)
             entry = text[heading.start() : end]
-            if not re.search(r"^- \[ \] 復習済み[ \t]*$", entry, re.MULTILINE):
+            # The checkbox state is the source of truth.  Do not silently drop an
+            # unfinished review merely because the human-readable label was
+            # paraphrased (for example, "復習する" instead of "復習済み").
+            if not re.search(r"^- \[ \][ \t]+\S.*$", entry, re.MULTILINE):
                 continue
             items.append(
                 UnreviewedItem(
