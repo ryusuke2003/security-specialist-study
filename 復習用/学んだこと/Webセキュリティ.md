@@ -90,3 +90,47 @@ db.query('SELECT * FROM users WHERE name = ?', [input])
 - CORSは、異なるオリジンのWebページ上のJavaScriptがAPIの**レスポンスを読み取れるか**を、ブラウザがサーバの許可に従って制御する仕組みである。リクエスト送信そのものを完全に禁止するものではない。
 - `PATCH`などの単純リクエストではないメソッドや、特定のヘッダ・Content-Typeを使う場合、ブラウザは本リクエストの前にOPTIONSのpreflightで、許可するOrigin・メソッド・ヘッダを確認し得る。
 - Cookieなどの認証情報を含める場合は、`Access-Control-Allow-Origin`へ`*`ではなく許可するOriginを明示し、`Access-Control-Allow-Credentials: true`を組み合わせる。流れは[CORSのpreflightと認証情報付きリクエスト](../流れ図/CORSのpreflightと認証情報付きリクエスト.md)を参照する。
+
+## 2026-09-04
+
+### ブラウザとJavaScriptの権限境界、CORS
+
+- JavaScriptはブラウザ内で動くが、ブラウザ本体そのものではない。JavaScriptが扱えるのは、DOM、`fetch()`の結果、`localStorage`、`document.cookie`、IndexedDBなど、ブラウザがWeb APIとして公開した情報に限られる。
+- ブラウザがネットワークから受信したパケットや、他オリジンのレスポンス本文、他サイトの`localStorage`を、JavaScriptがブラウザ内部のメモリから直接読むことはできない。
+
+```text
+OS
+  ↓
+ブラウザ本体
+  ↓  Web APIとして許可された情報だけを渡す
+JavaScript
+```
+
+- CORSは、このブラウザからJavaScriptへの受け渡しを制御する仕組みである。別オリジンへリクエストが届き、レスポンスがブラウザまで返ってきても、サーバがCORSで許可していなければ、そのレスポンス本文を呼び出し元のJavaScriptは読めない。
+- したがって、**「レスポンスがブラウザまで届いた」こと**と、**「JavaScriptがレスポンスを読める」こと**は別である。
+- `PATCH`などの単純でないメソッド、特定のリクエストヘッダや`Content-Type`を使うクロスオリジン操作では、ブラウザは実リクエストを送る前にOPTIONSの**preflight**を送る。これは、許可するOrigin・メソッド・ヘッダをサーバへ確認し、許可されなければJavaScriptからの実リクエストを送らないための仕組みである。
+- preflightは開発者がJavaScriptからON／OFFを指定する機能ではない。ブラウザがリクエストのメソッド・ヘッダ・`Content-Type`などを基に、仕様に従って自動的に要否を判断して送る。サーバ側はOPTIONSへ適切なCORSヘッダで応答して許可範囲を示す。
+
+### SameSiteとCORSの役割の違い
+
+| 仕組み | 主に制御するもの | クロスサイトで許可されない場合 |
+|---|---|---|
+| `SameSite` | ブラウザがCookieをリクエストに自動送信するか | リクエスト自体は送れても、認証Cookieが付かず、ログイン済みとして扱われにくい |
+| CORS | JavaScriptが別オリジンのレスポンスを読めるか | レスポンスがブラウザに届いても、呼び出し元JavaScriptは本文を読めない。preflight対象なら実リクエストも送られない |
+
+- 一言でいうと、**SameSiteはCookie送信側の制御**、**CORSはレスポンス読み取り側の制御**である。両者は対象が異なるため、片方だけでCSRFや情報漏えいのすべてを防ぐものではない。
+
+### HttpOnly Cookieは保存されるがJavaScriptへ公開されない
+
+- `HttpOnly`属性付きCookieもブラウザ内部には保存され、対象のリクエスト先・パスなどの条件を満たせば、ブラウザがHTTPリクエストへ自動で付与する。
+- ただしブラウザは、その値をJavaScript向けのAPIである`document.cookie`には公開しない。したがって、XSSで実行されたJavaScriptによるセッションCookieの窃取を抑えられる。
+
+```text
+ブラウザ内部: session=abc123 を保存
+  ↓
+対象サイトへのHTTPリクエスト: Cookieを自動で付与
+  ↓
+JavaScriptのdocument.cookie: HttpOnly Cookieは見えない
+```
+
+- JavaScriptがCookie値を読めなくても、JavaScriptが同一オリジンへリクエストを発行すると、条件に合うCookieはブラウザ経由で送られ、認証済みの処理が実行され得る。`HttpOnly`はCookieの**読取り**を防ぐ属性であって、Cookieを使ったリクエスト送信やXSSそのものを防ぐものではない。
