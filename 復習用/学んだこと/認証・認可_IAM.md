@@ -66,3 +66,11 @@
 - SPはIdPのXML署名をまず検証する。成功すれば「信頼するIdPが発行し、署名後に内容が改ざんされていない」ことを確認できる。そのうえで発行者・宛先・対象者・期限を読み取り、**自分のSP・今回の利用者・有効な時間帯に限定されたAssertionか**を確認する。
 - 暗号化は、属性やNameIDなどをブラウザや経路へ見せたくない場合に使う追加の秘匿機能である。IdPはSPの公開鍵向けに`EncryptedAssertion`を作り、SPが復号する。
 - HTTP POSTの`SAMLResponse`はBase64で符号化されることがあるが、Base64は暗号化ではない。役割は、HTTPSが通信経路の秘匿・保護、XML署名がAssertionの真正性・完全性、`EncryptedAssertion`がAssertion内容の秘匿、発行者・宛先・期限確認がAssertionを正しいSP・利用者・ログインに限定すること、と分けて考える。
+
+## 2026-09-04
+
+### client secretとPKCEの役割分担
+
+- public clientかconfidential clientかは、モバイルかPCかではなく、**クライアントシークレットを安全に保持できるか**で決まる。モバイルアプリ、SPA、デスクトップアプリ、Electronアプリは端末へ配布されて解析され得るため、固定の`client_secret`を秘密として扱えないpublic clientである。
+- サーバー側だけで`client_secret`を保持できるWebアプリはconfidential clientである。`client_secret`はアプリ単位で固定の長期秘密を用いたクライアント認証に使う。一方、PKCEの`code_verifier`は認可リクエストごとに生成・破棄する一時的な秘密であり、認可コード横取り後のトークン交換を防ぐ。
+- confidential clientでもPKCEは併用できる。認可コードフローでは、`client_secret`によるクライアント認証と、PKCEによる認可コード横取り対策は目的が異なるため、両方を使える。要点は「固定secretを安全に守れないクライアントではPKCEが必須級、守れるクライアントでもPKCEは追加の防御になる」である。
