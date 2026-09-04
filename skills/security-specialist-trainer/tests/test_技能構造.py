@@ -254,7 +254,8 @@ class 技能構造テスト(unittest.TestCase):
             ),
             "10分復習採点ワークフロー.md": (
                 "Score: 100 / 100", "Score: 0 / 100", "#### 解説",
-                "誤答したPrimary Termだけ", "record", "unreviewed",
+                "D. わかりません", "誤答または`D. わかりません`を選んだPrimary Termだけ",
+                "record", "unreviewed",
             ),
             "カタログ拡張.md": ("通常の問題作成・採点・復習では読まない",),
             "カタログ部分参照.md": ("直接のPrerequisitesだけ", "再帰的に広げない"),

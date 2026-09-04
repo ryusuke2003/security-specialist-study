@@ -522,7 +522,7 @@ def finalize_quick_review_session(
     summary = (
         f"## Session {session_number} Summary\n\n"
         f"- Correct: {correct} / {question_count}\n"
-        "- Mastery updated: いいえ（3択の正答は理解度・復習期限・カバレッジへ反映しない）\n"
+        "- Mastery updated: いいえ（選択式の正答は理解度・復習期限・カバレッジへ反映しない）\n"
         "- Incorrect answers remain candidates for the next quick review.\n"
     )
     pattern = re.compile(rf"^## Session {session_number} Summary[ \t]*$.*\Z", re.MULTILINE | re.DOTALL)

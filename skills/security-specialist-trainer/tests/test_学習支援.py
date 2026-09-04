@@ -367,7 +367,7 @@ class 学習支援テスト(unittest.TestCase):
         self.assertIn("- Questions: 10", output.getvalue())
         self.assertIn("- Track allocation: A 4 / B 6", output.getvalue())
 
-    def test_今日の十分復習は既定八問の三択計画になる(self) -> None:
+    def test_今日の十分復習は既定八問の三択と不明選択肢の計画になる(self) -> None:
         self.assertEqual(
             (study_helper.QUICK_REVIEW_MODE, 8),
             study_helper.infer_generation_request("今日の10分復習"),
@@ -382,7 +382,7 @@ class 学習支援テスト(unittest.TestCase):
             )
         self.assertEqual(0, exit_code)
         self.assertIn("- Questions: 8", output.getvalue())
-        self.assertIn("- Format: 3-choice", output.getvalue())
+        self.assertIn("- Format: 3-choice + D. わかりません", output.getvalue())
 
     def test_十分復習は期限超過と今日の復習と低得点を優先する(self) -> None:
         items = [
@@ -430,9 +430,10 @@ class 学習支援テスト(unittest.TestCase):
 
 ### 問題
 
-- [x] A. 誤答。
+- [ ] A. 誤答。
 - [ ] B. 正答。
 - [ ] C. 誤答。
+- [x] D. わかりません
 
 ### 採点
 
@@ -457,6 +458,7 @@ Score: 0 / 100
 - [ ] A. 誤答。
 - [x] B. 正答。
 - [ ] C. 誤答。
+- [ ] D. わかりません
 
 ### 採点
 
@@ -473,6 +475,33 @@ Score: 100 / 100
             self.assertEqual("", questions[1].explanation)
             self.assertEqual("", questions[0].good_point)
             self.assertEqual("", questions[0].review_focus)
+
+            invalid_unknown_score = (
+                (review_dir / "2026-08-22.md").read_text(encoding="utf-8")
+                .replace("Score: 0 / 100", "Score: 100 / 100", 1)
+            )
+            with self.assertRaisesRegex(ValueError, "D. わかりません but Score is not 0"):
+                study_helper.parse_graded_session(
+                    invalid_unknown_score, 1, allow_missing_mode=False
+                )
+
+            multiple_choices = (
+                (review_dir / "2026-08-22.md").read_text(encoding="utf-8")
+                .replace("- [ ] A. 誤答。", "- [x] A. 誤答。", 1)
+            )
+            with self.assertRaisesRegex(ValueError, "exactly one checked choice"):
+                study_helper.parse_graded_session(
+                    multiple_choices, 1, allow_missing_mode=False
+                )
+
+            no_checked_choice = (
+                (review_dir / "2026-08-22.md").read_text(encoding="utf-8")
+                .replace("- [x] D. わかりません", "- [ ] D. わかりません", 1)
+            )
+            with self.assertRaisesRegex(ValueError, "exactly one checked choice"):
+                study_helper.parse_graded_session(
+                    no_checked_choice, 1, allow_missing_mode=False
+                )
 
             legacy_explanation_text = (
                 (review_dir / "2026-08-22.md").read_text(encoding="utf-8")
@@ -571,6 +600,7 @@ CSRF対策として適切なものはどれですか？
 - [x] A. CSRFトークンを検証する。
 - [ ] B. Cookieを常に削除する。
 - [ ] C. ログを削除する。
+- [ ] D. わかりません
 
 ### 採点
 
@@ -663,6 +693,7 @@ CSRF対策として適切なものはどれですか？
 - [ ] A. CSRFトークンを検証する。
 - [ ] B. Cookieを常に削除する。
 - [ ] C. ログを削除する。
+- [ ] D. わかりません
 """
             session_path.write_text(unanswered_session, encoding="utf-8")
             unanswered_index = study_helper.write_unanswered_index(root)
@@ -803,7 +834,7 @@ CSRFが成立する条件と対策を説明してください。
                             study_helper.STANDARD_SESSION_MODE,
                         )
 
-    def test_作成直後の十分復習は三択形式を検証する(self) -> None:
+    def test_作成直後の十分復習は三択と不明選択肢を検証する(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             session_dir = root / "学習記録" / "10分復習"
@@ -835,6 +866,7 @@ CSRF対策として適切なものはどれですか？
 - [ ] A. CSRFトークンを検証する。
 - [ ] B. Cookieを常に削除する。
 - [ ] C. ログを削除する。
+- [ ] D. わかりません
 """
             session_path.write_text(valid, encoding="utf-8")
             result = study_helper.validate_authored_session(
@@ -843,10 +875,19 @@ CSRF対策として適切なものはどれですか？
             self.assertEqual(study_helper.QUICK_REVIEW_MODE, result["mode"])
 
             session_path.write_text(
-                valid.replace("- [ ] C. ログを削除する。\n", ""),
+                valid.replace("- [ ] D. わかりません\n", ""),
                 encoding="utf-8",
             )
-            with self.assertRaisesRegex(ValueError, "A/B/C checkbox choices"):
+            with self.assertRaisesRegex(ValueError, "A/B/C/D checkbox choices"):
+                study_helper.validate_authored_session(
+                    root, date(2026, 8, 22), 1, study_helper.QUICK_REVIEW_MODE
+                )
+
+            session_path.write_text(
+                valid.replace("D. わかりません", "D. 判断を保留する"),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "D. わかりません"):
                 study_helper.validate_authored_session(
                     root, date(2026, 8, 22), 1, study_helper.QUICK_REVIEW_MODE
                 )
@@ -858,7 +899,7 @@ CSRF対策として適切なものはどれですか？
                 ),
                 encoding="utf-8",
             )
-            with self.assertRaisesRegex(ValueError, "unchecked A/B/C checkbox choices"):
+            with self.assertRaisesRegex(ValueError, "unchecked A/B/C/D checkbox choices"):
                 study_helper.validate_authored_session(
                     root, date(2026, 8, 22), 1, study_helper.QUICK_REVIEW_MODE
                 )
@@ -884,6 +925,7 @@ CSRF対策として適切なものはどれですか？
 - [ ] A. CSRFトークンを検証する。
 - [ ] B. Cookieを常に削除する。
 - [ ] C. ログを削除する。
+- [ ] D. わかりません
 
 ### Q2
 
@@ -893,16 +935,23 @@ CSRF対策として適切なものはどれですか？
 ### 問題
 
 - [ ] A. Cookieを常に削除する。
-- [x] B. 出力エンコーディングを行う。
+- [ ] B. 出力エンコーディングを行う。
 - [ ] C. ログを削除する。
+- [x] D. わかりません
 """,
                 encoding="utf-8",
             )
             unanswered = study_helper.unanswered_questions(root)
             self.assertEqual([1], [question.question_number for question in unanswered])
-            self.assertEqual(("B",), study_helper.quick_review_checked_choices(
+            self.assertEqual(("D",), study_helper.quick_review_checked_choices(
                 (review_dir / "2026-08-22.md").read_text(encoding="utf-8")
             ))
+            self.assertEqual(
+                ("B",),
+                study_helper.quick_review_checked_choices(
+                    "- [ ] A. 誤答\n- [x] B. 正答\n- [ ] C. 誤答\n"
+                ),
+            )
 
     def test_十分復習の作成済み判定は取消済みを除外する(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

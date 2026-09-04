@@ -23,6 +23,7 @@ from .common import (
     _first_feedback_bullet,
     as_date,
     parse_list_field,
+    quick_review_checked_choices,
     sessions_directory,
     term_recall_track_counts,
 )
@@ -311,15 +312,28 @@ def validate_authored_session(
             if answer_matches:
                 raise ValueError(f"Q{number} quick-review must not have a 回答 heading")
             checkbox_lines = re.findall(
-                r"^- \[[^\]]*\] [A-Z]\.\s+.*$", problem_text, flags=re.MULTILINE
+                r"^- \[[^\]]*\] [A-Z]\.[ \t]+\S.*$",
+                problem_text,
+                flags=re.MULTILINE,
             )
             choices = re.findall(
-                r"^- \[ \] ([ABC])\.\s+\S.*$", problem_text, flags=re.MULTILINE
+                r"^- \[ \] ([ABCD])\.[ \t]+\S.*$",
+                problem_text,
+                flags=re.MULTILINE,
             )
-            if len(checkbox_lines) != 3 or choices != ["A", "B", "C"]:
+            unknown_choice = re.search(
+                r"^- \[ \] D\.[ \t]+わかりません[ \t]*$",
+                problem_text,
+                flags=re.MULTILINE,
+            )
+            if (
+                len(checkbox_lines) != 4
+                or choices != ["A", "B", "C", "D"]
+                or unknown_choice is None
+            ):
                 raise ValueError(
-                    f"Q{number} quick-review must have exactly three unchecked "
-                    "A/B/C checkbox choices"
+                    f"Q{number} quick-review must have exactly four unchecked "
+                    "A/B/C/D checkbox choices ending with D. わかりません"
                 )
         else:
             if len(answer_matches) != 1:
@@ -455,6 +469,21 @@ def parse_graded_session(
         score = int(score_match.group(1))
         if not 0 <= score <= 100:
             raise ValueError(f"Q{heading.group(1)} has an invalid Score")
+        if question_mode == QUICK_REVIEW_MODE:
+            checked_choices = quick_review_checked_choices(block)
+            has_checkbox_choices = re.search(
+                r"^- \[[ xX]\][ \t]+[ABCD]\.[ \t]+",
+                block,
+                flags=re.MULTILINE,
+            )
+            if has_checkbox_choices and len(checked_choices) != 1:
+                raise ValueError(
+                    f"Q{heading.group(1)} quick-review must have exactly one checked choice"
+                )
+            if checked_choices == ("D",) and score != 0:
+                raise ValueError(
+                    f"Q{heading.group(1)} selected D. わかりません but Score is not 0"
+                )
         duplicates = seen_primary.intersection(primary)
         if duplicates:
             raise ValueError(f"Primary Terms repeated in one session: {', '.join(sorted(duplicates))}")

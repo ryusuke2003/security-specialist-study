@@ -488,7 +488,7 @@ def render_plan(
     if mode == QUICK_REVIEW_MODE:
         lines.extend(
             [
-                "- Format: 3-choice",
+                "- Format: 3-choice + D. わかりません",
                 "- Scoring: incorrect answers are review signals; correct answers do not raise mastery scores",
                 "",
                 "| Slot | Bucket | Term | Domain | Track | Level | Form | Priority | Reason |",
@@ -516,7 +516,7 @@ def render_plan(
     for slot, (bucket, candidate) in enumerate(plan, 1):
         item = candidate.item
         track = planned_track(candidate, mode)
-        form = "3択" if mode == QUICK_REVIEW_MODE else "語句説明" if mode == TERM_RECALL_MODE else suggested_form(candidate.suggested_level)
+        form = "3択＋わかりません" if mode == QUICK_REVIEW_MODE else "語句説明" if mode == TERM_RECALL_MODE else suggested_form(candidate.suggested_level)
         row = (
             f"| {slot} | {bucket} | {item.term} | {item.domain} | {track} | "
             f"{candidate.suggested_level} | {form} | {candidate.priority:.1f} | {candidate.reason} |"

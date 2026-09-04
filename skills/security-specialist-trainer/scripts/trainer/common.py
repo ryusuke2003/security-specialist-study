@@ -508,11 +508,11 @@ def _feedback_text(section: str, heading: str) -> str:
 
 
 def quick_review_checked_choices(question: str) -> tuple[str, ...]:
-    """Return checked A/B/C task-list choices in a quick-review question."""
+    """Return checked A/B/C/D task-list choices in a quick-review question."""
     return tuple(
         match.group(1)
         for match in re.finditer(
-            r"^- \[[xX]\][ \t]+([ABC])\.[ \t]+",
+            r"^- \[[xX]\][ \t]+([ABCD])\.[ \t]+",
             question,
             flags=re.MULTILINE,
         )
