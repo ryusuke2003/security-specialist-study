@@ -155,6 +155,35 @@ TLSはHTTPだけの技術ではなく、上位プロトコルの通信を暗号�
 - これは証明書の署名や有効期間とは別の検証である。チェーン検証に成功していても、接続先名がSANの`dNSName`と一致しなければ接続を拒否する。
 - 旧実装や組織内の互換設定でCNを代替参照する場合はあるが、例外であり、設計・運用・試験問題ではCNフォールバックを前提にしない。IPアドレスで接続する場合は、DNS名ではなくSANの`iPAddress`が完全一致しなければならない。
 
+### FQDNとIPリテラルではSANの型を分ける
+
+- `FQDN`は**Fully Qualified Domain Name**の略で、DNS階層上の位置を省略せず、ルートまでたどれる完全なドメイン名である。ホストを表す例として`www.example.com`があり、厳密な表記ではルートを表す末尾のドットを付けて`www.example.com.`と書く。通常のURLや会話では末尾のドットを省略してもFQDNと呼ぶことが多い。
+
+```text
+www.example.com.
+│   │       │ └─ ルート（末尾のドット）
+│   │       └── TLDのラベル: com
+│   └────────── 第2レベルのラベル: example
+└────────────── ホストを識別する左端のラベル: www
+```
+
+- 検索ドメイン`example.com`が自動補完される前提で入力する`www`のような短縮名は、その文脈がなければ完全な位置を決められない。FQDNは`www.example.com`のように、接続先をDNS名前空間上で一意に特定できるところまでラベルを並べる。
+- FQDNは`www`から始まる名前という意味ではない。`api.example.com`も、ゾーン頂点を表す`example.com`も、ルートまでの完全な名前として扱われるならFQDNである。
+- TLSクライアントはURL全体を証明書と文字列比較するのではない。例えば`https://www.example.com:8443/login`から接続先のhostである`www.example.com`を取り出す。`https`というスキーム、`8443`というポート番号、`/login`というパスは、SANのDNS名照合には含めない。
+- クライアントは接続先hostがDNS名なら`DNS-ID`、IPv4またはIPv6のIPリテラルなら`IP-ID`という別種の参照識別子として扱う。証明書側でも、SAN（`subjectAltName`）のGeneralNameはDNS名用の`dNSName`とIPアドレス用の`iPAddress`に分かれている。
+
+| 接続先URL | クライアントが照合する値 | 証明書のSANで必要な型 |
+|---|---|---|
+| `https://www.example.com/` | DNS名`www.example.com` | `dNSName`（表示例: `DNS:www.example.com`） |
+| `https://192.0.2.1/` | IPv4アドレス`192.0.2.1` | `iPAddress`（表示例: `IP Address:192.0.2.1`） |
+| `https://[2001:db8::1]/` | IPv6アドレス`2001:db8::1` | `iPAddress`（表示例: `IP Address:2001:db8::1`） |
+
+- したがって、証明書に`dNSName`として`192.0.2.1`相当の文字列が入っていても、`https://192.0.2.1/`への接続で必要な`IP-ID`との一致にはならない。見た目が同じ文字列でも、**参照識別子とSAN項目の型が違えば不一致**である。
+- `iPAddress`は証明書内部では文字列ではなく、IPv4なら4オクテット、IPv6なら16オクテットのアドレス値として格納される。照合はパース後のアドレス値をオクテット単位で行うため、IPアドレスにワイルドカードやサブネット単位の部分一致は使わない。
+- DNS名の比較はASCIIでは大文字・小文字を区別しない。ワイルドカードを許す場合も、原則として`*.example.com`のように左端ラベル全体へ置き、`www.example.com`には一致するが、`example.com`や`a.b.example.com`には一致しない。
+- 現在のサーバID検証では、DNS名はSANの`dNSName`、IPアドレスはSANの`iPAddress`と照合し、Subjectの`CN`は照合に使わない。覚え方は、**FQDNならDNS型、IPリテラルならIP型。文字列が似ていても型をまたいで照合しない**。
+- 参照: [RFC 8499（DNS Terminology）](https://www.rfc-editor.org/rfc/rfc8499.html)、[RFC 9525（Service Identity in TLS）](https://www.rfc-editor.org/rfc/rfc9525.html)、[RFC 5280（PKIX Certificate and CRL Profile）](https://www.rfc-editor.org/rfc/rfc5280.html)
+
 ## 2026-09-03
 
 ### AEADの認証タグは「人」ではなく「鍵を知る者」が作ったデータを確認する
