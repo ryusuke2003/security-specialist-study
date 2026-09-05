@@ -30,6 +30,7 @@ class 技能構造テスト(unittest.TestCase):
         cls.common_start = cls.skill / "references" / "共通開始処理.md"
         cls.question_workflow = cls.skill / "references" / "問題作成ワークフロー.md"
         cls.selection_rules = cls.skill / "references" / "出題選定ルール.md"
+        cls.diagram_rules = cls.skill / "references" / "流れ図作成ルール.md"
 
     def test_必須ファイルとディレクトリが揃う(self) -> None:
         files = [
@@ -57,6 +58,7 @@ class 技能構造テスト(unittest.TestCase):
             self.common_start,
             self.question_workflow,
             self.selection_rules,
+            self.diagram_rules,
         ]
         directories = [
             self.root / "学習記録" / "理解・応用問題",
@@ -243,7 +245,7 @@ class 技能構造テスト(unittest.TestCase):
             "AGENTS.md": ("question generation or session grading",),
             "SKILL.md": (
                 "共通開始処理.md", "10分復習採点ワークフロー.md",
-                "only when the user explicitly requests catalog expansion",
+                "only when the user explicitly requests catalog expansion", "流れ図作成ルール.md",
             ),
             "共通開始処理.md": ("午前5時", "quick-review-status"),
             "問題作成ワークフロー.md": ("出題選定ルール.md", "validate-session"),

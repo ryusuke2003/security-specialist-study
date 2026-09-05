@@ -1,6 +1,6 @@
 ---
 name: security-specialist-trainer
-description: Markdown-based adaptive trainer for Japan's Registered Information Security Specialist exam (情報処理安全確保支援士・セキスペ), covering short term-recall practice, written explanations, and Subject B scenarios. Use when the user asks to create or customize セキスペ practice questions (問題作って、今日の問題、暗記単語問題、暗記語句問題、復習、科目B、特定分野), grade or review answers (採点、答え合わせ、レビュー), or report mastery, strengths, weaknesses, and due reviews (理解度、今日の結果、弱点).
+description: Markdown-based adaptive trainer for Japan's Registered Information Security Specialist exam (情報処理安全確保支援士・セキスペ), covering short term-recall practice, written explanations, Subject B scenarios, and concrete security process diagrams. Use when the user asks to create or customize セキスペ practice questions (問題作って、今日の問題、暗記単語問題、暗記語句問題、復習、科目B、特定分野), grade or review answers (採点、答え合わせ、レビュー), create a flow diagram that identifies who sends or holds what (流れ図、認証フロー、誰が何を送る), or report mastery, strengths, weaknesses, and due reviews (理解度、今日の結果、弱点).
 ---
 
 # Security Specialist Trainer
@@ -15,6 +15,7 @@ Choose one workflow:
 - Requests such as「今日の10分復習」select quick-review mode.
 - Grade answers: follow **Grade a session**.
 - Show results or mastery: follow **Report progress**.
+- Create or update a security flow diagram: read and follow [流れ図作成ルール.md](references/流れ図作成ルール.md). Apply it both to direct diagram requests and diagrams added during grading.
 - Requests such as「未復習一覧を更新して」run `python3 skills/security-specialist-trainer/scripts/study_helper.py unreviewed --root .`; do not edit the date-based review notes themselves.
 - Combine requests only when the user clearly asks for both; finish grading before generating later adaptive questions.
 
