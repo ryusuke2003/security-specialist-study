@@ -1,31 +1,75 @@
 # Active DirectoryとKerberosのチケット認証
 
+## 前提と登場人物
+
+**AD DSは利用者・端末・グループ等の管理基盤、Kerberosはチケットを使う認証方式**である。ADドメインのDC（ドメインコントローラ）がKDCを担当する。ASとTGSはKDC内の役割であり、別の物理サーバという意味ではない。
+
+利用者端末、DC、利用先のファイルサーバを区別する。以下は同一ドメインの基本例で、パスワード由来の鍵による事前認証を想定する。証明書等を使う事前認証、紹介チケット、委任は省略する。
+
+## 1. 利用者端末がTGTを取得する（AS交換）
+
 ```mermaid
 sequenceDiagram
+    autonumber
     participant C as 利用者端末
-    participant DC as ドメインコントローラ（AD DS / Kerberos KDC）
-    participant S as 利用先サービス
+    participant K as DC内のKDC
 
-    Note over DC: 【AD】利用者・端末・グループ情報を管理する。DCは、その情報を参照するKerberosのKDC役も兼ねる。
-    Note over C,S: 【Kerberos】以下のAS・TGS・APのチケット認証手順を行う。
-    Note over C,DC: 1. AS（Authentication Service）: 最初のログオンでTGTを得る
-    C->>DC: AS-REQ（利用者IDと事前認証情報）を送る
-    DC->>DC: ADの利用者情報を確認する
-    DC-->>C: AS-REP（TGTとクライアント・KDC間のセッション鍵）を返す
-    Note over C: TGTは「KDCに認証済み」であることを示すチケット
-    Note over C,DC: 2. TGS（Ticket Granting Service）: 利用先ごとのサービスチケットを得る
-    C->>DC: TGS-REQ（TGTと利用先サービスのSPN）を送る
-    DC->>DC: TGTを検証し、サービス利用を認可する
-    DC-->>C: TGS-REP（サービスチケット）を返す
-    Note over C,S: 3. AP（Application Service）: サービスへチケットを提示する
-    C->>S: AP-REQ（サービスチケットとAuthenticator）を送る
-    S->>S: サービスチケットを検証し、利用者を認証する
-    S-->>C: サービスへのアクセスを許可する
+    C->>K: 利用者端末がAS-REQを送る<br/>利用者ID・事前認証情報
+    K->>K: KDCが利用者の鍵で事前認証情報を検証する
+    alt KDCが事前認証を認めた
+        K->>K: KDCがTGTと端末・TGS間のセッション鍵を作る
+        K-->>C: KDCがAS-REPを返す<br/>TGT・端末向けに暗号化したセッション鍵等
+        C->>C: 利用者端末が応答の端末向け部分を復号し、TGTと鍵を保持する
+    else KDCが事前認証を拒否した
+        K-->>C: KDCがエラーを返し、TGTを発行しない
+    end
 ```
 
-## 要点
+TGT内部はKDC側の鍵で保護される。端末がTGTを持つことと、TGTの中身を自由に読めることは別である。セッション鍵もネットワークへ平文で送らない。
 
-- ADは利用者・端末・グループなどを集中管理する基盤であり、ドメインコントローラがKerberosのKDCとして認証を提供する。
-- 図の`【Kerberos】`と示した範囲にある`AS-REQ / AS-REP / TGS-REQ / TGS-REP / AP-REQ`、TGT、サービスチケットの流れが**Kerberos**である。ADそのものは認証方式ではなく、KerberosのKDCが参照する利用者・端末・グループ情報などを管理する基盤である。
-- 利用者端末は最初にTGTを得て、その後はサービスごとにサービスチケットを取得する。パスワードを各サービスへ繰り返し送らない。
-- `SPN`はサービスを識別する名前であり、KDCはTGTとSPNを基に、そのサービス用チケットを発行する。
+## 2. 利用者端末がサービス用チケットを取得・提示する
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as 利用者端末
+    participant K as DC内のKDC
+    participant S as ファイルサーバ
+
+    C->>K: 利用者端末がTGS-REQを送る<br/>TGT・Authenticator・利用先のSPN
+    K->>K: KDCがTGTとAuthenticatorを検証し、要求先を確認する
+    K-->>C: KDCがTGS-REPを返す<br/>サービスチケット・保護された端末向けセッション鍵
+    Note over C,K: 以下はチケット発行成功時。失敗時はサービスへの提示へ進まない
+    C->>S: 利用者端末がAP-REQを送る<br/>サービスチケット・新しいAuthenticator
+    S->>S: ファイルサーバが自分の鍵でチケットを開き、Authenticator等を検証する
+    opt 相互認証を要求した場合
+        S-->>C: ファイルサーバがAP-REPを返す
+        C->>C: 利用者端末がセッション鍵を使ってAP-REPを検証する
+    end
+    C->>S: 利用者端末が対象ファイルの読取りを要求する
+    S->>S: ファイルサーバが認証済み利用者のグループ情報等とACLを照合する
+    alt サーバの認可条件を満たす
+        S-->>C: ファイルサーバが要求されたデータを返す
+    else サーバの認可条件を満たさない
+        S-->>C: ファイルサーバがアクセスを拒否する
+    end
+```
+
+**TGT・サービスチケットによる認証と、ファイルに触ってよいかという認可は別。** KDCの発行ポリシーがあっても、サービスチケットを持つだけで全ファイルへアクセスできるわけではない。ADではPAC等の認可情報を利用できるが、利用先サービス側でもアクセス制御を行う。
+
+## 処理後に残るもの
+
+| 主体 | 保持するもの | 相手へ渡さないもの |
+|---|---|---|
+| 利用者端末 | 有効期間内のTGT、サービスチケット、対応するセッション鍵 | 利用者のパスワードを各サービスへ繰り返し送らない |
+| DC内のKDC | アカウント情報、チケット保護・発行に必要な鍵 | KDCの長期秘密情報 |
+| ファイルサーバ | サービスの鍵、ACL、認証後の接続状態・再送検出情報 | サービスの長期鍵 |
+
+## 注意点
+
+SPNは利用先サービスの識別名である。Authenticatorはチケットとは別で、セッション鍵で保護した時刻等を含み、鍵の保有と再送でないことの確認に使う。TGTそのものをファイルサーバへの入場券として使うわけではない。
+
+## 参照資料
+
+- [RFC 4120 §1.4・§3：Kerberosの認証・認可の区別と各交換](https://www.rfc-editor.org/rfc/rfc4120.html)
+- [Microsoft：Kerberos authentication overview](https://learn.microsoft.com/en-us/windows-server/security/kerberos/kerberos-authentication-overview)

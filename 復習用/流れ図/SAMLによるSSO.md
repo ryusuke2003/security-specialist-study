@@ -1,50 +1,74 @@
 # SAMLによるSSO
 
-SAMLは、**会社のログイン窓口（IdP）で一度本人確認すると、連携先サービス（SP）へ個別のパスワード入力なしで入れるようにする仕組み**です。
+## 前提と登場人物
 
-たとえば、社員が社内ポータルから勤怠SaaSや経費精算SaaSを使う場面で利用されます。各SaaSがパスワードを個別に管理する代わりに、IdPが「この人は認証済み」と保証します。
+**利用者を認証するのはIdP、Assertionを検証して自分用セッションを作るのはSP**である。ここでは会社のIdPと勤怠SaaSのSPが、署名検証鍵・識別子・返送先等を設定済みとする。
+
+以下はSP起点のWeb SSOで、認証要求はリダイレクト、SAML ResponseはHTTPSのフォームPOSTでブラウザが運ぶ構成例である。IdP起点SSOや別のbindingは省略する。
+
+## 1. SPがブラウザをIdPへ案内する
 
 ```mermaid
 sequenceDiagram
-    participant User as 利用者
-    participant Browser as ブラウザ
-    participant SP as 勤怠SaaS（SP）
-    participant IdP as 会社の認証基盤（IdP）
+    autonumber
+    actor U as 利用者
+    participant B as ブラウザ
+    participant S as 勤怠SaaSのSP
+    participant I as 会社のIdP
 
-    User->>Browser: 利用者が勤怠SaaSを開く
-    Browser->>SP: ブラウザが勤怠SaaSへアクセスする
-    SP-->>Browser: SPがIdPへの認証要求を付けてリダイレクトする
-    Browser->>IdP: ブラウザが会社の認証基盤へ移動する
-
-    alt IdPで未認証
-        IdP-->>Browser: IdPがログイン画面を表示する
-        User->>IdP: 利用者がID・パスワードや多要素認証で本人確認を行う
-    else IdPで認証済み
-        IdP->>IdP: IdPが既存のログイン状態を確認する
+    U->>B: 利用者が勤怠SaaSを開く
+    B->>S: ブラウザが勤怠画面を要求する
+    S->>S: SPが未ログインと判断し、AuthnRequestのIDを一時保持する
+    S-->>B: SPがAuthnRequest付きのIdP向けリダイレクトを返す
+    B->>I: ブラウザがAuthnRequestとIdP用Cookie等を送る
+    alt IdPが有効な既存セッションを確認した
+        I->>I: IdPが再認証要件を確認し、既存ログインを利用する
+    else IdPでログインや再認証が必要
+        I-->>B: IdPがログイン・MFA画面を返す
+        U->>B: 利用者がIdPの画面で認証操作を行う
+        B->>I: ブラウザがIdPへ認証情報・操作結果を送る
+        I->>I: IdPが利用者を認証する
     end
+    Note over I: IdPで認証に失敗した場合は成功Assertionを発行しない
+```
 
-    IdP->>IdP: IdPが「利用者は認証済み」と示すSAML Assertionを作成し署名する
-    IdP-->>Browser: IdPがAssertionを含むフォームをSPへ送るようブラウザへ返す
-    Browser->>SP: ブラウザがSAML Assertionを勤怠SaaSへ送る
-    SP->>SP: SPがAssertionの署名・発行者・宛先・有効期限を検証する
+## 2. SPがAssertionを検証してログイン状態を作る
 
-    alt Assertionの検証に失敗
-        SP-->>Browser: SPがログインを拒否する
-    else Assertionの検証に成功
-        SP-->>Browser: SPが自分用のセッションを発行する
-        Browser-->>User: 利用者が勤怠SaaSを利用できる
+```mermaid
+sequenceDiagram
+    autonumber
+    participant I as 会社のIdP
+    participant B as ブラウザ
+    participant S as 勤怠SaaSのSP
+
+    I->>I: IdPが利用者・対象SP・有効期間等を含むAssertionへ署名する
+    I-->>B: IdPが署名済みAssertionを含むSAML ResponseのPOSTフォームを返す
+    B->>S: ブラウザがSPのACSへSAML ResponseをPOSTする
+    S->>S: SPが信頼済みIdP鍵で署名を検証し、署名された内容だけを利用する
+    S->>S: SPが発行者・宛先・Audience・期限・要求IDとの対応・再利用を検証する
+    alt SPの検証に成功した
+        S->>S: SPが利用者を対応付け、権限を確認してSP用セッションを作る
+        S-->>B: SPが自分用のセッションCookieを返す
+        B->>S: ブラウザがSP用Cookieで以後の勤怠画面を要求する
+    else SPの検証に失敗した
+        S-->>B: SPがログインを拒否し、セッションを発行しない
     end
 ```
 
-## 4つだけ覚える
+ACSはSPがSAML Responseを受け取る窓口である。Response全体への署名等を使う構成もあるが、いずれも署名検証済みの要素と実際に利用する利用者情報を一致させる必要がある。
 
-- **IdP（Identity Provider）**: 会社の認証基盤。利用者本人を認証し、認証済みだと保証する。
-- **SP（Service Provider）**: 勤怠・経費精算などの利用先サービス。IdPの保証を検証して利用を許可する。
-- **SAML Assertion**: 「この利用者は認証済み」「誰であるか」などを表す、IdP署名付きの情報。
-- **SSO（Single Sign-On）**: 一度のログインで複数サービスを使える状態。
+## 処理後に残るもの
 
-## 間違えやすい点
+| 主体 | 保持するもの | 相手へ渡さないもの |
+|---|---|---|
+| IdP | 署名秘密鍵、利用者情報、IdP用ログイン状態 | IdPの署名秘密鍵、利用者のパスワードをSPへ渡さない |
+| SP | 信頼済みIdPの検証鍵・設定、SP用セッション、再送検出等の状態 | IdPの秘密鍵は不要 |
+| ブラウザ | IdP用CookieとSP用Cookieを別々に保持。一時的にSAML Responseを仲介 | IdPのCookieをSP用Cookieとして流用しない |
 
-- SAMLで認証するのは**IdP**、Assertionを受け取り検証するのは**SP**です。
-- Assertionはブラウザを経由してSPへ届きますが、SPはそのまま信用せず、署名・発行者・宛先・有効期限を検証します。
-- SAMLは主に組織向けのWeb SSOでよく使われます。OAuth 2.0は主に「APIへ何を許可するか」の認可、OIDCはOAuth 2.0上の認証連携であり、同じものではありません。
+## 注意点
+
+SSOは、一度のログインを別の連携サービスでも利用できることを指す。別SPを開いた際も、そのSP向けのAssertion検証とセッション発行は行う。ブラウザを通ったAssertionを無条件に信用したり、IdPの認証成功だけでSPの全機能を許可したりしない。
+
+## 参照資料
+
+- [OWASP：SAML Security Cheat Sheet（Redirect/POST、署名・要求対応・再送検証）](https://cheatsheetseries.owasp.org/cheatsheets/SAML_Security_Cheat_Sheet.html)
