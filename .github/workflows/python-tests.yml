@@ -30,10 +30,18 @@ jobs:
         if: always()
         run: git archive --format=zip --output=diagram-review-source.zip HEAD
 
+      - name: Export pinned local Mermaid renderer
+        run: |
+          mkdir -p /tmp/diagram-mermaid
+          npm pack --ignore-scripts --pack-destination /tmp/diagram-mermaid mermaid@11.12.2
+          tar -xOf /tmp/diagram-mermaid/mermaid-11.12.2.tgz package/dist/mermaid.min.js > mermaid-browser.js
+
       - name: Upload diagram review snapshot
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: diagram-review-source
-          path: diagram-review-source.zip
+          path: |
+            diagram-review-source.zip
+            mermaid-browser.js
           retention-days: 1
