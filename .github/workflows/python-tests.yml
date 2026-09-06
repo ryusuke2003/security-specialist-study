@@ -25,3 +25,15 @@ jobs:
           python -m unittest discover
           -s skills/security-specialist-trainer/tests
           -v
+
+      - name: Export temporary final verification snapshot
+        if: always()
+        run: git archive --format=zip --output=/tmp/diagram-final-snapshot.zip HEAD
+
+      - name: Upload temporary final verification snapshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagram-final-snapshot
+          path: /tmp/diagram-final-snapshot.zip
+          retention-days: 1
