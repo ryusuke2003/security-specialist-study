@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="1307" viewBox="0 0 800 1307" role="img" aria-labelledby="title desc">
 <title id="title">SQLインジェクションとプレースホルダの全体像</title>
-<desc id="desc">SQLの構造を固定し、入力を「値」として渡す。 上下は別実装の比較。攻撃者はWebアプリ経由でSQLへ影響させようとする。 脆弱な実装の場合。送信。入力者からWebアプリ。検索値として &#x27; OR &#x27;1&#x27;=&#x27;1 を送る。 脆弱な実装の場合。送信。WebアプリからDB。入力をSQL文字列へ直接連結し、変わってしまったSQL本文を送る。 脆弱な実装の場合。内部。DB。ORをSQL構文と解釈し、本来の検索条件を超えた行を返してしまう。 対策した実装の場合。内部。Webアプリ。固定したSQLひな形と、入力されたパラメータ値を分離する。 対策した実装の場合。送信。Webアプリ／ドライバからDB。正しいパラメータ化APIで、SQLひな形と値を別々に渡す。 対策した実装の場合。内部。DB。入力全体を一つの値として比較する。入力をOR条件へ変えない。</desc>
+<desc id="desc">SQLの構造を固定し、入力を「値」として渡す。 上下は別実装の比較。攻撃者はWebアプリ経由でSQLへ影響させようとする。 脆弱な実装の場合。送信。入力者からWebアプリ。検索値として &#x27; OR &#x27;1&#x27;=&#x27;1 を送る。 脆弱な実装の場合。送信。WebアプリからDB。入力をSQL文字列へ直接連結し、変わってしまったSQL本文を送る。 脆弱な実装の場合。内部。DB。ORをSQL構文と解釈し、本来の検索条件を超える行を選んでしまう。 対策した実装の場合。内部。Webアプリ。固定したSQLひな形と、入力されたパラメータ値を分離する。 対策した実装の場合。送信。Webアプリ／ドライバからDB。正しいパラメータ化APIで、SQLひな形と値を別々に渡す。 対策した実装の場合。内部。DB。入力全体を一つの値として比較する。入力をOR条件へ変えない。</desc>
 <rect width="800" height="1307" fill="#f3f6fa"/>
 <g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
 <text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
@@ -37,7 +37,7 @@
 <rect x="88" y="556" width="502" height="40" rx="8" fill="#dcfce7"/>
 <text x="102" y="581" font-size="19" font-weight="600" fill="#166534">DB</text>
 <text x="632" y="583" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
-<text x="94" y="624" font-size="22" font-weight="400" fill="#172e46">ORをSQL構文と解釈し、本来の検索条件を超えた行を返してし</text>
+<text x="94" y="624" font-size="22" font-weight="400" fill="#172e46">ORをSQL構文と解釈し、本来の検索条件を超える行を選んでし</text>
 <text x="94" y="656" font-size="22" font-weight="400" fill="#172e46">まう。</text>
 <rect x="72" y="708" width="696" height="47" rx="8" fill="#dfe8f1"/>
 <text x="88" y="737" font-size="20" font-weight="700" fill="#172e46">対策した実装の場合</text>
