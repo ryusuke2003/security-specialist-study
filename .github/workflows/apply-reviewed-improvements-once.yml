@@ -1,0 +1,58 @@
+name: Apply reviewed repository improvements once
+
+on:
+  push:
+    branches:
+      - improve/repository-safety-and-review-20260907
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - name: Apply exactly the locally verified patch
+        run: |
+          python - <<'PY'
+          import base64
+          import hashlib
+          import lzma
+          import subprocess
+          from pathlib import Path
+          parts = sorted(Path('.').glob('.review-patch-*.b64'))
+          assert [p.name for p in parts] == [f'.review-patch-{i:02d}.b64' for i in range(4)]
+          patch = lzma.decompress(base64.b64decode(''.join(p.read_text() for p in parts), validate=True))
+          expected = '8ff62a55d5e011ad2dde5e652171b60e6c78449bd38aaa8b6ba379374227c0b5'
+          assert hashlib.sha256(patch).hexdigest() == expected, 'Patch digest mismatch'
+          target = Path('/tmp/repository-improvements.patch')
+          target.write_bytes(patch)
+          subprocess.run(['git', 'apply', '--check', str(target)], check=True)
+          subprocess.run(['git', 'apply', str(target)], check=True)
+          for part in parts:
+              part.unlink()
+          Path('.github/workflows/apply-reviewed-improvements-once.yml').unlink()
+          PY
+          git add -A
+          git diff --cached --check
+          test "$(git write-tree)" = "1575964efb3cf8d6718aca3304a1426b2f389f88"
+      - name: Verify every test and generated overview
+        run: |
+          python -m unittest discover -s skills/security-specialist-trainer/tests -v
+          python skills/security-specialist-trainer/scripts/render_overviews.py --check
+          git diff --exit-code
+      - name: Publish without temporary transport files
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m '入力検証と復習選定を改善し再構築失敗時の記録を保護'
+          git push origin HEAD:refs/heads/improve/repository-safety-and-review-20260907
