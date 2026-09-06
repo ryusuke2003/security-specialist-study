@@ -36,8 +36,10 @@ jobs:
           assert hashlib.sha256(patch).hexdigest() == expected, 'Patch digest mismatch'
           target = Path('/tmp/repository-improvements.patch')
           target.write_bytes(patch)
-          subprocess.run(['git', 'apply', '--check', str(target)], check=True)
-          subprocess.run(['git', 'apply', str(target)], check=True)
+          # The workflow edit is already applied through the authorized connector.
+          exclusion = '--exclude=.github/workflows/python-tests.yml'
+          subprocess.run(['git', 'apply', '--check', exclusion, str(target)], check=True)
+          subprocess.run(['git', 'apply', exclusion, str(target)], check=True)
           for part in parts:
               part.unlink()
           Path('.github/workflows/apply-reviewed-improvements-once.yml').unlink()
