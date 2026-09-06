@@ -1,0 +1,40 @@
+name: Publish reviewed diagram overviews
+
+on:
+  push:
+    branches:
+      - improve/diagram-actors-and-flow-20260906
+    paths:
+      - .github/workflows/diagram-refresh-once.yml
+
+permissions: {}
+
+jobs:
+  publish:
+    if: github.repository == 'ryusuke2003/security-specialist-study' && github.ref == 'refs/heads/improve/diagram-actors-and-flow-20260906'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+      - name: Generate and verify the reviewed teaching images
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python .github/diagram_refresh_once.py
+          python skills/security-specialist-trainer/scripts/render_overviews.py
+          python skills/security-specialist-trainer/scripts/render_overviews.py --check
+          python -m unittest discover -s skills/security-specialist-trainer/tests -v
+      - name: Commit the verified change and remove one-time tooling
+        run: |
+          rm .github/diagram_refresh_once.py .github/workflows/diagram-refresh-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- .github/diagram_refresh_once.py .github/diagram_overview_tests.py .github/workflows/diagram-refresh-once.yml AGENTS.md README.md docs skills/security-specialist-trainer 復習用/流れ図
+          git commit -m '全23資料を概要SVG中心へ変更し不要な監査文書と一時処理を削除'
+          git push origin HEAD:refs/heads/improve/diagram-actors-and-flow-20260906
