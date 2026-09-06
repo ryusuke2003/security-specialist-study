@@ -16,10 +16,10 @@ sequenceDiagram
     participant O as 認可・認証サーバ
 
     B->>C: ブラウザがログイン開始を要求する
-    C->>C: Webアプリがcode_verifier・state・nonceを生成し、開始セッションに対応付ける
+    C->>C: Webアプリがcode_verifier・state・<br/>nonceを生成し、開始セッションに対応付ける
     C->>C: WebアプリがverifierからS256方式のcode_challengeを作る
     C-->>B: Webアプリが認可エンドポイントへのリダイレクトを返す<br/>scope=openid・challenge・state・nonce等
-    B->>O: ブラウザが認可要求を送り、利用者のログイン・同意操作を仲介する
+    B->>O: ブラウザが認可要求を送り、<br/>利用者のログイン・同意操作を仲介する
     O->>O: 認可・認証サーバが利用者を認証し、認可条件を確認する
     O-->>B: 認可・認証サーバが登録済みcallbackへリダイレクトする<br/>認可コード・state
     B->>C: ブラウザがcallbackへ認可コード・stateを届ける
@@ -38,17 +38,17 @@ sequenceDiagram
     participant A as APIサーバ
 
     C->>O: Webアプリがトークンエンドポイントへ送る<br/>コード・verifier・redirect URI・クライアント認証等
-    O->>O: 認可・認証サーバがコードの有効性・宛先・クライアント等を検証する
-    O->>O: 認可・認証サーバがverifierのS256値を保存済みchallengeと照合する
+    O->>O: 認可・認証サーバがコードの有効性・<br/>宛先・クライアント等を検証する
+    O->>O: 認可・認証サーバがverifierのS256値を<br/>保存済みchallengeと照合する
     alt 認可・認証サーバの検証に失敗した
         O-->>C: 認可・認証サーバがトークン発行を拒否する
     else 認可・認証サーバの検証に成功した
         O-->>C: 認可・認証サーバがアクセストークンとIDトークンを返す
-        C->>C: WebアプリがIDトークンの署名・iss・aud・exp・nonce等を検証する
+        C->>C: WebアプリがIDトークンの署名・<br/>iss・aud・exp・nonce等を検証する
         Note over C: IDトークン検証に失敗した場合はログインを成立させない
         C-->>B: Webアプリが検証成功後に自分用のセッションCookieを発行する
         C->>A: Webアプリがアクセストークンを付けてAPIを要求する
-        A->>A: APIサーバがトークンの有効性・対象API・scope等の権限を検証する
+        A->>A: APIサーバがトークンの有効性・<br/>対象API・scope等の権限を検証する
         A-->>C: APIサーバが認可に応じた結果または拒否を返す
     end
 ```

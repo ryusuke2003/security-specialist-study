@@ -20,17 +20,17 @@ sequenceDiagram
 
     U->>B: 利用者がパスキー追加を選ぶ
     B->>R: ブラウザが現在のセッションCookieで登録開始を要求する
-    R->>R: RPが追加権限を確認し、一回限りのchallengeを登録試行へ対応付ける
+    R->>R: RPが追加権限を確認し、<br/>一回限りのchallengeを登録試行へ対応付ける
     R-->>B: RPが登録オプションを返す<br/>challenge・RP ID・user情報・公開鍵アルゴリズム等
     B->>B: ブラウザが呼出元originとRP IDの利用条件を検証する
-    B->>B: ブラウザがtype・challenge・originを含むclientDataJSONを作る
-    B->>A: ブラウザとOSがRP ID・user情報・clientDataJSONのハッシュ等を渡す
+    B->>B: ブラウザがtype・challenge・<br/>originを含むclientDataJSONを作る
+    B->>A: ブラウザとOSがRP ID・user情報・<br/>clientDataJSONのハッシュ等を渡す
     A-->>U: 認証器がPINや生体認証等の利用者確認を求める
     U->>A: 利用者が認証器に対して確認操作を行う
-    A->>A: 認証器が鍵ペアを生成し、秘密鍵をRP ID・credential ID等へ結び付けて保持する
+    A->>A: 認証器が鍵ペアを生成し、秘密鍵をRP ID・<br/>credential ID等へ結び付けて保持する
     A-->>B: 認証器がcredential IDと公開鍵を含む登録データを返す
-    B->>R: ブラウザがcredential ID・clientDataJSON・attestationObjectを送る
-    R->>R: RPがchallenge・origin・RP ID hash・UP/UV・形式等を検証する
+    B->>R: ブラウザがcredential ID・<br/>clientDataJSON・attestationObjectを送る
+    R->>R: RPがchallenge・origin・<br/>RP ID hash・UP/UV・形式等を検証する
     alt RPの検証に成功した
         R->>R: RPが利用者とcredential ID・公開鍵を対応付けて保存する
         R-->>B: RPが登録成功を返す
@@ -64,15 +64,16 @@ sequenceDiagram
     R->>R: RPが一回限りのchallengeを作り、認証試行へ対応付ける
     R-->>B: RPがchallenge・RP ID・UV要件・必要な候補ID等を返す
     B->>B: ブラウザが呼出元originとRP IDの利用条件を検証する
+    B->>B: ブラウザがtype・challenge・<br/>originを含むclientDataJSONを作る
     B->>A: ブラウザとOSがRP IDとclientDataJSONのハッシュ等を渡す
     A->>A: 認証器が指定RP IDに対応するパスキーを選ぶ
     A-->>U: 認証器が利用者確認を求める
     U->>A: 利用者がPINや生体認証等で確認操作を行う
-    A->>A: 認証器がauthenticatorDataとclientDataJSONハッシュの連結値へ署名する
+    A->>A: 認証器がauthenticatorDataと<br/>clientDataJSONハッシュの連結値へ署名する
     A-->>B: 認証器がcredential ID・authenticatorData・署名等を返す
     B->>R: ブラウザがclientDataJSONを添えた認証応答を送る
-    R->>R: RPがcredential IDに対応する利用者・登録済み公開鍵を取得する
-    R->>R: RPがchallenge・origin・RP ID hash・UP/UV・署名等を検証する
+    R->>R: RPがcredential IDに対応する利用者・<br/>登録済み公開鍵を取得する
+    R->>R: RPがchallenge・origin・<br/>RP ID hash・UP/UV・署名等を検証する
     alt RPの検証に成功した
         R->>R: RPがchallengeの再利用を防ぎ、ログインセッションを作る
         R-->>B: RPがセッションCookieを返す
