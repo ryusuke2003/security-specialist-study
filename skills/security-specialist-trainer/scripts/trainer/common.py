@@ -224,10 +224,12 @@ def split_markdown_row(line: str) -> list[str]:
     """Split the simple pipe tables used by this repository."""
     escaped = "\u0000"
     line = line.strip().replace("\\|", escaped)
-    return [cell.strip().replace(escaped, "|") for cell in line.strip("|").split("|")]
+    cells = line.removeprefix("|").removesuffix("|").split("|")
+    return [cell.strip().replace(escaped, "|") for cell in cells]
 
 
 def read_table(path: Path, required_first_column: str) -> list[dict[str, str]]:
+    """Read a simple table without silently dropping malformed source rows."""
     if not path.exists():
         return []
     lines = path.read_text(encoding="utf-8").splitlines()
@@ -237,16 +239,34 @@ def read_table(path: Path, required_first_column: str) -> list[dict[str, str]]:
         headers = split_markdown_row(line)
         if not headers or headers[0] != required_first_column:
             continue
+        if any(not header for header in headers) or len(set(headers)) != len(headers):
+            raise ValueError(f"{path}:{index + 1}: table columns must be nonempty and unique")
+        separator = split_markdown_row(lines[index + 1]) if index + 1 < len(lines) else []
+        if len(separator) != len(headers) or not all(
+            re.fullmatch(r":?-{3,}:?", cell) for cell in separator
+        ):
+            raise ValueError(f"{path}:{index + 2}: invalid table separator")
         rows: list[dict[str, str]] = []
-        for row_line in lines[index + 2 :]:
+        for number, row_line in enumerate(lines[index + 2:], index + 3):
             if not row_line.lstrip().startswith("|"):
                 break
             values = split_markdown_row(row_line)
             if len(values) != len(headers):
-                continue
+                raise ValueError(
+                    f"{path}:{number}: expected {len(headers)} columns, got {len(values)}"
+                )
             rows.append(dict(zip(headers, values)))
         return rows
     return []
+
+
+def _require_unique_terms(rows: list[dict[str, str]], source: Path) -> None:
+    seen: set[str] = set()
+    for row in rows:
+        term = row["Term"]
+        if not term or term in seen:
+            raise ValueError(f"{source}: empty or duplicate Term {term!r}")
+        seen.add(term)
 
 
 def as_int(value: str, default: int = 0) -> int:
@@ -274,6 +294,7 @@ def optional_score(value: str) -> Optional[int]:
 
 def load_catalog(root: Path) -> list[CatalogItem]:
     rows = read_table(reference_file(root, "出題分類と概念カタログ.md", "taxonomy.md"), "Term")
+    _require_unique_terms(rows, reference_file(root, "出題分類と概念カタログ.md", "taxonomy.md"))
     result = []
     for row in rows:
         result.append(
@@ -293,6 +314,7 @@ def load_catalog(root: Path) -> list[CatalogItem]:
 
 def load_terms(root: Path) -> dict[str, TermRecord]:
     rows = read_table(progress_file(root, "語句別理解度.md", "terms.md"), "Term")
+    _require_unique_terms(rows, progress_file(root, "語句別理解度.md", "terms.md"))
     result: dict[str, TermRecord] = {}
     for row in rows:
         score = as_int(row.get("Score", ""), -1)
@@ -450,13 +472,21 @@ def markdown_cell(value: object) -> str:
 
 
 def atomic_write(path: Path, text: str) -> None:
+    """Replace a text file atomically, cleaning the temporary file on failures."""
     path.parent.mkdir(parents=True, exist_ok=True)
     mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else 0o644
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, delete=False) as handle:
-        handle.write(text)
-        temporary = Path(handle.name)
-    os.chmod(temporary, mode)
-    os.replace(temporary, path)
+    temporary: Optional[Path] = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w", encoding="utf-8", newline="", dir=path.parent, delete=False
+        ) as handle:
+            temporary = Path(handle.name)
+            handle.write(text)
+        os.chmod(temporary, mode)
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def _clean_term(value: str) -> str:

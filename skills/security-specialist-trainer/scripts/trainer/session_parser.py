@@ -32,6 +32,8 @@ from .common import (
 
 def session_bounds(text: str, session_number: int) -> tuple[int, int]:
     headings = list(re.finditer(r"^## Session (\d+)[ \t]*$", text, flags=re.MULTILINE))
+    if sum(int(heading.group(1)) == session_number for heading in headings) > 1:
+        raise ValueError(f"Session {session_number} has duplicate headings")
     for index, heading in enumerate(headings):
         if int(heading.group(1)) != session_number:
             continue
@@ -391,10 +393,10 @@ def parse_graded_session(
 ) -> tuple[str, list[GradedQuestion]]:
     start, end = session_bounds(text, session_number)
     session = text[start:end]
-    status_match = re.search(r"^- Status:[ \t]*(\S+)[ \t]*$", session, flags=re.MULTILINE)
-    if not status_match:
-        raise ValueError(f"Session {session_number} has no Status")
-    status = status_match.group(1)
+    status_values = re.findall(r"^- Status:[ \t]*(\S+)[ \t]*$", session, flags=re.MULTILINE)
+    if len(status_values) != 1:
+        raise ValueError(f"Session {session_number} must have exactly one Status")
+    status = status_values[0]
     parsed_mode = session_mode(text, session_number, allow_missing=allow_missing_mode)
     question_mode = (
         TERM_RECALL_MODE if parsed_mode == TERM_RECALL_MODE
@@ -454,11 +456,21 @@ def parse_graded_session(
         domain_match = re.search(r"^- Domain:[ \t]*(.+?)[ \t]*$", block, flags=re.MULTILINE)
         track_match = re.search(r"^- Track:[ \t]*(A/B|A|B)[ \t]*$", block, flags=re.MULTILINE)
         level_match = re.search(r"^- Level:[ \t]*([1-6])[ \t]*$", block, flags=re.MULTILINE)
-        score_match = re.search(
-            r"^Score:[ \t]*(\d{1,3})[ \t]*/[ \t]*100[ \t]*$",
-            block,
-            flags=re.MULTILINE,
+        grading_sections = re.findall(
+            r"^### 採点[ \t]*\n(.*?)(?=^### |^## Session |\Z)",
+            block, flags=re.MULTILINE | re.DOTALL,
         )
+        if len(grading_sections) != 1:
+            raise ValueError(f"Q{heading.group(1)} must have exactly one grading block")
+        # Feedback may quote other scores. Only the grading header carries the result.
+        score_header = re.split(r"^#### ", grading_sections[0], maxsplit=1, flags=re.MULTILINE)[0]
+        scores = list(re.finditer(
+            r"^Score:[ \t]*(\d{1,3})[ \t]*/[ \t]*100[ \t]*$",
+            score_header, flags=re.MULTILINE,
+        ))
+        if len(scores) != 1 or len(re.findall(r"^Score:", score_header, re.MULTILINE)) != 1:
+            raise ValueError(f"Q{heading.group(1)} must have exactly one valid Score")
+        score_match = scores[0]
         primary = parse_list_field(block, "Primary Terms")
         if not primary:
             legacy = parse_list_field(block, "Terms")
@@ -470,6 +482,8 @@ def parse_graded_session(
         if not 0 <= score <= 100:
             raise ValueError(f"Q{heading.group(1)} has an invalid Score")
         if question_mode == QUICK_REVIEW_MODE:
+            if score not in {0, 100}:
+                raise ValueError(f"Q{heading.group(1)} quick-review Score must be 0 or 100")
             checked_choices = quick_review_checked_choices(block)
             has_checkbox_choices = re.search(
                 r"^- \[[ xX]\][ \t]+[ABCD]\.[ \t]+",
@@ -484,6 +498,8 @@ def parse_graded_session(
                 raise ValueError(
                     f"Q{heading.group(1)} selected D. わかりません but Score is not 0"
                 )
+        if len(primary) != len(set(primary)):
+            raise ValueError(f"Q{heading.group(1)} has duplicate Primary Terms")
         duplicates = seen_primary.intersection(primary)
         if duplicates:
             raise ValueError(f"Primary Terms repeated in one session: {', '.join(sorted(duplicates))}")
@@ -529,49 +545,47 @@ def parse_graded_session(
     return status, questions
 
 
-def recent_domain_counts(root: Path, limit_sessions: int = 5) -> dict[str, int]:
-    counts: dict[str, int] = {}
-    sections: list[tuple[date, int, str]] = []
+def _recent_session_sections(
+    root: Path, limit_sessions: int,
+) -> list[tuple[date, int, Path, str]]:
+    """Share filtering and ordering before applying the recent-session limit."""
+    if limit_sessions <= 0:
+        return []
+    sections: list[tuple[date, int, Path, str]] = []
     for path in session_file_paths(root):
         session_day = as_date(path.stem)
         if session_day is None:
             continue
         text = path.read_text(encoding="utf-8")
         for match in re.finditer(r"^## Session (\d+)[ \t]*$", text, flags=re.MULTILINE):
+            number = int(match.group(1))
             try:
-                session_mode_for_path(root, path, text, int(match.group(1)))
+                session_mode_for_path(root, path, text, number)
+                start, end = session_bounds(text, number)
             except ValueError:
                 continue
-            start, end = session_bounds(text, int(match.group(1)))
-            sections.append((session_day, int(match.group(1)), text[start:end]))
-    for _, _, section in sorted(sections, reverse=True)[:limit_sessions]:
+            section = text[start:end]
+            if re.search(r"^- Status:[ \t]*cancelled[ \t]*$", section, re.MULTILINE):
+                continue
+            sections.append((session_day, number, path, section))
+    return sorted(sections, key=lambda item: (item[0], item[1], str(item[2])), reverse=True)[:limit_sessions]
+
+
+def recent_domain_counts(root: Path, limit_sessions: int = 5) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for _, _, _, section in _recent_session_sections(root, limit_sessions):
         for domain in re.findall(r"^- Domain:[ \t]*(.+?)[ \t]*$", section, flags=re.MULTILINE):
             counts[domain] = counts.get(domain, 0) + 1
     return counts
 
 
 def recent_term_counts(root: Path, today: date, limit_sessions: int = 5) -> dict[str, int]:
-    """Weight same-day appearances more heavily, including ungraded sessions."""
+    """Weight same-day appearances, but never penalize cancelled questions."""
     counts: dict[str, int] = {}
-    sections: list[tuple[date, int, str]] = []
-    for path in session_file_paths(root):
-        session_day = as_date(path.stem)
-        if session_day is None:
-            continue
-        text = path.read_text(encoding="utf-8")
-        for match in re.finditer(r"^## Session (\d+)[ \t]*$", text, flags=re.MULTILINE):
-            try:
-                session_mode_for_path(root, path, text, int(match.group(1)))
-            except ValueError:
-                continue
-            start, end = session_bounds(text, int(match.group(1)))
-            sections.append((session_day, int(match.group(1)), text[start:end]))
-    for session_day, _, section in sorted(sections, reverse=True)[:limit_sessions]:
+    for session_day, _, _, section in _recent_session_sections(root, limit_sessions):
         weight = 4 if session_day == today else 1
         for question in re.split(r"(?=^### Q\d+[ \t]*$)", section, flags=re.MULTILINE)[1:]:
-            terms = parse_list_field(question, "Primary Terms")
-            if not terms:
-                terms = parse_list_field(question, "Terms")
+            terms = parse_list_field(question, "Primary Terms") or parse_list_field(question, "Terms")
             for term in terms:
                 counts[term] = counts.get(term, 0) + weight
     return counts
@@ -581,35 +595,13 @@ def recent_term_sources(
     root: Path,
     limit_sessions: int = 3,
 ) -> dict[str, list[tuple[date, int, Path]]]:
-    """Return recent Session sources for each primary term without judging prose overlap."""
-    sections: list[tuple[date, int, Path, str]] = []
-    for path in session_file_paths(root):
-        session_day = as_date(path.stem)
-        if session_day is None:
-            continue
-        text = path.read_text(encoding="utf-8")
-        for match in re.finditer(r"^## Session (\d+)[ \t]*$", text, flags=re.MULTILINE):
-            session_number = int(match.group(1))
-            try:
-                session_mode_for_path(root, path, text, session_number)
-            except ValueError:
-                continue
-            start, end = session_bounds(text, session_number)
-            sections.append((session_day, session_number, path, text[start:end]))
-
+    """Return recent active primary-term sources without judging prose overlap."""
     sources: dict[str, list[tuple[date, int, Path]]] = {}
-    ordered_sections = sorted(
-        sections,
-        key=lambda section: (section[0], section[1], str(section[2])),
-        reverse=True,
-    )
-    for session_day, session_number, path, section in ordered_sections[:limit_sessions]:
+    for session_day, number, path, section in _recent_session_sections(root, limit_sessions):
         for question in re.split(r"(?=^### Q\d+[ \t]*$)", section, flags=re.MULTILINE)[1:]:
-            terms = parse_list_field(question, "Primary Terms")
-            if not terms:
-                terms = parse_list_field(question, "Terms")
+            terms = parse_list_field(question, "Primary Terms") or parse_list_field(question, "Terms")
             for term in terms:
-                sources.setdefault(term, []).append((session_day, session_number, path))
+                sources.setdefault(term, []).append((session_day, number, path))
     return sources
 
 
@@ -658,27 +650,31 @@ def recent_mode_scores(
 
 
 def quick_review_incorrect_terms(root: Path) -> set[str]:
-    """Return missed quick-review terms without changing mastery evidence."""
-    incorrect: set[str] = set()
+    """Use each term's latest quick-review result, without changing mastery."""
+    latest: dict[str, tuple[tuple[date, int], int]] = {}
     for path in session_file_paths(root):
         if path.parent.name != QUICK_REVIEW_SESSION_DIRECTORY:
             continue
+        study_date = as_date(path.stem)
+        if study_date is None:
+            continue
         text = path.read_text(encoding="utf-8")
         for match in re.finditer(r"^## Session ([1-9][0-9]*)[ \t]*$", text, flags=re.MULTILINE):
+            number = int(match.group(1))
             try:
-                status, questions = parse_graded_session(
-                    text, int(match.group(1)), allow_missing_mode=False
-                )
+                if session_mode_for_path(root, path, text, number) != QUICK_REVIEW_MODE:
+                    continue
+                status, questions = parse_graded_session(text, number, allow_missing_mode=False)
             except ValueError:
                 continue
-            if status in {"grading", "graded"}:
-                incorrect.update(
-                    term
-                    for question in questions
-                    if question.score < 100
-                    for term in question.primary_terms
-                )
-    return incorrect
+            if status not in {"grading", "graded"}:
+                continue
+            order = (study_date, number)
+            for question in questions:
+                for term in question.primary_terms:
+                    if term not in latest or order > latest[term][0]:
+                        latest[term] = (order, question.score)
+    return {term for term, (_, score) in latest.items() if score < 100}
 
 
 def quick_review_exists(root: Path, study_date: date) -> bool:

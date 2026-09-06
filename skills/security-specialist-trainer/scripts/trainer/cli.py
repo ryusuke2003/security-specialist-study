@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from datetime import date
 from pathlib import Path
 from typing import Optional
 
@@ -54,6 +55,14 @@ def default_root() -> Path:
     return Path(__file__).resolve().parents[4]
 
 
+def argument_date(value: str) -> date:
+    """Reject a mistyped explicit date instead of silently using today's date."""
+    parsed = as_date(value)
+    if parsed is None or parsed.isoformat() != value:
+        raise argparse.ArgumentTypeError("use a valid YYYY-MM-DD date")
+    return parsed
+
+
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Plan and record adaptive security-specialist study in Markdown."
@@ -61,7 +70,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     subparsers = parser.add_subparsers(dest="command", required=True)
     plan_parser = subparsers.add_parser("plan", help="Print a Markdown selection plan without changing files.")
     plan_parser.add_argument("--root", type=Path, default=default_root())
-    plan_parser.add_argument("--date", type=as_date)
+    plan_parser.add_argument("--date", type=argument_date)
     plan_parser.add_argument("--count", type=int)
     plan_parser.add_argument("--focus", default="")
     plan_parser.add_argument(
@@ -78,7 +87,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Print bounded authoring context from progress and recent Sessions without changing files.",
     )
     briefing_parser.add_argument("--root", type=Path, default=default_root())
-    briefing_parser.add_argument("--date", type=as_date)
+    briefing_parser.add_argument("--date", type=argument_date)
     briefing_parser.add_argument("--count", type=int)
     briefing_parser.add_argument("--focus", default="")
     briefing_parser.add_argument(
@@ -95,7 +104,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Idempotently update Markdown progress from an already-scored Session.",
     )
     record_parser.add_argument("--root", type=Path, default=default_root())
-    record_parser.add_argument("--date", type=as_date, required=True)
+    record_parser.add_argument("--date", type=argument_date, required=True)
     record_parser.add_argument("--session", type=int, required=True)
     record_parser.add_argument(
         "--mode",
@@ -107,7 +116,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Validate a newly authored Session before answers or progress updates.",
     )
     validate_parser.add_argument("--root", type=Path, default=default_root())
-    validate_parser.add_argument("--date", type=as_date, required=True)
+    validate_parser.add_argument("--date", type=argument_date, required=True)
     validate_parser.add_argument("--session", type=int, required=True)
     validate_parser.add_argument(
         "--mode",
@@ -133,7 +142,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         "activity-log", help="Append a source-linked list of Sessions graded on a study date."
     )
     activity_parser.add_argument("--root", type=Path, default=default_root())
-    activity_parser.add_argument("--date", type=as_date)
+    activity_parser.add_argument("--date", type=argument_date)
     motivation_parser = subparsers.add_parser(
         "motivation", help="Write the derived vocabulary-coverage dashboard."
     )
@@ -146,7 +155,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Report whether today's quick-review Session already exists.",
     )
     quick_status_parser.add_argument("--root", type=Path, default=default_root())
-    quick_status_parser.add_argument("--date", type=as_date)
+    quick_status_parser.add_argument("--date", type=argument_date)
     study_date_parser = subparsers.add_parser(
         "study-date",
         help="Print the current JST study date; the study day starts at 05:00.",
@@ -157,7 +166,17 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
 
 def main(argv: Optional[list[str]] = None) -> int:
     args = parse_args(argv)
+    try:
+        return _run(args)
+    except (ValueError, OSError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+
+def _run(args: argparse.Namespace) -> int:
     root = args.root.resolve()
+    if not root.is_dir():
+        raise ValueError(f"study root is not a directory: {root}")
     if args.command == "study-date":
         print(current_study_date().isoformat())
         return 0
