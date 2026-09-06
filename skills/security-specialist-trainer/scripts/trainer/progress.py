@@ -536,7 +536,7 @@ def _restore_record_files_on_error(paths: list[Path]):
     snapshots: dict[Path, tuple[str, int] | None] = {}
     for path in dict.fromkeys(paths):
         snapshots[path] = (
-            (path.read_text(encoding="utf-8"), stat.S_IMODE(path.stat().st_mode))
+            (path.read_bytes().decode("utf-8"), stat.S_IMODE(path.stat().st_mode))
             if path.exists()
             else None
         )
@@ -687,18 +687,29 @@ def rebuild_progress(root: Path) -> dict[str, int]:
         raise ValueError("Cannot rebuild progress without a concept catalog")
     domain_rows = read_table(progress_file(root, "分野別理解度.md", "domains.md"), "Domain")
 
-    atomic_write(progress_file(root, "語句別理解度.md", "terms.md"), render_terms({}))
-    atomic_write(
+    transaction_paths = [
+        progress_file(root, "語句別理解度.md", "terms.md"),
         progress_file(root, "分野別理解度.md", "domains.md"),
-        render_domains(domain_rows, {}, [], current_study_date(), catalog),
-    )
-    atomic_write(progress_file(root, "学習履歴.md", "history.md"), render_history([]))
-
-    for study_date, session_number, path, mode, questions in sessions:
-        records = update_term_records(root, study_date, session_number, questions, catalog)
-        update_domains(root, records, study_date, catalog)
-        summary = update_history(
-            root, study_date, session_number, questions, records, path, mode
+        progress_file(root, "学習履歴.md", "history.md"),
+        progress_directory(root) / "モチベ.md",
+        sessions_directory(root) / "未解答一覧.md",
+        *(path for _, _, path, _, _ in sessions),
+    ]
+    with _restore_record_files_on_error(transaction_paths):
+        atomic_write(progress_file(root, "語句別理解度.md", "terms.md"), render_terms({}))
+        atomic_write(
+            progress_file(root, "分野別理解度.md", "domains.md"),
+            render_domains(domain_rows, {}, [], current_study_date(), catalog),
         )
-        finalize_session(path, session_number, summary)
+        atomic_write(progress_file(root, "学習履歴.md", "history.md"), render_history([]))
+
+        for study_date, session_number, path, mode, questions in sessions:
+            records = update_term_records(root, study_date, session_number, questions, catalog)
+            update_domains(root, records, study_date, catalog)
+            summary = update_history(
+                root, study_date, session_number, questions, records, path, mode
+            )
+            finalize_session(path, session_number, summary)
+        write_motivation(root)
+        write_unanswered_index(root)
     return {"sessions": len(sessions), "questions": sum(len(item[4]) for item in sessions)}
