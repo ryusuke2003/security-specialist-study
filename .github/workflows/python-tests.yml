@@ -12,8 +12,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -27,16 +25,3 @@ jobs:
           python -m unittest discover
           -s skills/security-specialist-trainer/tests
           -v
-
-      - name: Export tracked audit baseline
-        if: always()
-        run: git archive --format=zip --output="$RUNNER_TEMP/audit-baseline.zip" 3c73e677491883494ac05aede12faa296e403502
-
-      - name: Upload audit baseline
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: audit-baseline
-          path: ${{ runner.temp }}/audit-baseline.zip
-          retention-days: 1
-          if-no-files-found: error

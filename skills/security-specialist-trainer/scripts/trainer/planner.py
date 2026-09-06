@@ -24,7 +24,6 @@ from .common import (
     target_level,
     term_recall_track_counts,
 )
-from .indexes import unanswered_primary_terms
 from .session_parser import recent_mode_scores, recent_term_sources
 
 
@@ -99,9 +98,11 @@ def build_candidates(
                 mode_next_review = record.next_review if legacy_explanation else record.explanation_next_review
             mode_unseen = mode_attempts <= 0 or mode_score is None
             weakness = 0.0 if mode_unseen else 0.45 * (100 - mode_score)
-            elapsed = (today - mode_last_studied).days if mode_last_studied else base_interval(mode_score or record.score)
+            interval_score = mode_score if mode_score is not None else record.score
+            interval = base_interval(interval_score)
+            elapsed = (today - mode_last_studied).days if mode_last_studied else interval
             elapsed = max(0, elapsed)
-            forgetting = min(40.0, 35.0 * elapsed / base_interval(mode_score or record.score))
+            forgetting = min(40.0, 35.0 * elapsed / interval)
             unseen_bonus = 20 if mode_unseen else 0
             due = bool(mode_next_review and mode_next_review <= today) or forgetting >= 30
             challenge = not mode_unseen and mode_score >= 80
@@ -319,62 +320,44 @@ def adaptive_plan(
                 "定着確認": candidate.challenge,
             }.get(label, True)
 
-        while sum(planned_track(candidate, mode) == "B" for _, candidate in selected) > maximum_b:
-            replaceable = [
+        while True:
+            b_count = sum(planned_track(candidate, mode) == "B" for _, candidate in selected)
+            if minimum_b <= b_count <= maximum_b:
+                break
+            want_b = b_count < minimum_b
+            outgoing = [
                 (index, candidate)
                 for index, (_, candidate) in enumerate(selected)
-                if planned_track(candidate, mode) == "B"
+                if (planned_track(candidate, mode) == "B") != want_b
             ]
-            if not replaceable:
-                break
-            index, removed = min(replaceable, key=lambda pair: pair[1].priority)
-            label = selected[index][0]
-            replacements = [
-                candidate
-                for candidate in candidates
-                if planned_track(candidate, mode) != "B"
+            incoming = [
+                candidate for candidate in candidates
+                if (planned_track(candidate, mode) == "B") == want_b
                 and candidate.item.term not in used
-                and same_bucket(label, candidate)
             ]
-            if not replacements:
-                replacements = [
-                    candidate
-                    for candidate in candidates
-                    if planned_track(candidate, mode) != "B" and candidate.item.term not in used
-                ]
-            if not replacements:
+            if not outgoing or not incoming:
                 break
-            replacement = max(replacements, key=lambda c: c.priority)
-            used.remove(removed.item.term)
-            used.add(replacement.item.term)
-            selected[index] = (label, replacement)
 
-        while sum(planned_track(candidate, mode) == "B" for _, candidate in selected) < minimum_b:
-            replaceable = [
-                (index, candidate)
-                for index, (_, candidate) in enumerate(selected)
-                if planned_track(candidate, mode) != "B"
-            ]
-            if not replaceable:
-                break
-            index, removed = min(replaceable, key=lambda pair: pair[1].priority)
-            label = selected[index][0]
-            replacements = [
-                candidate
-                for candidate in candidates
-                if planned_track(candidate, mode) == "B"
-                and candidate.item.term not in used
-                and same_bucket(label, candidate)
-            ]
-            if not replacements:
-                replacements = [
-                    candidate
-                    for candidate in candidates
-                    if planned_track(candidate, mode) == "B" and candidate.item.term not in used
-                ]
-            if not replacements:
-                break
-            replacement = max(replacements, key=lambda c: c.priority)
+            # Consider every replaceable slot before relaxing its learning bucket.
+            # Replacing only the lowest-priority slot can silently discard the
+            # challenge/new mix even when another slot has a compatible swap.
+            compatible = max(
+                (
+                    (index, removed, replacement)
+                    for index, removed in outgoing
+                    for replacement in incoming
+                    if same_bucket(selected[index][0], replacement)
+                ),
+                key=lambda pair: pair[2].priority - pair[1].priority,
+                default=None,
+            )
+            if compatible is not None:
+                index, removed, replacement = compatible
+                label = selected[index][0]
+            else:
+                index, removed = min(outgoing, key=lambda pair: pair[1].priority)
+                replacement = max(incoming, key=lambda candidate: candidate.priority)
+                label = "配分補完"
             used.remove(removed.item.term)
             used.add(replacement.item.term)
             selected[index] = (label, replacement)
