@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1446" viewBox="0 0 800 1446" role="img" aria-labelledby="title desc">
+<title id="title">CORSのpreflightと認証情報付きリクエストの全体像</title>
+<desc id="desc">CORSの許可を確認するのはブラウザ。 Cookie付きPATCHの例。読取り拒否は、APIで済んだ業務処理の取消ではない。 送る前：preflight。送信。ブラウザからAPIサーバ。OPTIONSでOrigin・PATCH・要求ヘッダ名を通知する。Cookieは付けない。 送る前：preflight。送信。APIサーバからブラウザ。許可Origin・メソッド・ヘッダ・credentialsの設定を返す。 送る前：preflight。確認。ブラウザ。応答が要求条件に合えば本送信へ。不許可なら本リクエストを送らない。 許可後：本リクエスト。送信。ブラウザからAPIサーバ。PATCH本文とOriginを送る。Cookieは送信条件を満たす場合だけ付ける。 許可後：本リクエスト。送信。APIサーバからブラウザ。認証・認可・CSRF対策を確認して処理し、結果とCORSヘッダを返す。 受信後：読取り。確認。ブラウザ。本レスポンスのCORS条件を確認し、許可時だけJavaScriptへ渡す。</desc>
+<rect width="800" height="1446" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">CORSのpreflightと認証情報付きリクエスト</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">CORSの許可を確認するのはブラウザ。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">送る前：preflight</text>
+<rect x="72" y="276" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<path d="M36 320V420" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="288" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">ブラウザ</text>
+<rect x="446" y="288" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="313" font-size="19" font-weight="600" fill="#5b21b6">APIサーバ</text>
+<path d="M402 308H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">OPTIONSでOrigin・PATCH・要求ヘッダ名を通知する。Cookie</text>
+<text x="94" y="388" font-size="22" font-weight="400" fill="#172e46">は付けない。</text>
+<rect x="72" y="426" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="449" r="18" fill="#203b59"/>
+<text x="30" y="455" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<path d="M36 470V538" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="438" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="463" font-size="19" font-weight="600" fill="#5b21b6">APIサーバ</text>
+<rect x="446" y="438" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="460" y="463" font-size="19" font-weight="600" fill="#075985">ブラウザ</text>
+<path d="M402 458H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="506" font-size="22" font-weight="400" fill="#172e46">許可Origin・メソッド・ヘッダ・credentialsの設定を返す。</text>
+<rect x="72" y="544" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="567" r="18" fill="#203b59"/>
+<text x="30" y="573" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<rect x="88" y="556" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="581" font-size="19" font-weight="600" fill="#075985">ブラウザ</text>
+<text x="632" y="583" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="624" font-size="22" font-weight="400" fill="#172e46">応答が要求条件に合えば本送信へ。不許可なら本リクエスト</text>
+<text x="94" y="656" font-size="22" font-weight="400" fill="#172e46">を送らない。</text>
+<rect x="72" y="708" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="737" font-size="20" font-weight="700" fill="#172e46">許可後：本リクエスト</text>
+<rect x="72" y="769" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="792" r="18" fill="#203b59"/>
+<text x="30" y="798" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<path d="M36 813V913" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="781" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="806" font-size="19" font-weight="600" fill="#075985">ブラウザ</text>
+<rect x="446" y="781" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="806" font-size="19" font-weight="600" fill="#5b21b6">APIサーバ</text>
+<path d="M402 801H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="849" font-size="22" font-weight="400" fill="#172e46">PATCH本文とOriginを送る。Cookieは送信条件を満たす場合だ</text>
+<text x="94" y="881" font-size="22" font-weight="400" fill="#172e46">け付ける。</text>
+<rect x="72" y="919" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="942" r="18" fill="#203b59"/>
+<text x="30" y="948" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<rect x="88" y="931" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="956" font-size="19" font-weight="600" fill="#5b21b6">APIサーバ</text>
+<rect x="446" y="931" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="460" y="956" font-size="19" font-weight="600" fill="#075985">ブラウザ</text>
+<path d="M402 951H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="999" font-size="22" font-weight="400" fill="#172e46">認証・認可・CSRF対策を確認して処理し、結果とCORSヘッダ</text>
+<text x="94" y="1031" font-size="22" font-weight="400" fill="#172e46">を返す。</text>
+<rect x="72" y="1083" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="1112" font-size="20" font-weight="700" fill="#172e46">受信後：読取り</text>
+<rect x="72" y="1144" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1167" r="18" fill="#203b59"/>
+<text x="30" y="1173" font-size="19" font-weight="600" fill="#ffffff">6</text>
+<rect x="88" y="1156" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="1181" font-size="19" font-weight="600" fill="#075985">ブラウザ</text>
+<text x="632" y="1183" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="1224" font-size="22" font-weight="400" fill="#172e46">本レスポンスのCORS条件を確認し、許可時だけJavaScriptへ</text>
+<text x="94" y="1256" font-size="22" font-weight="400" fill="#172e46">渡す。</text>
+<rect x="32" y="1308" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1335" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1365" font-size="19" font-weight="400" fill="#764a0b">Cookie付きPATCHの例。読取り拒否は、APIで済んだ業務処理の取消で</text>
+<text x="48" y="1393" font-size="19" font-weight="400" fill="#764a0b">はない。</text>
+</g>
+</svg>

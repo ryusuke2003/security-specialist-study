@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1446" viewBox="0 0 800 1446" role="img" aria-labelledby="title desc">
+<title id="title">CSRFトークンとSameSiteの全体像</title>
+<desc id="desc">SameSiteはブラウザ。トークン検証はWebサイト。 ログイン済みの被害者を想定。攻撃者は正しいCSRFトークンを読めない。 正規フォームの準備。送信。ECサイトから被害者ブラウザ。正規フォームの要求に、セッションと結び付いたCSRFトークンを返す。 攻撃者の誘導。送信。攻撃者サイトから被害者ブラウザ。ECサイトへ自動POSTする偽フォームを渡す。 ブラウザの判断。確認。被害者ブラウザ。SameSite等でCookieを付けるか判断する。POST自体を必ず止めるわけではない。 不正な要求。送信。被害者ブラウザからECサイト。正しいトークンのないPOSTを送る。Cookieの有無は送信条件による。 ECサイトの判断。確認。ECサイト。未認証なら拒否。Cookieがあってもトークンが不一致なら変更を実行しない。</desc>
+<rect width="800" height="1446" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">CSRFトークンとSameSite</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">SameSiteはブラウザ。トークン検証はWebサイト。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">正規フォームの準備</text>
+<rect x="72" y="276" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<rect x="88" y="288" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">ECサイト</text>
+<rect x="446" y="288" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="313" font-size="19" font-weight="600" fill="#5b21b6">被害者ブラウザ</text>
+<path d="M402 308H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">正規フォームの要求に、セッションと結び付いたCSRFトーク</text>
+<text x="94" y="388" font-size="22" font-weight="400" fill="#172e46">ンを返す。</text>
+<rect x="72" y="440" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="469" font-size="20" font-weight="700" fill="#172e46">攻撃者の誘導</text>
+<rect x="72" y="501" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="524" r="18" fill="#203b59"/>
+<text x="30" y="530" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<rect x="88" y="513" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="102" y="538" font-size="19" font-weight="600" fill="#166534">攻撃者サイト</text>
+<rect x="446" y="513" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="538" font-size="19" font-weight="600" fill="#5b21b6">被害者ブラウザ</text>
+<path d="M402 533H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="581" font-size="22" font-weight="400" fill="#172e46">ECサイトへ自動POSTする偽フォームを渡す。</text>
+<rect x="72" y="633" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="662" font-size="20" font-weight="700" fill="#172e46">ブラウザの判断</text>
+<rect x="72" y="694" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="717" r="18" fill="#203b59"/>
+<text x="30" y="723" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<rect x="88" y="706" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="731" font-size="19" font-weight="600" fill="#5b21b6">被害者ブラウザ</text>
+<text x="632" y="733" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="774" font-size="22" font-weight="400" fill="#172e46">SameSite等でCookieを付けるか判断する。POST自体を必ず止</text>
+<text x="94" y="806" font-size="22" font-weight="400" fill="#172e46">めるわけではない。</text>
+<rect x="72" y="858" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="887" font-size="20" font-weight="700" fill="#172e46">不正な要求</text>
+<rect x="72" y="919" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="942" r="18" fill="#203b59"/>
+<text x="30" y="948" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<rect x="88" y="931" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="956" font-size="19" font-weight="600" fill="#5b21b6">被害者ブラウザ</text>
+<rect x="446" y="931" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="460" y="956" font-size="19" font-weight="600" fill="#075985">ECサイト</text>
+<path d="M402 951H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="999" font-size="22" font-weight="400" fill="#172e46">正しいトークンのないPOSTを送る。Cookieの有無は送信条件</text>
+<text x="94" y="1031" font-size="22" font-weight="400" fill="#172e46">による。</text>
+<rect x="72" y="1083" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="1112" font-size="20" font-weight="700" fill="#172e46">ECサイトの判断</text>
+<rect x="72" y="1144" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1167" r="18" fill="#203b59"/>
+<text x="30" y="1173" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<rect x="88" y="1156" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="1181" font-size="19" font-weight="600" fill="#075985">ECサイト</text>
+<text x="632" y="1183" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="1224" font-size="22" font-weight="400" fill="#172e46">未認証なら拒否。Cookieがあってもトークンが不一致なら変</text>
+<text x="94" y="1256" font-size="22" font-weight="400" fill="#172e46">更を実行しない。</text>
+<rect x="32" y="1308" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1335" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1365" font-size="19" font-weight="400" fill="#764a0b">ログイン済みの被害者を想定。攻撃者は正しいCSRFトークンを読めな</text>
+<text x="48" y="1393" font-size="19" font-weight="400" fill="#764a0b">い。</text>
+</g>
+</svg>

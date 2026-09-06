@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1275" viewBox="0 0 800 1275" role="img" aria-labelledby="title desc">
+<title id="title">セッション固定とCookie属性の全体像</title>
+<desc id="desc">ログイン時は新IDを作るだけでなく、旧IDも無効化。 上下は別実装の比較。攻撃者が既知のS1を被害者に使わせられる弱点を前提とする。 脆弱な実装の場合。送信。被害者ブラウザからWebアプリ。攻撃者が知るS1を付けて、被害者本人がログインする。 脆弱な実装の場合。内部。Webアプリ。本人確認後もS1を認証済みセッションとして使い続ける。 脆弱な実装の場合。送信。攻撃者からWebアプリ。既知のS1を再利用し、被害者としてアクセスしてしまう。 対策した実装の場合。内部。Webアプリ。本人確認後に予測不能なS2を生成し、S1を無効化する。 対策した実装の場合。送信。Webアプリから被害者ブラウザ。認証済み状態をS2に結び付け、Set-Cookieで新IDを設定する。 対策した実装の場合。確認。Webアプリ。攻撃者が古いS1を使っても、無効なセッションとして拒否する。</desc>
+<rect width="800" height="1275" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">セッション固定とCookie属性</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">ログイン時は新IDを作るだけでなく、旧IDも無効化。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">脆弱な実装の場合</text>
+<rect x="72" y="276" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<path d="M36 320V388" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="288" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">被害者ブラウザ</text>
+<rect x="446" y="288" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="313" font-size="19" font-weight="600" fill="#5b21b6">Webアプリ</text>
+<path d="M402 308H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">攻撃者が知るS1を付けて、被害者本人がログインする。</text>
+<rect x="72" y="394" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="417" r="18" fill="#203b59"/>
+<text x="30" y="423" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<path d="M36 438V506" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="406" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="431" font-size="19" font-weight="600" fill="#5b21b6">Webアプリ</text>
+<text x="632" y="433" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="474" font-size="22" font-weight="400" fill="#172e46">本人確認後もS1を認証済みセッションとして使い続ける。</text>
+<rect x="72" y="512" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="535" r="18" fill="#203b59"/>
+<text x="30" y="541" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<rect x="88" y="524" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="102" y="549" font-size="19" font-weight="600" fill="#166534">攻撃者</text>
+<rect x="446" y="524" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="549" font-size="19" font-weight="600" fill="#5b21b6">Webアプリ</text>
+<path d="M402 544H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="592" font-size="22" font-weight="400" fill="#172e46">既知のS1を再利用し、被害者としてアクセスしてしまう。</text>
+<rect x="72" y="644" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="673" font-size="20" font-weight="700" fill="#172e46">対策した実装の場合</text>
+<rect x="72" y="705" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="728" r="18" fill="#203b59"/>
+<text x="30" y="734" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<path d="M36 749V817" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="717" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="742" font-size="19" font-weight="600" fill="#5b21b6">Webアプリ</text>
+<text x="632" y="744" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="785" font-size="22" font-weight="400" fill="#172e46">本人確認後に予測不能なS2を生成し、S1を無効化する。</text>
+<rect x="72" y="823" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="846" r="18" fill="#203b59"/>
+<text x="30" y="852" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<path d="M36 867V967" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="835" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="860" font-size="19" font-weight="600" fill="#5b21b6">Webアプリ</text>
+<rect x="446" y="835" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="460" y="860" font-size="19" font-weight="600" fill="#075985">被害者ブラウザ</text>
+<path d="M402 855H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="903" font-size="22" font-weight="400" fill="#172e46">認証済み状態をS2に結び付け、Set-Cookieで新IDを設定する</text>
+<text x="94" y="935" font-size="22" font-weight="400" fill="#172e46">。</text>
+<rect x="72" y="973" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="996" r="18" fill="#203b59"/>
+<text x="30" y="1002" font-size="19" font-weight="600" fill="#ffffff">6</text>
+<rect x="88" y="985" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="1010" font-size="19" font-weight="600" fill="#5b21b6">Webアプリ</text>
+<text x="632" y="1012" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="1053" font-size="22" font-weight="400" fill="#172e46">攻撃者が古いS1を使っても、無効なセッションとして拒否す</text>
+<text x="94" y="1085" font-size="22" font-weight="400" fill="#172e46">る。</text>
+<rect x="32" y="1137" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1164" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1194" font-size="19" font-weight="400" fill="#764a0b">上下は別実装の比較。攻撃者が既知のS1を被害者に使わせられる弱点</text>
+<text x="48" y="1222" font-size="19" font-weight="400" fill="#764a0b">を前提とする。</text>
+</g>
+</svg>

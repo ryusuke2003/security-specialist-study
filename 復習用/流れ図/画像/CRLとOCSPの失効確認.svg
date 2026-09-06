@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1500" viewBox="0 0 800 1500" role="img" aria-labelledby="title desc">
+<title id="title">CRLとOCSPの失効確認の全体像</title>
+<desc id="desc">取得する人が違っても、最後に確認するのはクライアント。 以下は三つの方式の比較。失効確認だけで証明書の全検査が済むわけではない。 方式1：CRL。交換。TLSクライアントとCRL配布サーバ。失効一覧を要求し、正当な発行者が署名したCRLを受け取る。 方式1：CRL。確認。TLSクライアント。CRLの署名・範囲・鮮度を検証し、シリアル番号を照合する。 方式2：OCSP。交換。TLSクライアントとOCSPレスポンダ。対象CertIDを照会し、署名付きの証明書状態を受け取る。 方式2：OCSP。確認。TLSクライアント。署名者の権限・対象・鮮度等を検証し、good／revoked／unknownを確認する。 方式3：OCSP stapling。交換。WebサーバとOCSPレスポンダ。自分の証明書のOCSP応答を先に取得し、期限付きで保存する。 方式3：OCSP stapling。送信。WebサーバからTLSクライアント。TLS接続時、証明書に取得済みの署名付きOCSP応答を添える。 方式3：OCSP stapling。確認。TLSクライアント。添付されたOCSP応答も、自分で署名・権限・対象・鮮度を検証する。</desc>
+<rect width="800" height="1500" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">CRLとOCSPの失効確認</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">取得する人が違っても、最後に確認するのはクライアント。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">方式1：CRL</text>
+<rect x="72" y="276" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<path d="M36 320V388" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="288" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">TLSクライアント</text>
+<rect x="446" y="288" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="313" font-size="19" font-weight="600" fill="#5b21b6">CRL配布サーバ</text>
+<path d="M402 308H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<path d="M402 308l7 -6m-7 6l7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">失効一覧を要求し、正当な発行者が署名したCRLを受け取る。</text>
+<rect x="72" y="394" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="417" r="18" fill="#203b59"/>
+<text x="30" y="423" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<rect x="88" y="406" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="431" font-size="19" font-weight="600" fill="#075985">TLSクライアント</text>
+<text x="632" y="433" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="474" font-size="22" font-weight="400" fill="#172e46">CRLの署名・範囲・鮮度を検証し、シリアル番号を照合する。</text>
+<rect x="72" y="526" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="555" font-size="20" font-weight="700" fill="#172e46">方式2：OCSP</text>
+<rect x="72" y="587" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="610" r="18" fill="#203b59"/>
+<text x="30" y="616" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<path d="M36 631V699" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="599" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="624" font-size="19" font-weight="600" fill="#075985">TLSクライアント</text>
+<rect x="446" y="599" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="624" font-size="19" font-weight="600" fill="#166534">OCSPレスポンダ</text>
+<path d="M402 619H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<path d="M402 619l7 -6m-7 6l7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="667" font-size="22" font-weight="400" fill="#172e46">対象CertIDを照会し、署名付きの証明書状態を受け取る。</text>
+<rect x="72" y="705" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="728" r="18" fill="#203b59"/>
+<text x="30" y="734" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<rect x="88" y="717" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="742" font-size="19" font-weight="600" fill="#075985">TLSクライアント</text>
+<text x="632" y="744" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="785" font-size="22" font-weight="400" fill="#172e46">署名者の権限・対象・鮮度等を検証し、good／revoked／</text>
+<text x="94" y="817" font-size="22" font-weight="400" fill="#172e46">unknownを確認する。</text>
+<rect x="72" y="869" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="898" font-size="20" font-weight="700" fill="#172e46">方式3：OCSP stapling</text>
+<rect x="72" y="930" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="953" r="18" fill="#203b59"/>
+<text x="30" y="959" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<path d="M36 974V1074" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="942" width="306" height="40" rx="8" fill="#fef3c7"/>
+<text x="102" y="967" font-size="19" font-weight="600" fill="#92400e">Webサーバ</text>
+<rect x="446" y="942" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="967" font-size="19" font-weight="600" fill="#166534">OCSPレスポンダ</text>
+<path d="M402 962H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<path d="M402 962l7 -6m-7 6l7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="1010" font-size="22" font-weight="400" fill="#172e46">自分の証明書のOCSP応答を先に取得し、期限付きで保存する</text>
+<text x="94" y="1042" font-size="22" font-weight="400" fill="#172e46">。</text>
+<rect x="72" y="1080" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1103" r="18" fill="#203b59"/>
+<text x="30" y="1109" font-size="19" font-weight="600" fill="#ffffff">6</text>
+<path d="M36 1124V1192" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="1092" width="306" height="40" rx="8" fill="#fef3c7"/>
+<text x="102" y="1117" font-size="19" font-weight="600" fill="#92400e">Webサーバ</text>
+<rect x="446" y="1092" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="460" y="1117" font-size="19" font-weight="600" fill="#075985">TLSクライアント</text>
+<path d="M402 1112H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="1160" font-size="22" font-weight="400" fill="#172e46">TLS接続時、証明書に取得済みの署名付きOCSP応答を添える。</text>
+<rect x="72" y="1198" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1221" r="18" fill="#203b59"/>
+<text x="30" y="1227" font-size="19" font-weight="600" fill="#ffffff">7</text>
+<rect x="88" y="1210" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="1235" font-size="19" font-weight="600" fill="#075985">TLSクライアント</text>
+<text x="632" y="1237" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="1278" font-size="22" font-weight="400" fill="#172e46">添付されたOCSP応答も、自分で署名・権限・対象・鮮度を検</text>
+<text x="94" y="1310" font-size="22" font-weight="400" fill="#172e46">証する。</text>
+<rect x="32" y="1362" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1389" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1419" font-size="19" font-weight="400" fill="#764a0b">以下は三つの方式の比較。失効確認だけで証明書の全検査が済むわけ</text>
+<text x="48" y="1447" font-size="19" font-weight="400" fill="#764a0b">ではない。</text>
+</g>
+</svg>

@@ -6,6 +6,33 @@
 
 ページの読込みは済んでおり、preflightの許可キャッシュはないものとする。API用Cookieの送信は、`credentials: include`に加え、Domain・Path・Secure・SameSiteやブラウザのCookieポリシーにも従う。
 
+## 全体像
+
+![CORSの許可を確認するのはブラウザ。](画像/CORS%E3%81%AEpreflight%E3%81%A8%E8%AA%8D%E8%A8%BC%E6%83%85%E5%A0%B1%E4%BB%98%E3%81%8D%E3%83%AA%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88.svg)
+
+<details>
+<summary>図の内容を文字で読む</summary>
+
+<!-- overview:start -->
+要点: CORSの許可を確認するのはブラウザ。
+
+補足: Cookie付きPATCHの例。読取り拒否は、APIで済んだ業務処理の取消ではない。
+
+| 段階 | 種類 | 主体 | 相手 | 内容 |
+|---|---|---|---|---|
+| 送る前：preflight | 送信 | ブラウザ | APIサーバ | OPTIONSでOrigin・PATCH・要求ヘッダ名を通知する。Cookieは付けない。 |
+| 送る前：preflight | 送信 | APIサーバ | ブラウザ | 許可Origin・メソッド・ヘッダ・credentialsの設定を返す。 |
+| 送る前：preflight | 確認 | ブラウザ | — | 応答が要求条件に合えば本送信へ。不許可なら本リクエストを送らない。 |
+| 許可後：本リクエスト | 送信 | ブラウザ | APIサーバ | PATCH本文とOriginを送る。Cookieは送信条件を満たす場合だけ付ける。 |
+| 許可後：本リクエスト | 送信 | APIサーバ | ブラウザ | 認証・認可・CSRF対策を確認して処理し、結果とCORSヘッダを返す。 |
+| 受信後：読取り | 確認 | ブラウザ | — | 本レスポンスのCORS条件を確認し、許可時だけJavaScriptへ渡す。 |
+<!-- overview:end -->
+
+</details>
+
+<details>
+<summary>詳しい手順・分岐を開く（Mermaid）</summary>
+
 ## 1. ブラウザが本リクエストの送信条件を確認する
 
 ```mermaid
@@ -50,6 +77,8 @@ sequenceDiagram
 ```
 
 2番目の失敗では、**APIサーバの業務処理が既に実行されている可能性がある**。CORSエラーは処理の巻戻しを意味しない。preflightなしで送れるリクエストもあり、CORSは[CSRF対策](CSRFトークンとSameSite.md)の代わりにはならない。
+
+</details>
 
 ## 処理後に残るもの
 

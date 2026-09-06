@@ -6,6 +6,33 @@
 
 以下はSP起点のWeb SSOで、認証要求はリダイレクト、SAML ResponseはHTTPSのフォームPOSTでブラウザが運ぶ構成例である。IdP起点SSOや別のbindingは省略する。
 
+## 全体像
+
+![IdPが利用者を認証。SPがAssertionを検証。](画像/SAML%E3%81%AB%E3%82%88%E3%82%8BSSO.svg)
+
+<details>
+<summary>図の内容を文字で読む</summary>
+
+<!-- overview:start -->
+要点: IdPが利用者を認証。SPがAssertionを検証。
+
+補足: SP起点のRedirect／POSTの例。利用者のパスワードやIdP用CookieをSPへ渡さない。
+
+| 段階 | 種類 | 主体 | 相手 | 内容 |
+|---|---|---|---|---|
+| IdPで認証 | 送信 | 勤怠SaaS（SP） | ブラウザ | AuthnRequest付きで会社IdPへのリダイレクトを返す。 |
+| IdPで認証 | 交換 | ブラウザ | 会社のIdP | 認証要求を送る。既存ログインを利用するか、利用者のログイン操作を仲介する。 |
+| 認証結果をSPへ | 送信 | 会社のIdP | ブラウザ | 認証成功後、署名したAssertionを含むSAML Responseを返す。 |
+| 認証結果をSPへ | 送信 | ブラウザ | 勤怠SaaS（SP） | SPのACSへSAML ResponseをPOSTする。 |
+| SPでログイン | 確認 | 勤怠SaaS（SP） | — | IdPの署名、宛先・Audience・期限・要求ID・再利用等を検証する。 |
+| SPでログイン | 送信 | 勤怠SaaS（SP） | ブラウザ | 検証と権限確認の成功後、SP専用のセッションCookieを返す。 |
+<!-- overview:end -->
+
+</details>
+
+<details>
+<summary>詳しい手順・分岐を開く（Mermaid）</summary>
+
 ## 1. SPがブラウザをIdPへ案内する
 
 ```mermaid
@@ -56,6 +83,8 @@ sequenceDiagram
 ```
 
 ACSはSPがSAML Responseを受け取る窓口である。Response全体への署名等を使う構成もあるが、いずれも署名検証済みの要素と実際に利用する利用者情報を一致させる必要がある。
+
+</details>
 
 ## 処理後に残るもの
 

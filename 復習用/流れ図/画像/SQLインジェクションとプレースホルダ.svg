@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1307" viewBox="0 0 800 1307" role="img" aria-labelledby="title desc">
+<title id="title">SQLインジェクションとプレースホルダの全体像</title>
+<desc id="desc">SQLの構造を固定し、入力を「値」として渡す。 上下は別実装の比較。攻撃者はWebアプリ経由でSQLへ影響させようとする。 脆弱な実装の場合。送信。入力者からWebアプリ。検索値として &#x27; OR &#x27;1&#x27;=&#x27;1 を送る。 脆弱な実装の場合。送信。WebアプリからDB。入力をSQL文字列へ直接連結し、変わってしまったSQL本文を送る。 脆弱な実装の場合。内部。DB。ORをSQL構文と解釈し、本来の検索条件を超えた行を返してしまう。 対策した実装の場合。内部。Webアプリ。固定したSQLひな形と、入力されたパラメータ値を分離する。 対策した実装の場合。送信。Webアプリ／ドライバからDB。正しいパラメータ化APIで、SQLひな形と値を別々に渡す。 対策した実装の場合。内部。DB。入力全体を一つの値として比較する。入力をOR条件へ変えない。</desc>
+<rect width="800" height="1307" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">SQLインジェクションとプレースホルダ</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">SQLの構造を固定し、入力を「値」として渡す。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">脆弱な実装の場合</text>
+<rect x="72" y="276" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<path d="M36 320V388" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="288" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">入力者</text>
+<rect x="446" y="288" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="313" font-size="19" font-weight="600" fill="#5b21b6">Webアプリ</text>
+<path d="M402 308H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">検索値として &#x27; OR &#x27;1&#x27;=&#x27;1 を送る。</text>
+<rect x="72" y="394" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="417" r="18" fill="#203b59"/>
+<text x="30" y="423" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<path d="M36 438V538" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="406" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="431" font-size="19" font-weight="600" fill="#5b21b6">Webアプリ</text>
+<rect x="446" y="406" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="431" font-size="19" font-weight="600" fill="#166534">DB</text>
+<path d="M402 426H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="474" font-size="22" font-weight="400" fill="#172e46">入力をSQL文字列へ直接連結し、変わってしまったSQL本文を</text>
+<text x="94" y="506" font-size="22" font-weight="400" fill="#172e46">送る。</text>
+<rect x="72" y="544" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="567" r="18" fill="#203b59"/>
+<text x="30" y="573" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<rect x="88" y="556" width="502" height="40" rx="8" fill="#dcfce7"/>
+<text x="102" y="581" font-size="19" font-weight="600" fill="#166534">DB</text>
+<text x="632" y="583" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="624" font-size="22" font-weight="400" fill="#172e46">ORをSQL構文と解釈し、本来の検索条件を超えた行を返してし</text>
+<text x="94" y="656" font-size="22" font-weight="400" fill="#172e46">まう。</text>
+<rect x="72" y="708" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="737" font-size="20" font-weight="700" fill="#172e46">対策した実装の場合</text>
+<rect x="72" y="769" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="792" r="18" fill="#203b59"/>
+<text x="30" y="798" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<path d="M36 813V881" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="781" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="806" font-size="19" font-weight="600" fill="#5b21b6">Webアプリ</text>
+<text x="632" y="808" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="849" font-size="22" font-weight="400" fill="#172e46">固定したSQLひな形と、入力されたパラメータ値を分離する。</text>
+<rect x="72" y="887" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="910" r="18" fill="#203b59"/>
+<text x="30" y="916" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<path d="M36 931V999" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="899" width="306" height="40" rx="8" fill="#fef3c7"/>
+<text x="102" y="924" font-size="19" font-weight="600" fill="#92400e">Webアプリ／ドライバ</text>
+<rect x="446" y="899" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="924" font-size="19" font-weight="600" fill="#166534">DB</text>
+<path d="M402 919H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="967" font-size="22" font-weight="400" fill="#172e46">正しいパラメータ化APIで、SQLひな形と値を別々に渡す。</text>
+<rect x="72" y="1005" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1028" r="18" fill="#203b59"/>
+<text x="30" y="1034" font-size="19" font-weight="600" fill="#ffffff">6</text>
+<rect x="88" y="1017" width="502" height="40" rx="8" fill="#dcfce7"/>
+<text x="102" y="1042" font-size="19" font-weight="600" fill="#166534">DB</text>
+<text x="632" y="1044" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="1085" font-size="22" font-weight="400" fill="#172e46">入力全体を一つの値として比較する。入力をOR条件へ変えな</text>
+<text x="94" y="1117" font-size="22" font-weight="400" fill="#172e46">い。</text>
+<rect x="32" y="1169" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1196" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1226" font-size="19" font-weight="400" fill="#764a0b">上下は別実装の比較。攻撃者はWebアプリ経由でSQLへ影響させようと</text>
+<text x="48" y="1254" font-size="19" font-weight="400" fill="#764a0b">する。</text>
+</g>
+</svg>

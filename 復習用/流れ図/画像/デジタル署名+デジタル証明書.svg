@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1189" viewBox="0 0 800 1189" role="img" aria-labelledby="title desc">
+<title id="title">デジタル署名とデジタル証明書の全体像</title>
+<desc id="desc">証明書を信頼できるかと、データの署名が正しいかは別。 Bobは信頼済みCAを保持済み。Aliceの秘密鍵もCAの秘密鍵もBobへ渡さない。 Aliceが署名。内部。Aliceの署名アプリ。Aliceの秘密鍵で文書Mへ署名する。 Aliceが署名。送信。Aliceの署名アプリからBobの検証アプリ。文書M・署名・Aliceの証明書・必要な中間証明書を送る。 Bobが二段階で検証。確認。Bobの検証アプリ。信頼済みCAを起点に、証明書の署名・期限・用途・期待する署名者等を確認する。 Bobが二段階で検証。確認。Bobの検証アプリ。信用できる証明書のAlice公開鍵で、受信Mとその署名を検証する。 Bobが二段階で検証。確認。Bobの検証アプリ。両方が有効な場合だけ署名付き文書として受け入れる。失敗なら拒否する。</desc>
+<rect width="800" height="1189" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">デジタル署名とデジタル証明書</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">証明書を信頼できるかと、データの署名が正しいかは別。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">Aliceが署名</text>
+<rect x="72" y="276" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<path d="M36 320V388" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="288" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">Aliceの署名アプリ</text>
+<text x="632" y="315" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">Aliceの秘密鍵で文書Mへ署名する。</text>
+<rect x="72" y="394" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="417" r="18" fill="#203b59"/>
+<text x="30" y="423" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<rect x="88" y="406" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="431" font-size="19" font-weight="600" fill="#075985">Aliceの署名アプリ</text>
+<rect x="446" y="406" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="431" font-size="19" font-weight="600" fill="#5b21b6">Bobの検証アプリ</text>
+<path d="M402 426H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="474" font-size="22" font-weight="400" fill="#172e46">文書M・署名・Aliceの証明書・必要な中間証明書を送る。</text>
+<rect x="72" y="526" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="555" font-size="20" font-weight="700" fill="#172e46">Bobが二段階で検証</text>
+<rect x="72" y="587" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="610" r="18" fill="#203b59"/>
+<text x="30" y="616" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<path d="M36 631V731" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="599" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="624" font-size="19" font-weight="600" fill="#5b21b6">Bobの検証アプリ</text>
+<text x="632" y="626" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="667" font-size="22" font-weight="400" fill="#172e46">信頼済みCAを起点に、証明書の署名・期限・用途・期待する</text>
+<text x="94" y="699" font-size="22" font-weight="400" fill="#172e46">署名者等を確認する。</text>
+<rect x="72" y="737" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="760" r="18" fill="#203b59"/>
+<text x="30" y="766" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<path d="M36 781V881" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="749" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="774" font-size="19" font-weight="600" fill="#5b21b6">Bobの検証アプリ</text>
+<text x="632" y="776" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="817" font-size="22" font-weight="400" fill="#172e46">信用できる証明書のAlice公開鍵で、受信Mとその署名を検証</text>
+<text x="94" y="849" font-size="22" font-weight="400" fill="#172e46">する。</text>
+<rect x="72" y="887" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="910" r="18" fill="#203b59"/>
+<text x="30" y="916" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<rect x="88" y="899" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="924" font-size="19" font-weight="600" fill="#5b21b6">Bobの検証アプリ</text>
+<text x="632" y="926" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="967" font-size="22" font-weight="400" fill="#172e46">両方が有効な場合だけ署名付き文書として受け入れる。失敗</text>
+<text x="94" y="999" font-size="22" font-weight="400" fill="#172e46">なら拒否する。</text>
+<rect x="32" y="1051" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1078" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1108" font-size="19" font-weight="400" fill="#764a0b">Bobは信頼済みCAを保持済み。Aliceの秘密鍵もCAの秘密鍵もBobへ渡</text>
+<text x="48" y="1136" font-size="19" font-weight="400" fill="#764a0b">さない。</text>
+</g>
+</svg>

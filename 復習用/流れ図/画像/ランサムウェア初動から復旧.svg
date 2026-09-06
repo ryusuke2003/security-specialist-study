@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1789" viewBox="0 0 800 1789" role="img" aria-labelledby="title desc">
+<title id="title">ランサムウェア初動から復旧の全体像</title>
+<desc id="desc">隔離と証拠保全を調整し、安全を確認してから復旧。 全作業を直列に終える手順ではない。復元成功だけでは侵害除去・再接続可を意味しない。 初動：被害拡大を防ぐ。確認。CSIRT。検知内容を評価し、対応担当・隔離対象・業務への影響を確認する。 初動：被害拡大を防ぐ。並行。ネットワーク担当と調査担当。隔離・通信制限と、ログ・メモリ等の保全を並行して調整する。 範囲調査と侵害除去。確認。調査担当。他端末・認証情報・バックアップまで侵害範囲と侵入経路を調べる。 範囲調査と侵害除去。内部。対応チーム。侵入経路を塞ぎ、侵害アカウント・セッション等を無効化する。 条件を満たした後に復旧。確認。復旧担当／対応チーム。バックアップの健全性・復元可能性と、復旧先の侵害除去・再侵入対策を確認する。 条件を満たした後に復旧。内部。復旧担当。隔離されたクリーンな環境へ復元し、動作を検証する。 条件を満たした後に復旧。確認。CSIRT／業務責任者。再接続・業務再開を承認する。不足条件があれば保留する。 再接続後も監視。並行。運用担当とSOC。運用担当が段階的に再接続し、SOCが再発・横展開の兆候を監視する。</desc>
+<rect width="800" height="1789" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">ランサムウェア初動から復旧</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">隔離と証拠保全を調整し、安全を確認してから復旧。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">初動：被害拡大を防ぐ</text>
+<rect x="72" y="276" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<path d="M36 320V420" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="288" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">CSIRT</text>
+<text x="632" y="315" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">検知内容を評価し、対応担当・隔離対象・業務への影響を確</text>
+<text x="94" y="388" font-size="22" font-weight="400" fill="#172e46">認する。</text>
+<rect x="72" y="426" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="449" r="18" fill="#203b59"/>
+<text x="30" y="455" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<rect x="88" y="438" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="463" font-size="19" font-weight="600" fill="#5b21b6">ネットワーク担当</text>
+<rect x="446" y="438" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="463" font-size="19" font-weight="600" fill="#166534">調査担当</text>
+<text x="408" y="465" font-size="26" font-weight="700" fill="#52657b">+</text>
+<text x="94" y="506" font-size="22" font-weight="400" fill="#172e46">隔離・通信制限と、ログ・メモリ等の保全を並行して調整す</text>
+<text x="94" y="538" font-size="22" font-weight="400" fill="#172e46">る。</text>
+<rect x="72" y="590" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="619" font-size="20" font-weight="700" fill="#172e46">範囲調査と侵害除去</text>
+<rect x="72" y="651" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="674" r="18" fill="#203b59"/>
+<text x="30" y="680" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<path d="M36 695V795" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="663" width="502" height="40" rx="8" fill="#dcfce7"/>
+<text x="102" y="688" font-size="19" font-weight="600" fill="#166534">調査担当</text>
+<text x="632" y="690" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="731" font-size="22" font-weight="400" fill="#172e46">他端末・認証情報・バックアップまで侵害範囲と侵入経路を</text>
+<text x="94" y="763" font-size="22" font-weight="400" fill="#172e46">調べる。</text>
+<rect x="72" y="801" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="824" r="18" fill="#203b59"/>
+<text x="30" y="830" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<rect x="88" y="813" width="502" height="40" rx="8" fill="#fef3c7"/>
+<text x="102" y="838" font-size="19" font-weight="600" fill="#92400e">対応チーム</text>
+<text x="632" y="840" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="881" font-size="22" font-weight="400" fill="#172e46">侵入経路を塞ぎ、侵害アカウント・セッション等を無効化す</text>
+<text x="94" y="913" font-size="22" font-weight="400" fill="#172e46">る。</text>
+<rect x="72" y="965" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="994" font-size="20" font-weight="700" fill="#172e46">条件を満たした後に復旧</text>
+<rect x="72" y="1026" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1049" r="18" fill="#203b59"/>
+<text x="30" y="1055" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<path d="M36 1070V1170" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="1038" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="1063" font-size="19" font-weight="600" fill="#075985">復旧担当／対応チーム</text>
+<text x="632" y="1065" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="1106" font-size="22" font-weight="400" fill="#172e46">バックアップの健全性・復元可能性と、復旧先の侵害除去・</text>
+<text x="94" y="1138" font-size="22" font-weight="400" fill="#172e46">再侵入対策を確認する。</text>
+<rect x="72" y="1176" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1199" r="18" fill="#203b59"/>
+<text x="30" y="1205" font-size="19" font-weight="600" fill="#ffffff">6</text>
+<path d="M36 1220V1288" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="1188" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="1213" font-size="19" font-weight="600" fill="#5b21b6">復旧担当</text>
+<text x="632" y="1215" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="1256" font-size="22" font-weight="400" fill="#172e46">隔離されたクリーンな環境へ復元し、動作を検証する。</text>
+<rect x="72" y="1294" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1317" r="18" fill="#203b59"/>
+<text x="30" y="1323" font-size="19" font-weight="600" fill="#ffffff">7</text>
+<rect x="88" y="1306" width="502" height="40" rx="8" fill="#dcfce7"/>
+<text x="102" y="1331" font-size="19" font-weight="600" fill="#166534">CSIRT／業務責任者</text>
+<text x="632" y="1333" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="1374" font-size="22" font-weight="400" fill="#172e46">再接続・業務再開を承認する。不足条件があれば保留する。</text>
+<rect x="72" y="1426" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="1455" font-size="20" font-weight="700" fill="#172e46">再接続後も監視</text>
+<rect x="72" y="1487" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1510" r="18" fill="#203b59"/>
+<text x="30" y="1516" font-size="19" font-weight="600" fill="#ffffff">8</text>
+<rect x="88" y="1499" width="306" height="40" rx="8" fill="#fef3c7"/>
+<text x="102" y="1524" font-size="19" font-weight="600" fill="#92400e">運用担当</text>
+<rect x="446" y="1499" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="460" y="1524" font-size="19" font-weight="600" fill="#075985">SOC</text>
+<text x="408" y="1526" font-size="26" font-weight="700" fill="#52657b">+</text>
+<text x="94" y="1567" font-size="22" font-weight="400" fill="#172e46">運用担当が段階的に再接続し、SOCが再発・横展開の兆候を監</text>
+<text x="94" y="1599" font-size="22" font-weight="400" fill="#172e46">視する。</text>
+<rect x="32" y="1651" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1678" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1708" font-size="19" font-weight="400" fill="#764a0b">全作業を直列に終える手順ではない。復元成功だけでは侵害除去・再</text>
+<text x="48" y="1736" font-size="19" font-weight="400" fill="#764a0b">接続可を意味しない。</text>
+</g>
+</svg>

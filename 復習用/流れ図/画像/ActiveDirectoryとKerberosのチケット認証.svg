@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1350" viewBox="0 0 800 1350" role="img" aria-labelledby="title desc">
+<title id="title">Active DirectoryとKerberosのチケット認証の全体像</title>
+<desc id="desc">TGTはKDC用。サービスチケットは利用先用。 ASとTGSはDC内KDCの役割。鍵は保護して配布し、認証成功と認可を分ける。 TGTを取得。送信。利用者端末からDC内KDC（AS）。利用者IDと事前認証情報をAS-REQで送る。 TGTを取得。送信。DC内KDC（AS）から利用者端末。検証成功後、TGTと保護した端末向けセッション鍵を返す。 利用先のチケットを取得。送信。利用者端末からDC内KDC（TGS）。TGT・Authenticator・利用先のSPNを送る。 利用先のチケットを取得。送信。DC内KDC（TGS）から利用者端末。検証成功後、サービスチケットと保護したセッション鍵を返す。 利用先で確認。送信。利用者端末からファイルサーバ。サービスチケットと新しいAuthenticatorを提示する。 利用先で確認。確認。ファイルサーバ。チケット等で認証する。さらにグループ情報とACLで操作を認可する。</desc>
+<rect width="800" height="1350" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">Active DirectoryとKerberosのチケット認証</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">TGTはKDC用。サービスチケットは利用先用。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">TGTを取得</text>
+<rect x="72" y="276" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<path d="M36 320V388" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="288" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">利用者端末</text>
+<rect x="446" y="288" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="313" font-size="19" font-weight="600" fill="#5b21b6">DC内KDC（AS）</text>
+<path d="M402 308H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">利用者IDと事前認証情報をAS-REQで送る。</text>
+<rect x="72" y="394" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="417" r="18" fill="#203b59"/>
+<text x="30" y="423" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<rect x="88" y="406" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="431" font-size="19" font-weight="600" fill="#5b21b6">DC内KDC（AS）</text>
+<rect x="446" y="406" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="460" y="431" font-size="19" font-weight="600" fill="#075985">利用者端末</text>
+<path d="M402 426H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="474" font-size="22" font-weight="400" fill="#172e46">検証成功後、TGTと保護した端末向けセッション鍵を返す。</text>
+<rect x="72" y="526" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="555" font-size="20" font-weight="700" fill="#172e46">利用先のチケットを取得</text>
+<rect x="72" y="587" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="610" r="18" fill="#203b59"/>
+<text x="30" y="616" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<path d="M36 631V699" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="599" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="624" font-size="19" font-weight="600" fill="#075985">利用者端末</text>
+<rect x="446" y="599" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="624" font-size="19" font-weight="600" fill="#166534">DC内KDC（TGS）</text>
+<path d="M402 619H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="667" font-size="22" font-weight="400" fill="#172e46">TGT・Authenticator・利用先のSPNを送る。</text>
+<rect x="72" y="705" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="728" r="18" fill="#203b59"/>
+<text x="30" y="734" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<rect x="88" y="717" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="102" y="742" font-size="19" font-weight="600" fill="#166534">DC内KDC（TGS）</text>
+<rect x="446" y="717" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="460" y="742" font-size="19" font-weight="600" fill="#075985">利用者端末</text>
+<path d="M402 737H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="785" font-size="22" font-weight="400" fill="#172e46">検証成功後、サービスチケットと保護したセッション鍵を返</text>
+<text x="94" y="817" font-size="22" font-weight="400" fill="#172e46">す。</text>
+<rect x="72" y="869" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="898" font-size="20" font-weight="700" fill="#172e46">利用先で確認</text>
+<rect x="72" y="930" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="953" r="18" fill="#203b59"/>
+<text x="30" y="959" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<path d="M36 974V1042" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="942" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="967" font-size="19" font-weight="600" fill="#075985">利用者端末</text>
+<rect x="446" y="942" width="306" height="40" rx="8" fill="#fef3c7"/>
+<text x="460" y="967" font-size="19" font-weight="600" fill="#92400e">ファイルサーバ</text>
+<path d="M402 962H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="1010" font-size="22" font-weight="400" fill="#172e46">サービスチケットと新しいAuthenticatorを提示する。</text>
+<rect x="72" y="1048" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1071" r="18" fill="#203b59"/>
+<text x="30" y="1077" font-size="19" font-weight="600" fill="#ffffff">6</text>
+<rect x="88" y="1060" width="502" height="40" rx="8" fill="#fef3c7"/>
+<text x="102" y="1085" font-size="19" font-weight="600" fill="#92400e">ファイルサーバ</text>
+<text x="632" y="1087" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="1128" font-size="22" font-weight="400" fill="#172e46">チケット等で認証する。さらにグループ情報とACLで操作を認</text>
+<text x="94" y="1160" font-size="22" font-weight="400" fill="#172e46">可する。</text>
+<rect x="32" y="1212" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1239" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1269" font-size="19" font-weight="400" fill="#764a0b">ASとTGSはDC内KDCの役割。鍵は保護して配布し、認証成功と認可を分</text>
+<text x="48" y="1297" font-size="19" font-weight="400" fill="#764a0b">ける。</text>
+</g>
+</svg>

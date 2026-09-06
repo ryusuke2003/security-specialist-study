@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1532" viewBox="0 0 800 1532" role="img" aria-labelledby="title desc">
+<title id="title">EDRテレメトリの収集・分析・対応の全体像</title>
+<desc id="desc">観測データは基盤へ。対応指示は端末へ。 基盤側で分析し、人が対応を承認する例。コマンド送信と隔離成功は別。 収集・分析。送信。端末OSからEDRエージェント。プロセス起動・ファイル変更・通信イベント等を通知する。 収集・分析。送信。EDRエージェントからEDR分析基盤。端末ID・時刻等を付けたテレメトリを、保護された経路で送る。 収集・分析。送信。EDR分析基盤からSOC担当者。受信データを保存・分析し、不審な挙動と検知根拠を表示する。 対応指示。送信。SOC担当者からEDR分析基盤。対象端末と、隔離・プロセス停止等の操作を指定する。 対応指示。送信。EDR分析基盤からEDRエージェント。操作者の権限を確認したうえで、対象端末にコマンドを送る。 実行・結果確認。交換。EDRエージェントと端末OS。通信制限等の操作を要求し、実行結果を確認する。 実行・結果確認。送信。EDRエージェントからEDR分析基盤。実行結果・時刻・状態を報告する。基盤はSOCへ結果を表示する。</desc>
+<rect width="800" height="1532" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">EDRテレメトリの収集・分析・対応</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">観測データは基盤へ。対応指示は端末へ。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">収集・分析</text>
+<rect x="72" y="276" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<path d="M36 320V388" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="288" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">端末OS</text>
+<rect x="446" y="288" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="313" font-size="19" font-weight="600" fill="#5b21b6">EDRエージェント</text>
+<path d="M402 308H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">プロセス起動・ファイル変更・通信イベント等を通知する。</text>
+<rect x="72" y="394" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="417" r="18" fill="#203b59"/>
+<text x="30" y="423" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<path d="M36 438V538" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="406" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="431" font-size="19" font-weight="600" fill="#5b21b6">EDRエージェント</text>
+<rect x="446" y="406" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="431" font-size="19" font-weight="600" fill="#166534">EDR分析基盤</text>
+<path d="M402 426H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="474" font-size="22" font-weight="400" fill="#172e46">端末ID・時刻等を付けたテレメトリを、保護された経路で送</text>
+<text x="94" y="506" font-size="22" font-weight="400" fill="#172e46">る。</text>
+<rect x="72" y="544" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="567" r="18" fill="#203b59"/>
+<text x="30" y="573" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<rect x="88" y="556" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="102" y="581" font-size="19" font-weight="600" fill="#166534">EDR分析基盤</text>
+<rect x="446" y="556" width="306" height="40" rx="8" fill="#fef3c7"/>
+<text x="460" y="581" font-size="19" font-weight="600" fill="#92400e">SOC担当者</text>
+<path d="M402 576H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="624" font-size="22" font-weight="400" fill="#172e46">受信データを保存・分析し、不審な挙動と検知根拠を表示す</text>
+<text x="94" y="656" font-size="22" font-weight="400" fill="#172e46">る。</text>
+<rect x="72" y="708" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="737" font-size="20" font-weight="700" fill="#172e46">対応指示</text>
+<rect x="72" y="769" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="792" r="18" fill="#203b59"/>
+<text x="30" y="798" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<path d="M36 813V881" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="781" width="306" height="40" rx="8" fill="#fef3c7"/>
+<text x="102" y="806" font-size="19" font-weight="600" fill="#92400e">SOC担当者</text>
+<rect x="446" y="781" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="806" font-size="19" font-weight="600" fill="#166534">EDR分析基盤</text>
+<path d="M402 801H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="849" font-size="22" font-weight="400" fill="#172e46">対象端末と、隔離・プロセス停止等の操作を指定する。</text>
+<rect x="72" y="887" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="910" r="18" fill="#203b59"/>
+<text x="30" y="916" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<rect x="88" y="899" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="102" y="924" font-size="19" font-weight="600" fill="#166534">EDR分析基盤</text>
+<rect x="446" y="899" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="924" font-size="19" font-weight="600" fill="#5b21b6">EDRエージェント</text>
+<path d="M402 919H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="967" font-size="22" font-weight="400" fill="#172e46">操作者の権限を確認したうえで、対象端末にコマンドを送る</text>
+<text x="94" y="999" font-size="22" font-weight="400" fill="#172e46">。</text>
+<rect x="72" y="1051" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="1080" font-size="20" font-weight="700" fill="#172e46">実行・結果確認</text>
+<rect x="72" y="1112" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1135" r="18" fill="#203b59"/>
+<text x="30" y="1141" font-size="19" font-weight="600" fill="#ffffff">6</text>
+<path d="M36 1156V1224" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="1124" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="1149" font-size="19" font-weight="600" fill="#5b21b6">EDRエージェント</text>
+<rect x="446" y="1124" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="460" y="1149" font-size="19" font-weight="600" fill="#075985">端末OS</text>
+<path d="M402 1144H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<path d="M402 1144l7 -6m-7 6l7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="1192" font-size="22" font-weight="400" fill="#172e46">通信制限等の操作を要求し、実行結果を確認する。</text>
+<rect x="72" y="1230" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1253" r="18" fill="#203b59"/>
+<text x="30" y="1259" font-size="19" font-weight="600" fill="#ffffff">7</text>
+<rect x="88" y="1242" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="1267" font-size="19" font-weight="600" fill="#5b21b6">EDRエージェント</text>
+<rect x="446" y="1242" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="1267" font-size="19" font-weight="600" fill="#166534">EDR分析基盤</text>
+<path d="M402 1262H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="1310" font-size="22" font-weight="400" fill="#172e46">実行結果・時刻・状態を報告する。基盤はSOCへ結果を表示す</text>
+<text x="94" y="1342" font-size="22" font-weight="400" fill="#172e46">る。</text>
+<rect x="32" y="1394" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1421" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1451" font-size="19" font-weight="400" fill="#764a0b">基盤側で分析し、人が対応を承認する例。コマンド送信と隔離成功は</text>
+<text x="48" y="1479" font-size="19" font-weight="400" fill="#764a0b">別。</text>
+</g>
+</svg>
