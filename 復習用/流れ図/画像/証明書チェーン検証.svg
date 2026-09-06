@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1328" viewBox="0 0 800 1328" role="img" aria-labelledby="title desc">
+<title id="title">証明書チェーン検証の全体像</title>
+<desc id="desc">信頼の起点は、ブラウザ／OSに設定済みのCA。 中間CAが一段の例。サーバが添えたルートや、自己署名できたというだけでは信用しない。 証明書を受け取る。送信。Webサーバからブラウザ。サーバ証明書と必要な中間CA証明書を送る。秘密鍵は送らない。 ブラウザ内で検証。内部。ブラウザ。受信証明書から、ローカルの信頼済みCAへ至るパスを組み立てる。 ブラウザ内で検証。確認。ブラウザ。ルート公開鍵で中間CA証明書、中間CA公開鍵でサーバ証明書の署名を検証する。 ブラウザ内で検証。確認。ブラウザ。期限・用途・制約、接続先名とSAN、方針に応じた失効情報等を確認する。 必要な検証に成功した後。内部。ブラウザ。サーバ名に対応する公開鍵を信頼し、TLSの署名・Finished等の検証へ進む。</desc>
+<rect width="800" height="1328" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">証明書チェーン検証</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">信頼の起点は、ブラウザ／OSに設定済みのCA。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">証明書を受け取る</text>
+<rect x="72" y="276" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<rect x="88" y="288" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">Webサーバ</text>
+<rect x="446" y="288" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="313" font-size="19" font-weight="600" fill="#5b21b6">ブラウザ</text>
+<path d="M402 308H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">サーバ証明書と必要な中間CA証明書を送る。秘密鍵は送らな</text>
+<text x="94" y="388" font-size="22" font-weight="400" fill="#172e46">い。</text>
+<rect x="72" y="440" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="469" font-size="20" font-weight="700" fill="#172e46">ブラウザ内で検証</text>
+<rect x="72" y="501" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="524" r="18" fill="#203b59"/>
+<text x="30" y="530" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<path d="M36 545V645" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="513" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="538" font-size="19" font-weight="600" fill="#5b21b6">ブラウザ</text>
+<text x="632" y="540" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="581" font-size="22" font-weight="400" fill="#172e46">受信証明書から、ローカルの信頼済みCAへ至るパスを組み立</text>
+<text x="94" y="613" font-size="22" font-weight="400" fill="#172e46">てる。</text>
+<rect x="72" y="651" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="674" r="18" fill="#203b59"/>
+<text x="30" y="680" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<path d="M36 695V795" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="663" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="688" font-size="19" font-weight="600" fill="#5b21b6">ブラウザ</text>
+<text x="632" y="690" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="731" font-size="22" font-weight="400" fill="#172e46">ルート公開鍵で中間CA証明書、中間CA公開鍵でサーバ証明書</text>
+<text x="94" y="763" font-size="22" font-weight="400" fill="#172e46">の署名を検証する。</text>
+<rect x="72" y="801" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="824" r="18" fill="#203b59"/>
+<text x="30" y="830" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<rect x="88" y="813" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="838" font-size="19" font-weight="600" fill="#5b21b6">ブラウザ</text>
+<text x="632" y="840" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="881" font-size="22" font-weight="400" fill="#172e46">期限・用途・制約、接続先名とSAN、方針に応じた失効情報等</text>
+<text x="94" y="913" font-size="22" font-weight="400" fill="#172e46">を確認する。</text>
+<rect x="72" y="965" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="994" font-size="20" font-weight="700" fill="#172e46">必要な検証に成功した後</text>
+<rect x="72" y="1026" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1049" r="18" fill="#203b59"/>
+<text x="30" y="1055" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<rect x="88" y="1038" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="1063" font-size="19" font-weight="600" fill="#5b21b6">ブラウザ</text>
+<text x="632" y="1065" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="1106" font-size="22" font-weight="400" fill="#172e46">サーバ名に対応する公開鍵を信頼し、TLSの署名・Finished等</text>
+<text x="94" y="1138" font-size="22" font-weight="400" fill="#172e46">の検証へ進む。</text>
+<rect x="32" y="1190" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1217" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1247" font-size="19" font-weight="400" fill="#764a0b">中間CAが一段の例。サーバが添えたルートや、自己署名できたという</text>
+<text x="48" y="1275" font-size="19" font-weight="400" fill="#764a0b">だけでは信用しない。</text>
+</g>
+</svg>

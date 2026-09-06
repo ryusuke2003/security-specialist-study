@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1307" viewBox="0 0 800 1307" role="img" aria-labelledby="title desc">
+<title id="title">入力検証と出力エンコーディングの全体像</title>
+<desc id="desc">入力時・DBへ渡す時・HTMLへ出す時で対策を分ける。 表示名をHTMLの通常テキストへ出す例。入力検証だけでXSSやSQL攻撃は防げない。 保存する時。送信。ブラウザからWebアプリ。利用者が入力したプロフィールの表示名を送る。 保存する時。確認。Webアプリ。長さ・形式等の業務条件を確認する。不正なら保存しない。 保存する時。送信。WebアプリからDB。固定SQLと別パラメータの表示名を渡し、値として保存する。 後で表示する時。交換。WebアプリとDB。画面要求に応じ、パラメータ化クエリで保存済みの表示名を取得する。 後で表示する時。内部。Webアプリ。HTMLテキスト用に出力エンコードし、変換してから画面へ埋め込む。 後で表示する時。送信。Webアプリからブラウザ。変換済み表示名を含むHTMLを返す。ブラウザは表示名を文字列として表示する。</desc>
+<rect width="800" height="1307" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">入力検証と出力エンコーディング</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">入力時・DBへ渡す時・HTMLへ出す時で対策を分ける。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">保存する時</text>
+<rect x="72" y="276" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<path d="M36 320V388" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="288" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">ブラウザ</text>
+<rect x="446" y="288" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="313" font-size="19" font-weight="600" fill="#5b21b6">Webアプリ</text>
+<path d="M402 308H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">利用者が入力したプロフィールの表示名を送る。</text>
+<rect x="72" y="394" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="417" r="18" fill="#203b59"/>
+<text x="30" y="423" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<path d="M36 438V506" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="406" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="431" font-size="19" font-weight="600" fill="#5b21b6">Webアプリ</text>
+<text x="632" y="433" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="474" font-size="22" font-weight="400" fill="#172e46">長さ・形式等の業務条件を確認する。不正なら保存しない。</text>
+<rect x="72" y="512" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="535" r="18" fill="#203b59"/>
+<text x="30" y="541" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<rect x="88" y="524" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="549" font-size="19" font-weight="600" fill="#5b21b6">Webアプリ</text>
+<rect x="446" y="524" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="549" font-size="19" font-weight="600" fill="#166534">DB</text>
+<path d="M402 544H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="592" font-size="22" font-weight="400" fill="#172e46">固定SQLと別パラメータの表示名を渡し、値として保存する。</text>
+<rect x="72" y="644" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="673" font-size="20" font-weight="700" fill="#172e46">後で表示する時</text>
+<rect x="72" y="705" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="728" r="18" fill="#203b59"/>
+<text x="30" y="734" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<path d="M36 749V849" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="717" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="742" font-size="19" font-weight="600" fill="#5b21b6">Webアプリ</text>
+<rect x="446" y="717" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="742" font-size="19" font-weight="600" fill="#166534">DB</text>
+<path d="M402 737H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<path d="M402 737l7 -6m-7 6l7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="785" font-size="22" font-weight="400" fill="#172e46">画面要求に応じ、パラメータ化クエリで保存済みの表示名を</text>
+<text x="94" y="817" font-size="22" font-weight="400" fill="#172e46">取得する。</text>
+<rect x="72" y="855" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="878" r="18" fill="#203b59"/>
+<text x="30" y="884" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<path d="M36 899V999" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="867" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="892" font-size="19" font-weight="600" fill="#5b21b6">Webアプリ</text>
+<text x="632" y="894" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="935" font-size="22" font-weight="400" fill="#172e46">HTMLテキスト用に出力エンコードし、変換してから画面へ埋</text>
+<text x="94" y="967" font-size="22" font-weight="400" fill="#172e46">め込む。</text>
+<rect x="72" y="1005" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1028" r="18" fill="#203b59"/>
+<text x="30" y="1034" font-size="19" font-weight="600" fill="#ffffff">6</text>
+<rect x="88" y="1017" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="1042" font-size="19" font-weight="600" fill="#5b21b6">Webアプリ</text>
+<rect x="446" y="1017" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="460" y="1042" font-size="19" font-weight="600" fill="#075985">ブラウザ</text>
+<path d="M402 1037H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="1085" font-size="22" font-weight="400" fill="#172e46">変換済み表示名を含むHTMLを返す。ブラウザは表示名を文字</text>
+<text x="94" y="1117" font-size="22" font-weight="400" fill="#172e46">列として表示する。</text>
+<rect x="32" y="1169" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1196" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1226" font-size="19" font-weight="400" fill="#764a0b">表示名をHTMLの通常テキストへ出す例。入力検証だけでXSSやSQL攻撃</text>
+<text x="48" y="1254" font-size="19" font-weight="400" fill="#764a0b">は防げない。</text>
+</g>
+</svg>

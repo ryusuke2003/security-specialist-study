@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1071" viewBox="0 0 800 1071" role="img" aria-labelledby="title desc">
+<title id="title">デジタル署名の全体像</title>
+<desc id="desc">秘密鍵で署名。正しい公開鍵で検証。暗号化ではない。 BobはAliceの正しい公開鍵を取得済み。文書を秘密にするには別の暗号化が必要。 作成して送る。内部。Aliceの署名アプリ。元データMと秘密鍵を署名アルゴリズムへ入力し、署名を得る。 作成して送る。送信。Aliceの署名アプリからBobの検証アプリ。元データMと署名を送る。秘密鍵は送らない。 受け取って検証。確認。Bobの検証アプリ。受信したM・署名・信頼済みのAlice公開鍵を、署名検証へ入力する。 受け取って検証。確認。Bobの検証アプリ。有効なら対応する秘密鍵による署名とMの完全性を確認。不正なら受け入れない。</desc>
+<rect width="800" height="1071" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">デジタル署名</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">秘密鍵で署名。正しい公開鍵で検証。暗号化ではない。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">作成して送る</text>
+<rect x="72" y="276" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<path d="M36 320V420" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="288" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">Aliceの署名アプリ</text>
+<text x="632" y="315" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">元データMと秘密鍵を署名アルゴリズムへ入力し、署名を得る</text>
+<text x="94" y="388" font-size="22" font-weight="400" fill="#172e46">。</text>
+<rect x="72" y="426" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="449" r="18" fill="#203b59"/>
+<text x="30" y="455" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<rect x="88" y="438" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="463" font-size="19" font-weight="600" fill="#075985">Aliceの署名アプリ</text>
+<rect x="446" y="438" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="463" font-size="19" font-weight="600" fill="#5b21b6">Bobの検証アプリ</text>
+<path d="M402 458H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="506" font-size="22" font-weight="400" fill="#172e46">元データMと署名を送る。秘密鍵は送らない。</text>
+<rect x="72" y="558" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="587" font-size="20" font-weight="700" fill="#172e46">受け取って検証</text>
+<rect x="72" y="619" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="642" r="18" fill="#203b59"/>
+<text x="30" y="648" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<path d="M36 663V763" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="631" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="656" font-size="19" font-weight="600" fill="#5b21b6">Bobの検証アプリ</text>
+<text x="632" y="658" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="699" font-size="22" font-weight="400" fill="#172e46">受信したM・署名・信頼済みのAlice公開鍵を、署名検証へ入</text>
+<text x="94" y="731" font-size="22" font-weight="400" fill="#172e46">力する。</text>
+<rect x="72" y="769" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="792" r="18" fill="#203b59"/>
+<text x="30" y="798" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<rect x="88" y="781" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="806" font-size="19" font-weight="600" fill="#5b21b6">Bobの検証アプリ</text>
+<text x="632" y="808" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="849" font-size="22" font-weight="400" fill="#172e46">有効なら対応する秘密鍵による署名とMの完全性を確認。不正</text>
+<text x="94" y="881" font-size="22" font-weight="400" fill="#172e46">なら受け入れない。</text>
+<rect x="32" y="933" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="960" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="990" font-size="19" font-weight="400" fill="#764a0b">BobはAliceの正しい公開鍵を取得済み。文書を秘密にするには別の暗</text>
+<text x="48" y="1018" font-size="19" font-weight="400" fill="#764a0b">号化が必要。</text>
+</g>
+</svg>

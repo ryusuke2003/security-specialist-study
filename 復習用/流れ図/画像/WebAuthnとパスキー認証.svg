@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1639" viewBox="0 0 800 1639" role="img" aria-labelledby="title desc">
+<title id="title">WebAuthnとパスキー認証の全体像</title>
+<desc id="desc">RPは公開鍵、認証器は秘密鍵。送るのは署名。 登録済みパスキーでのログイン例。秘密鍵・PIN・生体情報はRPへ送らない。 ログイン開始。送信。RPサーバーからブラウザ／OS。一回限りのchallengeとRP ID、利用者確認の要件等を返す。 利用者側で署名。送信。ブラウザ／OSから認証器。originとRP IDの利用条件を確認後、RP ID・clientDataJSONのハッシュ等を渡す。 利用者側で署名。内部。認証器。対象RPの鍵を選び、PIN等で利用者を確認して、認証データへ秘密鍵で署名する。 利用者側で署名。送信。認証器からブラウザ／OS。credential ID・authenticatorData・署名等を返す。秘密鍵は返さない。 サービス側で検証。送信。ブラウザ／OSからRPサーバー。認証器の応答にclientDataJSONを添えて送る。 サービス側で検証。確認。RPサーバー。登録公開鍵で署名を検証し、challenge・origin・RP ID hash・UP/UV等も確認する。 検証成功後。送信。RPサーバーからブラウザ／OS。challengeの再利用を防ぎ、ログイン用のセッションCookieを発行する。</desc>
+<rect width="800" height="1639" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">WebAuthnとパスキー認証</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">RPは公開鍵、認証器は秘密鍵。送るのは署名。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">ログイン開始</text>
+<rect x="72" y="276" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<rect x="88" y="288" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">RPサーバー</text>
+<rect x="446" y="288" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="313" font-size="19" font-weight="600" fill="#5b21b6">ブラウザ／OS</text>
+<path d="M402 308H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">一回限りのchallengeとRP ID、利用者確認の要件等を返す。</text>
+<rect x="72" y="408" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="437" font-size="20" font-weight="700" fill="#172e46">利用者側で署名</text>
+<rect x="72" y="469" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="492" r="18" fill="#203b59"/>
+<text x="30" y="498" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<path d="M36 513V613" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="481" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="506" font-size="19" font-weight="600" fill="#5b21b6">ブラウザ／OS</text>
+<rect x="446" y="481" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="506" font-size="19" font-weight="600" fill="#166534">認証器</text>
+<path d="M402 501H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="549" font-size="22" font-weight="400" fill="#172e46">originとRP IDの利用条件を確認後、RP ID・clientDataJSON</text>
+<text x="94" y="581" font-size="22" font-weight="400" fill="#172e46">のハッシュ等を渡す。</text>
+<rect x="72" y="619" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="642" r="18" fill="#203b59"/>
+<text x="30" y="648" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<path d="M36 663V763" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="631" width="502" height="40" rx="8" fill="#dcfce7"/>
+<text x="102" y="656" font-size="19" font-weight="600" fill="#166534">認証器</text>
+<text x="632" y="658" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="699" font-size="22" font-weight="400" fill="#172e46">対象RPの鍵を選び、PIN等で利用者を確認して、認証データへ</text>
+<text x="94" y="731" font-size="22" font-weight="400" fill="#172e46">秘密鍵で署名する。</text>
+<rect x="72" y="769" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="792" r="18" fill="#203b59"/>
+<text x="30" y="798" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<rect x="88" y="781" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="102" y="806" font-size="19" font-weight="600" fill="#166534">認証器</text>
+<rect x="446" y="781" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="806" font-size="19" font-weight="600" fill="#5b21b6">ブラウザ／OS</text>
+<path d="M402 801H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="849" font-size="22" font-weight="400" fill="#172e46">credential ID・authenticatorData・署名等を返す。秘密鍵</text>
+<text x="94" y="881" font-size="22" font-weight="400" fill="#172e46">は返さない。</text>
+<rect x="72" y="933" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="962" font-size="20" font-weight="700" fill="#172e46">サービス側で検証</text>
+<rect x="72" y="994" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1017" r="18" fill="#203b59"/>
+<text x="30" y="1023" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<path d="M36 1038V1106" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="1006" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="1031" font-size="19" font-weight="600" fill="#5b21b6">ブラウザ／OS</text>
+<rect x="446" y="1006" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="460" y="1031" font-size="19" font-weight="600" fill="#075985">RPサーバー</text>
+<path d="M402 1026H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="1074" font-size="22" font-weight="400" fill="#172e46">認証器の応答にclientDataJSONを添えて送る。</text>
+<rect x="72" y="1112" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1135" r="18" fill="#203b59"/>
+<text x="30" y="1141" font-size="19" font-weight="600" fill="#ffffff">6</text>
+<rect x="88" y="1124" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="1149" font-size="19" font-weight="600" fill="#075985">RPサーバー</text>
+<text x="632" y="1151" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="1192" font-size="22" font-weight="400" fill="#172e46">登録公開鍵で署名を検証し、challenge・origin・RP ID hash</text>
+<text x="94" y="1224" font-size="22" font-weight="400" fill="#172e46">・UP/UV等も確認する。</text>
+<rect x="72" y="1276" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="1305" font-size="20" font-weight="700" fill="#172e46">検証成功後</text>
+<rect x="72" y="1337" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1360" r="18" fill="#203b59"/>
+<text x="30" y="1366" font-size="19" font-weight="600" fill="#ffffff">7</text>
+<rect x="88" y="1349" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="1374" font-size="19" font-weight="600" fill="#075985">RPサーバー</text>
+<rect x="446" y="1349" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="1374" font-size="19" font-weight="600" fill="#5b21b6">ブラウザ／OS</text>
+<path d="M402 1369H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="1417" font-size="22" font-weight="400" fill="#172e46">challengeの再利用を防ぎ、ログイン用のセッションCookieを</text>
+<text x="94" y="1449" font-size="22" font-weight="400" fill="#172e46">発行する。</text>
+<rect x="32" y="1501" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1528" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1558" font-size="19" font-weight="400" fill="#764a0b">登録済みパスキーでのログイン例。秘密鍵・PIN・生体情報はRPへ送</text>
+<text x="48" y="1586" font-size="19" font-weight="400" fill="#764a0b">らない。</text>
+</g>
+</svg>

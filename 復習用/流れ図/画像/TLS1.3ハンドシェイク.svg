@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1596" viewBox="0 0 800 1596" role="img" aria-labelledby="title desc">
+<title id="title">TLS 1.3ハンドシェイクの全体像</title>
+<desc id="desc">公開値で鍵を計算し、証明書と署名で相手を確認。 証明書認証のフルハンドシェイク。共有秘密は送らず、各検証の成功時だけ先へ進む。 通信鍵の準備。交換。ブラウザとWebサーバ。ClientHello／ServerHelloで方式とECDHEの一時公開値を交換する。 通信鍵の準備。内部。ブラウザ。自分の一時秘密鍵と相手の公開値から共有秘密を計算し、鍵を導出する。 通信鍵の準備。内部。Webサーバ。自分の一時秘密鍵と相手の公開値で同じ共有秘密を計算し、鍵を導出する。 サーバを確認。送信。Webサーバからブラウザ。暗号化したハンドシェイクで証明書・CertificateVerify・Finished等を送る。 サーバを確認。確認。ブラウザ。証明書チェーン・SAN、証明書の公開鍵による署名、Finishedを検証する。 完了を確認。送信。ブラウザからWebサーバ。サーバの検証成功後、自分のFinishedを送る。 完了を確認。確認。Webサーバ。ブラウザのFinishedを検証する。双方の成功後、通常のHTTP通信へ進む。</desc>
+<rect width="800" height="1596" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">TLS 1.3ハンドシェイク</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">公開値で鍵を計算し、証明書と署名で相手を確認。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">通信鍵の準備</text>
+<rect x="72" y="276" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<path d="M36 320V420" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="288" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">ブラウザ</text>
+<rect x="446" y="288" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="313" font-size="19" font-weight="600" fill="#5b21b6">Webサーバ</text>
+<path d="M402 308H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<path d="M402 308l7 -6m-7 6l7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">ClientHello／ServerHelloで方式とECDHEの一時公開値を交換</text>
+<text x="94" y="388" font-size="22" font-weight="400" fill="#172e46">する。</text>
+<rect x="72" y="426" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="449" r="18" fill="#203b59"/>
+<text x="30" y="455" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<path d="M36 470V570" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="438" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="463" font-size="19" font-weight="600" fill="#075985">ブラウザ</text>
+<text x="632" y="465" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="506" font-size="22" font-weight="400" fill="#172e46">自分の一時秘密鍵と相手の公開値から共有秘密を計算し、鍵</text>
+<text x="94" y="538" font-size="22" font-weight="400" fill="#172e46">を導出する。</text>
+<rect x="72" y="576" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="599" r="18" fill="#203b59"/>
+<text x="30" y="605" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<rect x="88" y="588" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="613" font-size="19" font-weight="600" fill="#5b21b6">Webサーバ</text>
+<text x="632" y="615" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="656" font-size="22" font-weight="400" fill="#172e46">自分の一時秘密鍵と相手の公開値で同じ共有秘密を計算し、</text>
+<text x="94" y="688" font-size="22" font-weight="400" fill="#172e46">鍵を導出する。</text>
+<rect x="72" y="740" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="769" font-size="20" font-weight="700" fill="#172e46">サーバを確認</text>
+<rect x="72" y="801" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="824" r="18" fill="#203b59"/>
+<text x="30" y="830" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<path d="M36 845V945" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="813" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="838" font-size="19" font-weight="600" fill="#5b21b6">Webサーバ</text>
+<rect x="446" y="813" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="460" y="838" font-size="19" font-weight="600" fill="#075985">ブラウザ</text>
+<path d="M402 833H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="881" font-size="22" font-weight="400" fill="#172e46">暗号化したハンドシェイクで証明書・CertificateVerify・</text>
+<text x="94" y="913" font-size="22" font-weight="400" fill="#172e46">Finished等を送る。</text>
+<rect x="72" y="951" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="974" r="18" fill="#203b59"/>
+<text x="30" y="980" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<rect x="88" y="963" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="988" font-size="19" font-weight="600" fill="#075985">ブラウザ</text>
+<text x="632" y="990" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="1031" font-size="22" font-weight="400" fill="#172e46">証明書チェーン・SAN、証明書の公開鍵による署名、Finished</text>
+<text x="94" y="1063" font-size="22" font-weight="400" fill="#172e46">を検証する。</text>
+<rect x="72" y="1115" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="1144" font-size="20" font-weight="700" fill="#172e46">完了を確認</text>
+<rect x="72" y="1176" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1199" r="18" fill="#203b59"/>
+<text x="30" y="1205" font-size="19" font-weight="600" fill="#ffffff">6</text>
+<path d="M36 1220V1288" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="1188" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="1213" font-size="19" font-weight="600" fill="#075985">ブラウザ</text>
+<rect x="446" y="1188" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="1213" font-size="19" font-weight="600" fill="#5b21b6">Webサーバ</text>
+<path d="M402 1208H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="1256" font-size="22" font-weight="400" fill="#172e46">サーバの検証成功後、自分のFinishedを送る。</text>
+<rect x="72" y="1294" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1317" r="18" fill="#203b59"/>
+<text x="30" y="1323" font-size="19" font-weight="600" fill="#ffffff">7</text>
+<rect x="88" y="1306" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="1331" font-size="19" font-weight="600" fill="#5b21b6">Webサーバ</text>
+<text x="632" y="1333" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="1374" font-size="22" font-weight="400" fill="#172e46">ブラウザのFinishedを検証する。双方の成功後、通常のHTTP</text>
+<text x="94" y="1406" font-size="22" font-weight="400" fill="#172e46">通信へ進む。</text>
+<rect x="32" y="1458" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1485" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1515" font-size="19" font-weight="400" fill="#764a0b">証明書認証のフルハンドシェイク。共有秘密は送らず、各検証の成功</text>
+<text x="48" y="1543" font-size="19" font-weight="400" fill="#764a0b">時だけ先へ進む。</text>
+</g>
+</svg>

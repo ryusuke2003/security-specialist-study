@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1275" viewBox="0 0 800 1275" role="img" aria-labelledby="title desc">
+<title id="title">DNSSECの全体像</title>
+<desc id="desc">親のDSで子の鍵を確認し、その鍵で応答を検証する。 検証するのはDNSリゾルバ。図の開始時点で親ゾーンの鍵は検証済み。 子の鍵を信頼する。交換。検証DNSリゾルバと親ゾーンの権威DNS。子ゾーンのDS RRsetとRRSIGを要求して受け取る。 子の鍵を信頼する。確認。検証DNSリゾルバ。信頼済みの親DNSKEYでDS RRsetの署名を検証する。 子の鍵を信頼する。交換。検証DNSリゾルバと子ゾーンの権威DNS。子のDNSKEY RRsetとRRSIGを要求して受け取る。 子の鍵を信頼する。確認。検証DNSリゾルバ。候補DNSKEYからDSを再計算して照合し、DNSKEY RRsetの署名も検証する。 問い合わせ結果を検証する。交換。検証DNSリゾルバと子ゾーンの権威DNS。www.example.jpのA RRsetとRRSIGを取得する。 問い合わせ結果を検証する。確認。検証DNSリゾルバ。検証済みの子DNSKEYで署名・期限等を確認する。不正なら通常SERVFAIL。</desc>
+<rect width="800" height="1275" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">DNSSEC</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">親のDSで子の鍵を確認し、その鍵で応答を検証する。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">子の鍵を信頼する</text>
+<rect x="72" y="276" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<path d="M36 320V388" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="288" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">検証DNSリゾルバ</text>
+<rect x="446" y="288" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="313" font-size="19" font-weight="600" fill="#5b21b6">親ゾーンの権威DNS</text>
+<path d="M402 308H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<path d="M402 308l7 -6m-7 6l7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">子ゾーンのDS RRsetとRRSIGを要求して受け取る。</text>
+<rect x="72" y="394" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="417" r="18" fill="#203b59"/>
+<text x="30" y="423" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<path d="M36 438V506" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="406" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="431" font-size="19" font-weight="600" fill="#075985">検証DNSリゾルバ</text>
+<text x="632" y="433" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="474" font-size="22" font-weight="400" fill="#172e46">信頼済みの親DNSKEYでDS RRsetの署名を検証する。</text>
+<rect x="72" y="512" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="535" r="18" fill="#203b59"/>
+<text x="30" y="541" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<path d="M36 556V624" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="524" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="549" font-size="19" font-weight="600" fill="#075985">検証DNSリゾルバ</text>
+<rect x="446" y="524" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="549" font-size="19" font-weight="600" fill="#166534">子ゾーンの権威DNS</text>
+<path d="M402 544H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<path d="M402 544l7 -6m-7 6l7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="592" font-size="22" font-weight="400" fill="#172e46">子のDNSKEY RRsetとRRSIGを要求して受け取る。</text>
+<rect x="72" y="630" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="653" r="18" fill="#203b59"/>
+<text x="30" y="659" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<rect x="88" y="642" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="667" font-size="19" font-weight="600" fill="#075985">検証DNSリゾルバ</text>
+<text x="632" y="669" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="710" font-size="22" font-weight="400" fill="#172e46">候補DNSKEYからDSを再計算して照合し、DNSKEY RRsetの署名</text>
+<text x="94" y="742" font-size="22" font-weight="400" fill="#172e46">も検証する。</text>
+<rect x="72" y="794" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="823" font-size="20" font-weight="700" fill="#172e46">問い合わせ結果を検証する</text>
+<rect x="72" y="855" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="878" r="18" fill="#203b59"/>
+<text x="30" y="884" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<path d="M36 899V967" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="867" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="892" font-size="19" font-weight="600" fill="#075985">検証DNSリゾルバ</text>
+<rect x="446" y="867" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="892" font-size="19" font-weight="600" fill="#166534">子ゾーンの権威DNS</text>
+<path d="M402 887H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<path d="M402 887l7 -6m-7 6l7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="935" font-size="22" font-weight="400" fill="#172e46">www.example.jpのA RRsetとRRSIGを取得する。</text>
+<rect x="72" y="973" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="996" r="18" fill="#203b59"/>
+<text x="30" y="1002" font-size="19" font-weight="600" fill="#ffffff">6</text>
+<rect x="88" y="985" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="1010" font-size="19" font-weight="600" fill="#075985">検証DNSリゾルバ</text>
+<text x="632" y="1012" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="1053" font-size="22" font-weight="400" fill="#172e46">検証済みの子DNSKEYで署名・期限等を確認する。不正なら通</text>
+<text x="94" y="1085" font-size="22" font-weight="400" fill="#172e46">常SERVFAIL。</text>
+<rect x="32" y="1137" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1164" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1194" font-size="19" font-weight="400" fill="#764a0b">検証するのはDNSリゾルバ。図の開始時点で親ゾーンの鍵は検証済み</text>
+<text x="48" y="1222" font-size="19" font-weight="400" fill="#764a0b">。</text>
+</g>
+</svg>

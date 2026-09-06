@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1236" viewBox="0 0 800 1236" role="img" aria-labelledby="title desc">
+<title id="title">AEADの暗号化と認証タグ検証の全体像</title>
+<desc id="desc">共通鍵で改ざんを確認する。ログイン認証とは別。 同じ方向用の鍵Kを共有済み。タグ検証に失敗した平文は使わない。 送信側。内部。送信アプリ。鍵Kで未使用のnonceを用意する。 送信側。内部。送信アプリ。平文・AAD・K・nonceから暗号文CとタグTを作る。 受渡し。送信。送信アプリから受信アプリ。C・Tと、nonce・AADを特定できる情報を送る。鍵Kは送らない。 受信側。確認。受信アプリ／AEAD。同じK・nonce・AADを使い、受信CとTを認証付き復号で検証する。 受信側。確認。受信アプリ。成功なら平文を使う。不正なら破棄し、業務処理へ渡さない。</desc>
+<rect width="800" height="1236" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">AEADの暗号化と認証タグ検証</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">共通鍵で改ざんを確認する。ログイン認証とは別。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">送信側</text>
+<rect x="72" y="276" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<path d="M36 320V388" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="288" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">送信アプリ</text>
+<text x="632" y="315" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">鍵Kで未使用のnonceを用意する。</text>
+<rect x="72" y="394" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="417" r="18" fill="#203b59"/>
+<text x="30" y="423" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<rect x="88" y="406" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="431" font-size="19" font-weight="600" fill="#075985">送信アプリ</text>
+<text x="632" y="433" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="474" font-size="22" font-weight="400" fill="#172e46">平文・AAD・K・nonceから暗号文CとタグTを作る。</text>
+<rect x="72" y="526" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="555" font-size="20" font-weight="700" fill="#172e46">受渡し</text>
+<rect x="72" y="587" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="610" r="18" fill="#203b59"/>
+<text x="30" y="616" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<rect x="88" y="599" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="624" font-size="19" font-weight="600" fill="#075985">送信アプリ</text>
+<rect x="446" y="599" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="624" font-size="19" font-weight="600" fill="#5b21b6">受信アプリ</text>
+<path d="M402 619H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="667" font-size="22" font-weight="400" fill="#172e46">C・Tと、nonce・AADを特定できる情報を送る。鍵Kは送らない</text>
+<text x="94" y="699" font-size="22" font-weight="400" fill="#172e46">。</text>
+<rect x="72" y="751" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="780" font-size="20" font-weight="700" fill="#172e46">受信側</text>
+<rect x="72" y="812" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="835" r="18" fill="#203b59"/>
+<text x="30" y="841" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<path d="M36 856V956" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="824" width="502" height="40" rx="8" fill="#dcfce7"/>
+<text x="102" y="849" font-size="19" font-weight="600" fill="#166534">受信アプリ／AEAD</text>
+<text x="632" y="851" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="892" font-size="22" font-weight="400" fill="#172e46">同じK・nonce・AADを使い、受信CとTを認証付き復号で検証す</text>
+<text x="94" y="924" font-size="22" font-weight="400" fill="#172e46">る。</text>
+<rect x="72" y="962" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="985" r="18" fill="#203b59"/>
+<text x="30" y="991" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<rect x="88" y="974" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="999" font-size="19" font-weight="600" fill="#5b21b6">受信アプリ</text>
+<text x="632" y="1001" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="1042" font-size="22" font-weight="400" fill="#172e46">成功なら平文を使う。不正なら破棄し、業務処理へ渡さない</text>
+<text x="94" y="1074" font-size="22" font-weight="400" fill="#172e46">。</text>
+<rect x="32" y="1126" width="736" height="82" rx="12" fill="#fff1d7"/>
+<text x="48" y="1153" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1183" font-size="19" font-weight="400" fill="#764a0b">同じ方向用の鍵Kを共有済み。タグ検証に失敗した平文は使わない。</text>
+</g>
+</svg>

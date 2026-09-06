@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1232" viewBox="0 0 800 1232" role="img" aria-labelledby="title desc">
+<title id="title">ステートフルファイアウォールの全体像</title>
+<desc id="desc">既存接続は状態、新規接続は開始ルールでも判断。 条件別の経路を示す。下の二経路を両方実行するわけではない。不正・不許可なら遮断。 共通：受信して分類。確認。ファイアウォール。パケットのTCP条件と接続状態を確認し、既存接続か新規接続かを判断する。 経路A：許可済みの既存接続。確認。ファイアウォール。逆方向の組合せも含め、パケットが許可済み接続の状態に適合するか確認する。 経路A：許可済みの既存接続。内部。ファイアウォール。適合する通信の接続状態を更新し、転送を許可する。 経路B：新規接続。確認。ファイアウォール。新規通信のルールで、接続開始を許可するか判断する。 経路B：新規接続。内部。ファイアウォール。許可した通信の5タプルと状態を記録し、転送を許可する。</desc>
+<rect width="800" height="1232" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">ステートフルファイアウォール</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">既存接続は状態、新規接続は開始ルールでも判断。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">共通：受信して分類</text>
+<rect x="72" y="276" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<rect x="88" y="288" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">ファイアウォール</text>
+<text x="632" y="315" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">パケットのTCP条件と接続状態を確認し、既存接続か新規接続</text>
+<text x="94" y="388" font-size="22" font-weight="400" fill="#172e46">かを判断する。</text>
+<rect x="72" y="440" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="469" font-size="20" font-weight="700" fill="#172e46">経路A：許可済みの既存接続</text>
+<rect x="72" y="501" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="524" r="18" fill="#203b59"/>
+<text x="30" y="530" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<path d="M36 545V645" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="513" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="538" font-size="19" font-weight="600" fill="#075985">ファイアウォール</text>
+<text x="632" y="540" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="581" font-size="22" font-weight="400" fill="#172e46">逆方向の組合せも含め、パケットが許可済み接続の状態に適</text>
+<text x="94" y="613" font-size="22" font-weight="400" fill="#172e46">合するか確認する。</text>
+<rect x="72" y="651" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="674" r="18" fill="#203b59"/>
+<text x="30" y="680" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<rect x="88" y="663" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="688" font-size="19" font-weight="600" fill="#075985">ファイアウォール</text>
+<text x="632" y="690" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="731" font-size="22" font-weight="400" fill="#172e46">適合する通信の接続状態を更新し、転送を許可する。</text>
+<rect x="72" y="783" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="812" font-size="20" font-weight="700" fill="#172e46">経路B：新規接続</text>
+<rect x="72" y="844" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="867" r="18" fill="#203b59"/>
+<text x="30" y="873" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<path d="M36 888V956" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="856" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="881" font-size="19" font-weight="600" fill="#075985">ファイアウォール</text>
+<text x="632" y="883" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="924" font-size="22" font-weight="400" fill="#172e46">新規通信のルールで、接続開始を許可するか判断する。</text>
+<rect x="72" y="962" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="985" r="18" fill="#203b59"/>
+<text x="30" y="991" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<rect x="88" y="974" width="502" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="999" font-size="19" font-weight="600" fill="#075985">ファイアウォール</text>
+<text x="632" y="1001" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="1042" font-size="22" font-weight="400" fill="#172e46">許可した通信の5タプルと状態を記録し、転送を許可する。</text>
+<rect x="32" y="1094" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1121" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1151" font-size="19" font-weight="400" fill="#764a0b">条件別の経路を示す。下の二経路を両方実行するわけではない。不正</text>
+<text x="48" y="1179" font-size="19" font-weight="400" fill="#764a0b">・不許可なら遮断。</text>
+</g>
+</svg>

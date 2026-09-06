@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1264" viewBox="0 0 800 1264" role="img" aria-labelledby="title desc">
+<title id="title">SPF検証の全体像</title>
+<desc id="desc">受信側が、接続元IPと送信ドメインの許可条件を照合。 対象はMAIL FROMのドメイン。本文改ざんや表示上の差出人本人を確認する仕組みではない。 接続を観測。送信。送信メールサーバから受信メールサーバ。SMTP接続し、MAIL FROM: alice@example.jpを通知する。 接続を観測。内部。受信メールサーバ。実際の接続元IPを取得し、example.jpを検証対象にする。 許可条件を取得。交換。受信メールサーバとDNS。example.jpのSPF用TXTを問い合わせ、送信経路のポリシーを受け取る。 受信側で判定。確認。受信メールサーバ。接続元IPをSPFの条件へ順に照合し、pass・fail等を記録する。 受信側で判定。内部。受信メールサーバ。他の検証結果・受信ポリシーも合わせて、メールの配送可否を決める。</desc>
+<rect width="800" height="1264" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">SPF検証</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">受信側が、接続元IPと送信ドメインの許可条件を照合。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">接続を観測</text>
+<rect x="72" y="276" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<path d="M36 320V388" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="288" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">送信メールサーバ</text>
+<rect x="446" y="288" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="313" font-size="19" font-weight="600" fill="#5b21b6">受信メールサーバ</text>
+<path d="M402 308H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">SMTP接続し、MAIL FROM: alice@example.jpを通知する。</text>
+<rect x="72" y="394" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="417" r="18" fill="#203b59"/>
+<text x="30" y="423" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<rect x="88" y="406" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="431" font-size="19" font-weight="600" fill="#5b21b6">受信メールサーバ</text>
+<text x="632" y="433" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="474" font-size="22" font-weight="400" fill="#172e46">実際の接続元IPを取得し、example.jpを検証対象にする。</text>
+<rect x="72" y="526" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="555" font-size="20" font-weight="700" fill="#172e46">許可条件を取得</text>
+<rect x="72" y="587" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="610" r="18" fill="#203b59"/>
+<text x="30" y="616" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<rect x="88" y="599" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="624" font-size="19" font-weight="600" fill="#5b21b6">受信メールサーバ</text>
+<rect x="446" y="599" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="624" font-size="19" font-weight="600" fill="#166534">DNS</text>
+<path d="M402 619H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<path d="M402 619l7 -6m-7 6l7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="667" font-size="22" font-weight="400" fill="#172e46">example.jpのSPF用TXTを問い合わせ、送信経路のポリシーを</text>
+<text x="94" y="699" font-size="22" font-weight="400" fill="#172e46">受け取る。</text>
+<rect x="72" y="751" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="780" font-size="20" font-weight="700" fill="#172e46">受信側で判定</text>
+<rect x="72" y="812" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="835" r="18" fill="#203b59"/>
+<text x="30" y="841" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<path d="M36 856V956" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="824" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="849" font-size="19" font-weight="600" fill="#5b21b6">受信メールサーバ</text>
+<text x="632" y="851" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="892" font-size="22" font-weight="400" fill="#172e46">接続元IPをSPFの条件へ順に照合し、pass・fail等を記録する</text>
+<text x="94" y="924" font-size="22" font-weight="400" fill="#172e46">。</text>
+<rect x="72" y="962" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="985" r="18" fill="#203b59"/>
+<text x="30" y="991" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<rect x="88" y="974" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="999" font-size="19" font-weight="600" fill="#5b21b6">受信メールサーバ</text>
+<text x="632" y="1001" font-size="17" font-weight="600" fill="#52657b">内部処理</text>
+<text x="94" y="1042" font-size="22" font-weight="400" fill="#172e46">他の検証結果・受信ポリシーも合わせて、メールの配送可否</text>
+<text x="94" y="1074" font-size="22" font-weight="400" fill="#172e46">を決める。</text>
+<rect x="32" y="1126" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1153" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1183" font-size="19" font-weight="400" fill="#764a0b">対象はMAIL FROMのドメイン。本文改ざんや表示上の差出人本人を確</text>
+<text x="48" y="1211" font-size="19" font-weight="400" fill="#764a0b">認する仕組みではない。</text>
+</g>
+</svg>

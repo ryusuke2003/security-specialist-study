@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1504" viewBox="0 0 800 1504" role="img" aria-labelledby="title desc">
+<title id="title">サーバ証明書の発行の全体像</title>
+<desc id="desc">CAはドメインの管理権限とCSRを確認して発行。 ACME DNS-01の例。サーバ用秘密鍵をCAへ提出するわけではない。 ドメイン管理を確認。交換。証明書管理クライアントと認証局CA。example.comの証明書を申請し、DNS-01のchallenge情報を受け取る。 ドメイン管理を確認。送信。証明書管理クライアントから権威DNS。管理権限を使い、_acme-challenge.example.comのTXTに応答値を設定する。 ドメイン管理を確認。交換。認証局CAと権威DNS。準備完了の通知後、対象TXTを取得し、期待値と照合する。 鍵と名前を証明書へ。送信。証明書管理クライアントから認証局CA。公開鍵・SAN等を含む署名済みCSRを提出する。秘密鍵は含めない。 鍵と名前を証明書へ。確認。認証局CA。CSRの署名・申請名・発行条件を検証し、CAの鍵で証明書へ署名する。 鍵と名前を証明書へ。送信。認証局CAから証明書管理クライアント。サーバ証明書と必要な中間CA証明書を返す。 運営者側で配備。送信。証明書管理クライアントからWebサーバ。保護された管理経路でサーバ用の鍵と証明書を設定する。</desc>
+<rect width="800" height="1504" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">サーバ証明書の発行</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">CAはドメインの管理権限とCSRを確認して発行。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">ドメイン管理を確認</text>
+<rect x="72" y="276" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<path d="M36 320V420" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="288" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">証明書管理クライアント</text>
+<rect x="446" y="288" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="313" font-size="19" font-weight="600" fill="#5b21b6">認証局CA</text>
+<path d="M402 308H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<path d="M402 308l7 -6m-7 6l7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">example.comの証明書を申請し、DNS-01のchallenge情報を受</text>
+<text x="94" y="388" font-size="22" font-weight="400" fill="#172e46">け取る。</text>
+<rect x="72" y="426" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="449" r="18" fill="#203b59"/>
+<text x="30" y="455" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<path d="M36 470V570" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="438" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="463" font-size="19" font-weight="600" fill="#075985">証明書管理クライアント</text>
+<rect x="446" y="438" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="463" font-size="19" font-weight="600" fill="#166534">権威DNS</text>
+<path d="M402 458H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="506" font-size="22" font-weight="400" fill="#172e46">管理権限を使い、_acme-challenge.example.comのTXTに応答</text>
+<text x="94" y="538" font-size="22" font-weight="400" fill="#172e46">値を設定する。</text>
+<rect x="72" y="576" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="599" r="18" fill="#203b59"/>
+<text x="30" y="605" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<rect x="88" y="588" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="613" font-size="19" font-weight="600" fill="#5b21b6">認証局CA</text>
+<rect x="446" y="588" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="613" font-size="19" font-weight="600" fill="#166534">権威DNS</text>
+<path d="M402 608H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<path d="M402 608l7 -6m-7 6l7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="656" font-size="22" font-weight="400" fill="#172e46">準備完了の通知後、対象TXTを取得し、期待値と照合する。</text>
+<rect x="72" y="708" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="737" font-size="20" font-weight="700" fill="#172e46">鍵と名前を証明書へ</text>
+<rect x="72" y="769" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="792" r="18" fill="#203b59"/>
+<text x="30" y="798" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<path d="M36 813V913" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="781" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="806" font-size="19" font-weight="600" fill="#075985">証明書管理クライアント</text>
+<rect x="446" y="781" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="806" font-size="19" font-weight="600" fill="#5b21b6">認証局CA</text>
+<path d="M402 801H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="849" font-size="22" font-weight="400" fill="#172e46">公開鍵・SAN等を含む署名済みCSRを提出する。秘密鍵は含め</text>
+<text x="94" y="881" font-size="22" font-weight="400" fill="#172e46">ない。</text>
+<rect x="72" y="919" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="942" r="18" fill="#203b59"/>
+<text x="30" y="948" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<path d="M36 963V1063" stroke="#bac9d8" stroke-width="2"/>
+<rect x="88" y="931" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="956" font-size="19" font-weight="600" fill="#5b21b6">認証局CA</text>
+<text x="632" y="958" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="999" font-size="22" font-weight="400" fill="#172e46">CSRの署名・申請名・発行条件を検証し、CAの鍵で証明書へ署</text>
+<text x="94" y="1031" font-size="22" font-weight="400" fill="#172e46">名する。</text>
+<rect x="72" y="1069" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1092" r="18" fill="#203b59"/>
+<text x="30" y="1098" font-size="19" font-weight="600" fill="#ffffff">6</text>
+<rect x="88" y="1081" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="1106" font-size="19" font-weight="600" fill="#5b21b6">認証局CA</text>
+<rect x="446" y="1081" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="460" y="1106" font-size="19" font-weight="600" fill="#075985">証明書管理クライアント</text>
+<path d="M402 1101H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="1149" font-size="22" font-weight="400" fill="#172e46">サーバ証明書と必要な中間CA証明書を返す。</text>
+<rect x="72" y="1201" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="1230" font-size="20" font-weight="700" fill="#172e46">運営者側で配備</text>
+<rect x="72" y="1262" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1285" r="18" fill="#203b59"/>
+<text x="30" y="1291" font-size="19" font-weight="600" fill="#ffffff">7</text>
+<rect x="88" y="1274" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="1299" font-size="19" font-weight="600" fill="#075985">証明書管理クライアント</text>
+<rect x="446" y="1274" width="306" height="40" rx="8" fill="#fef3c7"/>
+<text x="460" y="1299" font-size="19" font-weight="600" fill="#92400e">Webサーバ</text>
+<path d="M402 1294H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="1342" font-size="22" font-weight="400" fill="#172e46">保護された管理経路でサーバ用の鍵と証明書を設定する。</text>
+<rect x="32" y="1394" width="736" height="82" rx="12" fill="#fff1d7"/>
+<text x="48" y="1421" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1451" font-size="19" font-weight="400" fill="#764a0b">ACME DNS-01の例。サーバ用秘密鍵をCAへ提出するわけではない。</text>
+</g>
+</svg>
