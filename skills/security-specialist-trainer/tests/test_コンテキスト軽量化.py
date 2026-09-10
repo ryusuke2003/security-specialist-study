@@ -30,14 +30,14 @@ class コンテキスト軽量化テスト(unittest.TestCase):
         self.assertIn("record", text)
         self.assertIn("unreviewed", text)
 
-    def test_出題選定ルールはbriefingを数値判断の入口にする(self) -> None:
+    def test_出題選定ルールは作問整理結果を数値判断の入口にする(self) -> None:
         text = (SKILL / "references" / "出題選定ルール.md").read_text(encoding="utf-8")
         self.assertIn("study_helper.py briefing", text)
         for duplicated_formula in ("priority =", "weakness =", "forgetting ="):
             with self.subTest(duplicated_formula=duplicated_formula):
                 self.assertNotIn(duplicated_formula, text)
 
-    def test_進捗計算仕様はPython実装を正本として案内する(self) -> None:
+    def test_進捗計算仕様は実装を正本として案内する(self) -> None:
         path = ROOT / "参照資料" / "進捗計算仕様.md"
         self.assertTrue(path.is_file())
         text = path.read_text(encoding="utf-8")
