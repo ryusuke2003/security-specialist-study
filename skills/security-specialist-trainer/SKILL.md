@@ -24,13 +24,15 @@ Inspect past papers and [カタログ拡張.md](references/カタログ拡張.md
 Complete the common preflight, then run `python3 skills/security-specialist-trainer/scripts/study_helper.py grading-candidates --root .` before reading answers. Honor an explicit target; otherwise process all candidates chronologically, recording each before the next.
 
 - Quick-review only: read only [10分復習採点ワークフロー.md](references/10分復習採点ワークフロー.md).
-- Normal or term-recall: read the Session format and matching mode detail, [採点ワークフロー.md](references/採点ワークフロー.md), and [採点・理解度・復習ルール.md](../../参照資料/採点・理解度・復習ルール.md). For mixed candidates, also read the quick-review workflow and apply it only to that mode.
+- Normal or term-recall: read [セッション形式.md](../../参照資料/セッション形式.md), its matching mode detail, and [採点ワークフロー.md](references/採点ワークフロー.md). For mixed candidates, also read the quick-review workflow and apply it only to that mode.
+- Routine grading must not load calculation formulas or reimplement progress math. `record` owns numerical mastery, review dates, and derived progress updates.
 
 Only directly assessed Primary Terms in normal/term-recall Sessions update numerical mastery; Related Terms and quick-review results do not.
 
 ### Other requests
 
 - Progress/results/weaknesses: read `進捗/` and only the recent Sessions needed to explain the estimate. Do not run learning preflight. Distinguish unassessed, recall-only, application-confirmed, and high-difficulty-stable evidence; never treat missing mode scores as zero.
+- Exact score/review-date explanations, or changes/debugging of progress calculations: read [進捗計算仕様.md](../../参照資料/進捗計算仕様.md) and inspect only the implementation it names. Do not load it for routine grading.
 - Create or update a security diagram, including during grading: follow [流れ図作成ルール.md](references/流れ図作成ルール.md).
 - Update the unreviewed index: run `python3 skills/security-specialist-trainer/scripts/study_helper.py unreviewed --root .`; do not edit date-based review notes.
 
