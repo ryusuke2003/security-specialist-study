@@ -3,15 +3,15 @@
 採点や学習中に得た、後で読み返す価値のある文章メモを分野別に整理する場所です。新しいメモは、記入した日付を `## YYYY-MM-DD`（JST）で示し、同じファイルの同日分は同じ見出しに続けて追記します。処理手順を図で確認したい内容は、[流れ図](../流れ図/)を参照します。
 
 - [暗号・PKI](暗号・PKI.md): 暗号化、ハッシュ、MAC、電子署名、証明書、TLS
-- [メールセキュリティ](メールセキュリティ.md): SMTP、TLS、SPF、DKIM、DMARCなどメール配送・認証の仕組み
+- [メールセキュリティ](メールセキュリティ.md): SMTP、HELO/EHLO、SPF、DKIM、DMARCなどメール配送・認証の仕組み
 - [POP3・IMAP](POP3・IMAP.md): 受信メールの取得・同期、SMTPとの役割分担
 - [Webセキュリティ](Webセキュリティ.md): CSRF、SameSite、SQLインジェクション
 - [認証・認可 / IAM](認証・認可_IAM.md): OAuth 2.0 / OIDC、PKCE、WebAuthn、認証と認可の分離
 - [SAML](SAML.md): XMLとの違い、IdP・SP・Assertion、XMLベースの認証連携標準
 - [リスク・ガバナンス](リスク・ガバナンス.md): リスク対応と残余リスク
-- [DNS](DNS.md): DNSSECとRRSIG検証
+- [DNS](DNS.md): DNSSEC、RRSIG検証、secure / insecure / bogus
 - [OSセキュリティ](OSセキュリティ.md): Active DirectoryとKerberos
-- [マルウェア](マルウェア.md): C2通信
+- [マルウェア](マルウェア.md): C2通信、ビーコニング、DGA、DNS sinkhole
 - [インシデントレスポンス](インシデントレスポンス.md): プレイブックとエスカレーション
 - [フォレンジック](フォレンジック.md): 揮発性データの保全
 - [ログ分析・監視](ログ分析・監視.md): EDRテレメトリと検知ユースケース
