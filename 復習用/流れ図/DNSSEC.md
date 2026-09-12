@@ -35,7 +35,7 @@ DNSSECはDNS応答の真正性・完全性を確認する仕組みで、DNS通�
 
 ## 1. リゾルバが親から子へ信頼をつなぐ
 
-ルートのDNSKEY RRsetを信頼アンカーで検証し、その鍵集合で`.jp`のDSを検証する。同じ手順を繰り返して`example.jp`へ進む。次の図は、**リゾルバが既に`.jp`のDNSKEY RRsetを検証済み**の段階を取り出している。
+ルートの信頼アンカーから親ゾーンのDNSKEYを信頼し、親の`DS`と子の`DNSKEY`を照合する。同じ考え方を階層ごとに繰り返して、目的のゾーンまで信頼をつなぐ。
 
 ```mermaid
 sequenceDiagram
@@ -49,12 +49,12 @@ sequenceDiagram
     R->>R: リゾルバが信頼済みの親DNSKEYでDS RRsetの署名を検証する
     R->>C: リゾルバがexample.jpのDNSKEY RRsetと署名を要求する
     C-->>R: 子の権威DNSがDNSKEY RRsetとRRSIGを返す
-    R->>R: リゾルバが子の候補DNSKEYからDSのダイジェストを再計算して照合する
-    R->>R: リゾルバがDSに対応した子DNSKEYでDNSKEY RRsetの署名を検証する
+    R->>R: リゾルバがDSと対応する子DNSKEYを照合する
+    R->>R: リゾルバが子DNSKEYでDNSKEY RRsetの署名を検証する
     Note over R: 全検証に成功した場合だけ、子のDNSKEY集合を信頼する
 ```
 
-DSのダイジェストはDNSKEYだけの単純な文字列ハッシュではなく、所有者名とDNSKEY RDATAを所定の形式で計算する。DSは子の特定の鍵を親へ結び付け、RRSIGはRRsetへの署名を表す。
+セキスペ対策では、DSのバイト列生成方法まで暗記せず、**DSは親から子の特定DNSKEYへ信頼をつなぐ照合情報、RRSIGはRRsetへの署名**と押さえる。
 
 ## 2. リゾルバが問い合わせ対象のレコードを検証する
 
@@ -69,7 +69,7 @@ sequenceDiagram
     Note over R: 必要に応じて1の手順で子ゾーンの鍵まで信頼をつなぐ
     R->>C: リゾルバがwww.example.jpのA RRsetとRRSIGを要求する
     C-->>R: 権威DNSがA RRsetとRRSIGを返す
-    R->>R: リゾルバが検証済みDNSKEY集合の適切な鍵でA RRsetの署名・期限等を検証する
+    R->>R: リゾルバが検証済みDNSKEYでA RRsetの署名等を検証する
     alt リゾルバが信頼の連鎖と署名を有効と判定した
         R->>R: リゾルバが検証済みとして期限内でキャッシュする
         R-->>U: リゾルバが検証済みのAレコードを返す
@@ -90,11 +90,10 @@ sequenceDiagram
 
 ## 注意点
 
-検証の入力は**RRset本体・RRSIG・公開DNSKEY**であり、RRSIGだけを処理するわけではない。典型的にはKSKがDNSKEY RRsetへ、ZSKがA等のRRsetへ署名するが、鍵の分け方は構成による。
+検証の入力は**RRset本体・RRSIG・公開DNSKEY**であり、RRSIGだけを見て判断するわけではない。鍵をKSKとZSKに分ける構成は代表例だが、試験ではまずDS・DNSKEY・RRSIGの役割と信頼の連鎖を優先する。
 
-署名があるはずなのに検証できない`bogus`と、署名なしの委任であることを正当に確認した`insecure`は別である。後者まで必ずSERVFAILにするわけではない。図の失敗分岐は検証を要求する通常の問い合わせを想定し、検証を無効にする要求等は省略した。
+署名があるはずなのに検証できない`bogus`と、署名なしであることを正当に確認した`insecure`は別である。後者まで必ずSERVFAILにするわけではない。
 
 ## 参照資料
 
 - [RFC 4035 §5：認証済み鍵、RRset、応答の検証](https://www.rfc-editor.org/rfc/rfc4035.html)
-- [RFC 4034 §5.1.4：DSダイジェストの計算対象](https://www.rfc-editor.org/rfc/rfc4034.html)
