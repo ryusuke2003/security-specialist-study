@@ -69,7 +69,7 @@
 
 ### DNSSECのsecure / insecure / bogus
 
-- DNSSEC検証結果は、ざっくり`secure`・`insecure`・`bogus`に分けて考えると分かりやすい。
+- セキスペ対策では、DNSSEC検証結果をまず`secure`・`insecure`・`bogus`の3状態で区別できればよい。
 
 | 状態 | 意味 |
 |---|---|
@@ -79,6 +79,6 @@
 
 - 重要なのは、`insecure`と`bogus`は違うこと。DNSSECを使っていないだけの`insecure`は通常の名前解決結果として利用できる場合があるが、**署名付きであるべきデータの検証に失敗した`bogus`は信用してはいけない**。
 - 例えば、親のDSから子のDNSKEYまで信頼できても、そのDNSKEYでRRsetの`RRSIG`を検証して失敗したら`bogus`である。鍵まで正しいことは、肝心のDNSデータの真正性を保証しない。
-- `bogus`になる原因には、データ改ざんだけでなく、RRSIGの期限切れ、ゾーン更新後の署名更新漏れ、鍵の取り違えなどの運用ミスもある。
+- `bogus`になる原因には、データ改ざんだけでなく、RRSIGの期限切れや署名更新漏れなどもある。
 - 検証リゾルバは通常、このような応答を普通の名前解決結果として返さず、`SERVFAIL`などのエラーとして扱う。
 - 覚え方: **secure＝検証OK、insecure＝DNSSECなし、bogus＝DNSSEC検証NG**。
