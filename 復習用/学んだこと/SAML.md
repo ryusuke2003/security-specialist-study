@@ -26,7 +26,7 @@ SAML
 ```
 
 - したがって「SAMLはXMLベースのマークアップ言語」と表現すると、SAMLそのものがXMLのような記述言語であるように聞こえるため不正確である。
-- SAMLでは、IdPが利用者を認証し、その結果をSAML AssertionとしてSPへ渡す。SPはAssertionの署名や発行者、宛先、有効期限などを検証した上で利用者を受け入れる。
+- SAMLでは、IdPが利用者を認証し、その結果をSAML AssertionとしてSPへ渡す。SPはResponseまたはAssertionを保護するXML署名に加え、発行者、宛先、Audience、有効期限などを検証した上で利用者を受け入れる。構成によって署名位置は異なるため、Assertion自体が常に署名されるとは限らない。
 
 ### 試験向けの覚え方
 
