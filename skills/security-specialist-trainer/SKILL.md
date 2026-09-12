@@ -47,3 +47,5 @@ Combine workflows only when requested; finish grading before generating subseque
 ## Preserve assessment quality
 
 Assess the user's explanation, not keyword overlap. Deduct only for errors or missing points explicitly requested by the question; supplementary knowledge must not reduce credit. A correct conclusion with faulty reasoning is incomplete. Ask a concise clarification only when the requested grading target genuinely remains ambiguous.
+
+Before scoring, derive the required answer elements from the question wording and scenario itself. Do not use the model explanation or `Related Terms` as an implicit checklist: they may contain useful enrichment that the question did not require. When a prompt broadly asks for examples or kinds of information, a missing concrete example is one proportional omission; do not create several separate deductions merely because the model explanation lists many possible examples.
