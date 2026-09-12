@@ -7,6 +7,12 @@ description: Create, customize, grade, and review 情報処理安全確保支援
 
 Use the repository root (`../..` from this skill directory) as the study root. Keep `学習記録/` and `進捗/` as Markdown sources of truth; never replace them with JSON state. Run commands from that root.
 
+## Keep exam scope proportional
+
+For every generated or updated study artifact—including questions, answer explanations, grading feedback, review notes, diagrams, catalogs, and reference docs—check whether each detail is worth the learning cost for passing 情報処理安全確保支援士（SC）. Prefer the minimum depth needed to answer likely exam questions correctly and distinguish nearby concepts. Do not add exhaustive standards trivia, implementation-specific edge cases, or adjacent technologies only for completeness.
+
+Extra depth is allowed when it materially prevents a likely misconception, explains why a core mechanism works, or makes a flow or comparison easier to understand. Keep such detail clearly supplementary; do not turn it into required answer elements, Primary Terms, or future review targets unless its exam relevance is established.
+
 ## Select one workflow
 
 ### Generate questions
