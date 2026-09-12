@@ -135,3 +135,10 @@ OpenID Provider（OP）
 - 実際の「○○でログイン」では、OIDCのIDトークンでアプリへのログインを成立させ、同時に取得したアクセストークンでUserInfo Endpointや業務APIを呼ぶことがある。この場合も、**ログインの根拠はIDトークン、API利用の根拠はアクセストークン**と役割を分ける。
 - 覚え方は、**OAuth 2.0＝何をしてよいか、OIDC＝誰なのか**。詳しい認可コードとPKCEの流れは[OAuth 2.0 / OIDCの認可コードとPKCE](../流れ図/OAuth2とOIDCの認可コードとPKCE.md)を参照する。
 - 参照: [RFC 6749（The OAuth 2.0 Authorization Framework）](https://www.rfc-editor.org/rfc/rfc6749.html)、[OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0-18.html)
+
+## 2026-09-12
+
+### 特権アクセス管理（PAM）
+
+- PAMは、管理者やrootなどの強い権限を持つアカウント、認証情報、利用セッションを集中的に統制する仕組みである。
+- 代表的な統制には、資格情報の保管・自動変更、利用申請と承認、必要な時間だけ権限を与えるJIT、操作セッションの記録がある。要点は、特権を常時・無制限に渡さず、「誰が、いつ、何のために、何をしたか」を追跡できるようにすることである。
