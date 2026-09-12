@@ -45,10 +45,10 @@ sequenceDiagram
     participant O as 認可・認証サーバ
 
     B->>C: ブラウザがログイン開始を要求する
-    C->>C: Webアプリがcode_verifier・state・<br/>nonceを生成し、開始セッションに対応付ける
-    C->>C: WebアプリがverifierからS256方式のcode_challengeを作る
+    C->>C: Webアプリがcode_verifier・state・nonceを生成し、開始セッションに対応付ける
+    C->>C: Webアプリがverifierからcode_challengeを作る
     C-->>B: Webアプリが認可エンドポイントへのリダイレクトを返す<br/>scope=openid・challenge・state・nonce等
-    B->>O: ブラウザが認可要求を送り、<br/>利用者のログイン・同意操作を仲介する
+    B->>O: ブラウザが認可要求を送り、利用者のログイン・同意操作を仲介する
     O->>O: 認可・認証サーバが利用者を認証し、認可条件を確認する
     O-->>B: 認可・認証サーバが登録済みcallbackへリダイレクトする<br/>認可コード・state
     B->>C: ブラウザがcallbackへ認可コード・stateを届ける
@@ -67,17 +67,17 @@ sequenceDiagram
     participant A as APIサーバ
 
     C->>O: Webアプリがトークンエンドポイントへ送る<br/>コード・verifier・redirect URI・クライアント認証等
-    O->>O: 認可・認証サーバがコードの有効性・<br/>宛先・クライアント等を検証する
-    O->>O: 認可・認証サーバがverifierのS256値を<br/>保存済みchallengeと照合する
+    O->>O: 認可・認証サーバがコードの有効性・宛先・クライアント等を検証する
+    O->>O: 認可・認証サーバがverifierと保存済みchallengeの対応を確認する
     alt 認可・認証サーバの検証に失敗した
         O-->>C: 認可・認証サーバがトークン発行を拒否する
     else 認可・認証サーバの検証に成功した
         O-->>C: 認可・認証サーバがアクセストークンとIDトークンを返す
-        C->>C: WebアプリがIDトークンの署名・<br/>iss・aud・exp・nonce等を検証する
+        C->>C: WebアプリがIDトークンの署名・iss・aud・exp・nonce等を検証する
         Note over C: IDトークン検証に失敗した場合はログインを成立させない
         C-->>B: Webアプリが検証成功後に自分用のセッションCookieを発行する
         C->>A: Webアプリがアクセストークンを付けてAPIを要求する
-        A->>A: APIサーバがトークンの有効性・<br/>対象API・scope等の権限を検証する
+        A->>A: APIサーバがトークンの有効性・対象API・scope等の権限を検証する
         A-->>C: APIサーバが認可に応じた結果または拒否を返す
     end
 ```
@@ -95,7 +95,7 @@ sequenceDiagram
 
 ## 注意点
 
-PKCEは`BASE64URL(SHA256(code_verifier))`をchallengeとして登録し、コード交換時に照合する。コードを横取りしてもverifierを持たない相手の交換を防ぐ。`state`は開始したブラウザセッションとの対応、OIDCの`nonce`はIDトークンと認証要求との対応に使う。
+PKCEは認可要求時にverifierから作ったchallengeを登録し、コード交換時に提示されたverifierとの対応を確認する。**横取りした認可コードだけでは交換できない**ことが要点で、challenge生成式そのものを暗記する必要はない。`state`は開始したブラウザセッションとの対応、OIDCの`nonce`はIDトークンと認証要求との対応に使う。
 
 OAuth 2.0はAPI利用の認可、OIDCはIDトークンによる認証連携である。**IDトークンをAPI用アクセストークンの代わりに送らない。** OAuthだけならIDトークンは発行されない。リフレッシュトークンやトークン更新はこの図では省略した。
 
