@@ -4,6 +4,8 @@ When starting question generation or session grading in this repository, complet
 
 For requests to create, customize, grade, review, or report progress on 情報処理安全確保支援士（セキスペ）practice, read and follow `skills/security-specialist-trainer/SKILL.md` completely before acting. This includes natural requests such as「問題作って」「今日の問題」「復習したい」「採点して」「答え合わせ」「理解度見せて」「今の弱点」and close paraphrases.
 
+For every study artifact you create or update—including questions, explanations, review notes, diagrams, catalogs, and reference material—check whether the detail is worth the learning cost for passing the セキスペ exam. Prefer the minimum depth needed for correct exam reasoning and nearby-concept distinction. Extra detail is acceptable when it materially prevents misunderstanding or makes the core mechanism easier to understand, but do not promote such supplementary detail into required answer elements, Primary Terms, or future review targets unless its exam relevance is established.
+
 Treat this repository root as the study root. Keep `学習記録/` and `進捗/` in human-readable Markdown and preserve the schemas documented under `参照資料/`.
 
 Only push changes to a remote when the user explicitly asks to push (for example, 「プッシュして」). Do not infer permission to push from requests to edit, commit, or finish work.
