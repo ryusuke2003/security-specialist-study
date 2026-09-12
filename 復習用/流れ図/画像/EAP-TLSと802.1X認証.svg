@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1896" viewBox="0 0 800 1896" role="img" aria-labelledby="title desc">
+<title id="title">EAP-TLSと802.1X認証の全体像</title>
+<desc id="desc">APは認証を中継し、RADIUSサーバが証明書を検証して結果を返す。 CAは証明書の発行者であり、通常の接続認証時にRADIUSサーバの代わりとして判定する主体ではない。 認証開始。交換。クライアントとAP。クライアントがEAPOLで802.1X認証を開始し、APが識別情報を要求する。 認証中継。送信。APからRADIUSサーバ。APがクライアントのEAPメッセージをRADIUS Access-Requestで中継する。 サーバ確認。送信。RADIUSサーバからクライアント。RADIUSサーバがAP経由でサーバ証明書を提示し、クライアントが信頼性と接続先を検証する。 端末確認。送信。クライアントからRADIUSサーバ。クライアントがAP経由で端末証明書と秘密鍵所持の証明を提示する。秘密鍵は送らない。 証明書検証。確認。RADIUSサーバ。RADIUSサーバが端末証明書のチェーン・期限・失効・用途と秘密鍵所持を検証する。 結果通知。送信。RADIUSサーバからAP。RADIUSサーバがAccess-AcceptまたはAccess-Rejectを返す。 接続制御。確認。AP。APが成功時だけ通信を許可し、失敗時は未認証ポートを閉じたままにする。</desc>
+<rect width="800" height="1896" fill="#f3f6fa"/>
+<g font-family="Noto Sans CJK JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif">
+<text x="32" y="34" font-size="16" font-weight="600" fill="#52657b">全体像  /  段階ごとに、上から読む</text>
+<text x="32" y="74" font-size="28" font-weight="700" fill="#172e46">EAP-TLSと802.1X認証</text>
+<rect x="32" y="103" width="736" height="58" rx="12" fill="#e6eff8"/>
+<text x="50" y="132" font-size="21" font-weight="600" fill="#172e46">APは認証を中継し、RADIUSサーバが証明書を検証して結果を返す。</text>
+<text x="32" y="189" font-size="15" font-weight="400" fill="#52657b">矢印：情報の受渡し　｜　内部・確認：通信なし　｜　並行：担当を分けて調整</text>
+<rect x="72" y="215" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="244" font-size="20" font-weight="700" fill="#172e46">認証開始</text>
+<rect x="72" y="276" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="299" r="18" fill="#203b59"/>
+<text x="30" y="305" font-size="19" font-weight="600" fill="#ffffff">1</text>
+<rect x="88" y="288" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="313" font-size="19" font-weight="600" fill="#075985">クライアント</text>
+<rect x="446" y="288" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="313" font-size="19" font-weight="600" fill="#5b21b6">AP</text>
+<path d="M402 308H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<path d="M402 308l7 -6m-7 6l7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="356" font-size="22" font-weight="400" fill="#172e46">クライアントがEAPOLで802.1X認証を開始し、APが識別情報を</text>
+<text x="94" y="388" font-size="22" font-weight="400" fill="#172e46">要求する。</text>
+<rect x="72" y="440" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="469" font-size="20" font-weight="700" fill="#172e46">認証中継</text>
+<rect x="72" y="501" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="524" r="18" fill="#203b59"/>
+<text x="30" y="530" font-size="19" font-weight="600" fill="#ffffff">2</text>
+<rect x="88" y="513" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="538" font-size="19" font-weight="600" fill="#5b21b6">AP</text>
+<rect x="446" y="513" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="538" font-size="19" font-weight="600" fill="#166534">RADIUSサーバ</text>
+<path d="M402 533H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="581" font-size="22" font-weight="400" fill="#172e46">APがクライアントのEAPメッセージをRADIUS Access-Request</text>
+<text x="94" y="613" font-size="22" font-weight="400" fill="#172e46">で中継する。</text>
+<rect x="72" y="665" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="694" font-size="20" font-weight="700" fill="#172e46">サーバ確認</text>
+<rect x="72" y="726" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="749" r="18" fill="#203b59"/>
+<text x="30" y="755" font-size="19" font-weight="600" fill="#ffffff">3</text>
+<rect x="88" y="738" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="102" y="763" font-size="19" font-weight="600" fill="#166534">RADIUSサーバ</text>
+<rect x="446" y="738" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="460" y="763" font-size="19" font-weight="600" fill="#075985">クライアント</text>
+<path d="M402 758H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="806" font-size="22" font-weight="400" fill="#172e46">RADIUSサーバがAP経由でサーバ証明書を提示し、クライアン</text>
+<text x="94" y="838" font-size="22" font-weight="400" fill="#172e46">トが信頼性と接続先を検証する。</text>
+<rect x="72" y="890" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="919" font-size="20" font-weight="700" fill="#172e46">端末確認</text>
+<rect x="72" y="951" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="974" r="18" fill="#203b59"/>
+<text x="30" y="980" font-size="19" font-weight="600" fill="#ffffff">4</text>
+<rect x="88" y="963" width="306" height="40" rx="8" fill="#e0f2fe"/>
+<text x="102" y="988" font-size="19" font-weight="600" fill="#075985">クライアント</text>
+<rect x="446" y="963" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="460" y="988" font-size="19" font-weight="600" fill="#166534">RADIUSサーバ</text>
+<path d="M402 983H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="1031" font-size="22" font-weight="400" fill="#172e46">クライアントがAP経由で端末証明書と秘密鍵所持の証明を提</text>
+<text x="94" y="1063" font-size="22" font-weight="400" fill="#172e46">示する。秘密鍵は送らない。</text>
+<rect x="72" y="1115" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="1144" font-size="20" font-weight="700" fill="#172e46">証明書検証</text>
+<rect x="72" y="1176" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1199" r="18" fill="#203b59"/>
+<text x="30" y="1205" font-size="19" font-weight="600" fill="#ffffff">5</text>
+<rect x="88" y="1188" width="502" height="40" rx="8" fill="#dcfce7"/>
+<text x="102" y="1213" font-size="19" font-weight="600" fill="#166534">RADIUSサーバ</text>
+<text x="632" y="1215" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="1256" font-size="22" font-weight="400" fill="#172e46">RADIUSサーバが端末証明書のチェーン・期限・失効・用途と</text>
+<text x="94" y="1288" font-size="22" font-weight="400" fill="#172e46">秘密鍵所持を検証する。</text>
+<rect x="72" y="1340" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="1369" font-size="20" font-weight="700" fill="#172e46">結果通知</text>
+<rect x="72" y="1401" width="696" height="104" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1424" r="18" fill="#203b59"/>
+<text x="30" y="1430" font-size="19" font-weight="600" fill="#ffffff">6</text>
+<rect x="88" y="1413" width="306" height="40" rx="8" fill="#dcfce7"/>
+<text x="102" y="1438" font-size="19" font-weight="600" fill="#166534">RADIUSサーバ</text>
+<rect x="446" y="1413" width="306" height="40" rx="8" fill="#ede9fe"/>
+<text x="460" y="1438" font-size="19" font-weight="600" fill="#5b21b6">AP</text>
+<path d="M402 1433H435l-7 -6m7 6l-7 6" fill="none" stroke="#52657b" stroke-width="2"/>
+<text x="94" y="1481" font-size="22" font-weight="400" fill="#172e46">RADIUSサーバがAccess-AcceptまたはAccess-Rejectを返す。</text>
+<rect x="72" y="1533" width="696" height="47" rx="8" fill="#dfe8f1"/>
+<text x="88" y="1562" font-size="20" font-weight="700" fill="#172e46">接続制御</text>
+<rect x="72" y="1594" width="696" height="136" rx="12" fill="#ffffff"/>
+<circle cx="36" cy="1617" r="18" fill="#203b59"/>
+<text x="30" y="1623" font-size="19" font-weight="600" fill="#ffffff">7</text>
+<rect x="88" y="1606" width="502" height="40" rx="8" fill="#ede9fe"/>
+<text x="102" y="1631" font-size="19" font-weight="600" fill="#5b21b6">AP</text>
+<text x="632" y="1633" font-size="17" font-weight="600" fill="#52657b">確認・判断</text>
+<text x="94" y="1674" font-size="22" font-weight="400" fill="#172e46">APが成功時だけ通信を許可し、失敗時は未認証ポートを閉じ</text>
+<text x="94" y="1706" font-size="22" font-weight="400" fill="#172e46">たままにする。</text>
+<rect x="32" y="1758" width="736" height="110" rx="12" fill="#fff1d7"/>
+<text x="48" y="1785" font-size="17" font-weight="700" fill="#764a0b">前提・読み違えないポイント</text>
+<text x="48" y="1815" font-size="19" font-weight="400" fill="#764a0b">CAは証明書の発行者であり、通常の接続認証時にRADIUSサーバの代わ</text>
+<text x="48" y="1843" font-size="19" font-weight="400" fill="#764a0b">りとして判定する主体ではない。</text>
+</g>
+</svg>
